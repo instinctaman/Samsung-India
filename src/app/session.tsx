@@ -2,6 +2,7 @@ import { Image, Pressable, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import CheckCircle from "@/assets/images/svg/check_circle.svg";
 
 import AppButton from "@/components/ui/AppButton";
 import AppText from "@/components/ui/AppText";
@@ -52,7 +53,7 @@ export default function SessionScreen() {
           <AppButton
             title="Join Session"
             onPress={() => {}}
-            leftIcon={<Ionicons name="checkmark-circle-outline" size={21} color={Colors.white} />}
+            leftIcon={<CheckCircle width={21} height={21} />}
             buttonStyle={styles.joinButton}
           />
 
@@ -72,10 +73,12 @@ export default function SessionScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   hero: {
-    height: 242,
+    height: "40%",
     backgroundColor: Colors.mainColour1,
     alignItems: "center",
-    paddingTop: 38,
+    paddingTop: "25%",
+    borderTopLeftRadius: 35,
+    borderTopRightRadius: 35,
   },
   avatar: { width: 92, height: 92, borderRadius: 46, marginBottom: 12 },
   name: { fontSize: 20, lineHeight: 25 },
@@ -97,7 +100,7 @@ const styles = StyleSheet.create({
     width: "100%",
     maxWidth: 440,
     backgroundColor: Colors.white,
-    borderRadius: 20,
+    borderRadius: 27,
     padding: 24,
     marginTop: -39,
     shadowColor: "#000",
