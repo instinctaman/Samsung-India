@@ -1,0 +1,18 @@
+export const Colors = {
+    primary: "#1565F9",
+    primaryDark: "#0B4EDB",
+    background: "#EEF4FF",
+    white: "#FFFFFF",
+    black: "#111827",
+    gray100: "#F3F4F6",
+    gray200: "#E5E7EB",
+    gray400: "#9CA3AF",
+    gray600: "#4B5563",
+    success: "#16A34A",
+    danger: "#DC2626",
+    inputColour : "#4D4D4D",
+    inputColour2 : "#4D4D4D33",
+    inputColour3 : "rgba(77, 77, 77, 0.6)",
+    borderColour : "rgba(170, 170, 170, 0.38)",
+    mainColour1: "#006aff",
+};
