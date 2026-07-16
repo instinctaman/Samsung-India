@@ -50,11 +50,7 @@ export default function RegisterSheet({
                                 </AppText>
                             </View>
                             <Pressable onPress={onClose} style={styles.closeButton}>
-                                <AppText size={22} weight="700">
-                                    <Ionicons
-                                        name="close"
-                                    />
-                                </AppText>
+                                <Ionicons name="close" size={24} color={Colors.inputColour} />
                             </Pressable>
                         </View>
                         <View style={styles.divider} />
@@ -93,7 +89,6 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: "flex-end",
     },
-
     registerContainer: {
         maxHeight: "95%",
         backgroundColor: "#fff",
@@ -141,7 +136,7 @@ const styles = StyleSheet.create({
         borderRadius: 18,
     },
     ft: {
-        fontSize: Fonts.md,
+        fontSize: Fonts.bodyLg,
         color: Colors.mainColour1,
         fontWeight: FontWeight.semiBold,
         marginBottom: 8,

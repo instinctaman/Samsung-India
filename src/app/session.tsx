@@ -8,6 +8,7 @@ import AppButton from "@/components/ui/AppButton";
 import AppText from "@/components/ui/AppText";
 import SecurityFooter from "@/components/common/SecurityFooter";
 import { Colors } from "@/theme/colors";
+import { Fonts } from "@/theme/fonts";
 
 const details = [
   ["SUPERVISOR", "AKASH ROY"],
@@ -52,8 +53,8 @@ export default function SessionScreen() {
 
           <AppButton
             title="Join Session"
-            onPress={() => {}}
-            leftIcon={<CheckCircle width={21} height={21} />}
+            onPress={() => router.push("/session_detail")}
+            leftIcon={<CheckCircle width={Fonts.bodyLg} height={Fonts.bodyLg} />}
             buttonStyle={styles.joinButton}
           />
 
@@ -73,19 +74,19 @@ export default function SessionScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   hero: {
-    height: "40%",
+    height: "45%",
     backgroundColor: Colors.mainColour1,
     alignItems: "center",
-    paddingTop: "25%",
-    borderTopLeftRadius: 35,
-    borderTopRightRadius: 35,
+    paddingTop: "20%",
+    borderTopLeftRadius: Fonts.br,
+    borderTopRightRadius: Fonts.br,
   },
-  avatar: { width: 92, height: 92, borderRadius: 46, marginBottom: 12 },
-  name: { fontSize: 20, lineHeight: 25 },
+  avatar: { width: 176, height: 131, marginBottom: 12 },
+  name: { fontSize: Fonts.h2, lineHeight: 25 },
   phone: {
-    fontSize: 11,
+    fontSize: Fonts.body,
     lineHeight: 17,
-    backgroundColor: "rgba(255,255,255,0.20)",
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
     paddingHorizontal: 5,
     borderRadius: 2,
     marginTop: 3,
@@ -102,7 +103,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
     borderRadius: 27,
     padding: 24,
-    marginTop: -39,
+    marginTop: "-10%",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.08,
@@ -111,11 +112,11 @@ const styles = StyleSheet.create({
   },
   details: { flexDirection: "row", flexWrap: "wrap", rowGap: 20 },
   detail: { width: "50%" },
-  label: { fontSize: 10, color: "#505050", marginBottom: 6 },
-  value: { fontSize: 13, color: "#303030" },
+  label: { fontSize: Fonts.bodySm, color: "#505050", marginBottom: 6 },
+  value: { fontSize: Fonts.body, color: "#303030" },
   notice: { flexDirection: "row", alignItems: "center", marginTop: 26, marginBottom: 13 },
-  noticeText: { flex: 1, fontSize: 10, color: "#3D3D3D", marginLeft: 4 },
+  noticeText: { flex: 1, fontSize: Fonts.caption, color: "#3D3D3D", marginLeft: 4 },
   joinButton: { height: 40, borderRadius: 8 },
-  logout: { marginTop: 14, textAlign: "center", textDecorationLine: "underline", fontSize: 10, color: "#4D4D4D" },
+  logout: { marginTop: 14, textAlign: "center", textDecorationLine: "underline", fontSize: Fonts.bodySm, color: "#4D4D4D" },
   footer: { marginTop: 36 },
 });

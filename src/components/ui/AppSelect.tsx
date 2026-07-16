@@ -56,13 +56,13 @@ const styles = StyleSheet.create({
   picker: {
     width: "100%",
     color: Colors.black,
-    fontSize: Fonts.sm,
+    fontSize: Fonts.bodySm,
     backgroundColor: Colors.white,
     fontWeight: FontWeight.regular,
   },
   item: {
     color: Colors.black,
-    fontSize: Fonts.sm,
+    fontSize: Fonts.bodySm,
     fontWeight: FontWeight.regular,
   },
 });

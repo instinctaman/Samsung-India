@@ -18,7 +18,7 @@ export default function RegisterButton({
       onPress={onPress}
       loading={loading}
       textStyle={{
-        fontSize: Fonts.llg,
+        fontSize: Fonts.lg,
       }}
       rightIcon={
         <Ionicons

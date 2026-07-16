@@ -49,7 +49,7 @@ const styles = StyleSheet.create({
   },
 
   label: {
-    fontSize: Fonts.lg,
+    fontSize: Fonts.body,
     color: Colors.black,
     marginBottom: 8,
     fontWeight: "500",
@@ -61,7 +61,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.gray200,
     borderRadius: 10,
     paddingHorizontal: 15,
-    fontSize: Fonts.sm,
+    fontSize: Fonts.xs,
     backgroundColor: Colors.white,
     fontWeight: FontWeight.regular,
     // borderColor: focused

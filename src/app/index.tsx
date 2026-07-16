@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
     marginTop: 15,
     textAlign: "center",
     textDecorationLine: "underline",
-    fontSize: Fonts.sm,
+    fontSize: Fonts.bodySm,
   },
   content: {
     flex: 1,

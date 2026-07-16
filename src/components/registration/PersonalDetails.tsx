@@ -69,7 +69,7 @@ export default function PersonalDetails() {
 
 const styles = StyleSheet.create({
     sectionTitle: {
-        fontSize: Fonts.md,
+        fontSize: Fonts.bodyLg,
         color: Colors.mainColour1,
         fontWeight: FontWeight.semiBold,
         marginBottom: 10,

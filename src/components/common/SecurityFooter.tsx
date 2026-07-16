@@ -23,7 +23,7 @@ const styles = StyleSheet.create({
   },
   text: {
     color: Colors.inputColour,
-    fontSize: Fonts.sm,
+    fontSize: Fonts.bodySm,
     fontWeight: FontWeight.regular,
     marginLeft: 8,
   },

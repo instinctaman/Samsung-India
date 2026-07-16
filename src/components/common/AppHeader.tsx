@@ -54,10 +54,10 @@ const styles = StyleSheet.create({
     },
     title: {
         marginBottom: 8,
-        fontSize: Fonts.xl,
+        fontSize: Fonts.h1,
     },
     subtitle: {
         textAlign: "center",
-        fontSize: Fonts.md,
+        fontSize: Fonts.xs,
     },
 });

@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
 
   text: {
     color: Colors.white,
-    fontSize: Fonts.xxl,
+    fontSize: Fonts.bodyLg,
     fontWeight: FontWeight.medium,
   },
   content: {

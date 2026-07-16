@@ -14,6 +14,10 @@ export default function RootLayout() {
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />
         <Stack.Screen name="session" />
+        <Stack.Screen name="session_detail" />
+        <Stack.Screen name="attendance" />
+        <Stack.Screen name="wait" />
+        <Stack.Screen name="quiz" />
         <Stack.Screen name="explore" />
       </Stack>
     </ThemeProvider>
