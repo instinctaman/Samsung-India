@@ -14,4 +14,10 @@ export const Fonts = {
   xl: 20,
   lg: 24,
   br: 35,
+
+  smallIcon: 14,
+  captionIcon: 16,
+  iconSize:60,
+  profileIconSize:131,
+  timerIconSize:103,
 } as const;

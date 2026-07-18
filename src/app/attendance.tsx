@@ -1,12 +1,14 @@
 import { Pressable, StyleSheet, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { StatusBar } from "expo-status-bar";
 
 import AppText from "@/components/ui/AppText";
 import { Colors } from "@/theme/colors";
 import { FontWeight } from "@/theme/fontWeight";
 import { Fonts } from "@/theme/fonts";
+import Sparkle from "@/assets/images/svg/sparkle.svg";
 
 const details = [
   { label: "Session", value: "Training Session", icon: "calendar" },
@@ -17,13 +19,19 @@ const details = [
 
 export default function AttendanceScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+      <View style={[styles.statusBarBackground, { height: insets.top }]} />
+      <StatusBar style="light" animated />
       <View style={styles.successArea}>
         <View style={styles.successHalo}>
-          <View style={styles.successCircle}>
-            <Ionicons name="checkmark" size={62} color={Colors.success} />
+          <Sparkle width={219} height={101} style={styles.sparkle} />
+          <View style={styles.successRing}>
+            <View style={styles.successCircle}>
+              <Ionicons name="checkmark" size={Fonts.iconSize} color={Colors.success} />
+            </View>
           </View>
         </View>
         <AppText style={styles.title} color={Colors.white} weight={FontWeight.semiBold}>Access Granted!</AppText>
@@ -64,9 +72,12 @@ function DetailRow({ label, value, icon, isLast }: typeof details[number] & { is
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F2FFF9" },
+  statusBarBackground: { position: "absolute", top: 0, left: 0, right: 0, backgroundColor: Colors.success },
   successArea: { height: "80%", minHeight: 350, alignItems: "center", justifyContent: "center", backgroundColor: Colors.success, borderBottomLeftRadius: 34, borderBottomRightRadius: 34, paddingBottom: 72 },
-  successHalo: { width: 128, height: 128, borderRadius: 64, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255, 255, 255, 0.08)", borderWidth: 10, borderColor: "rgba(255, 255, 255, 0.06)" },
-  successCircle: { width: 76, height: 76, borderRadius: 38, backgroundColor: Colors.white, alignItems: "center", justifyContent: "center" },
+  successHalo: { width: 144, height: 144, borderRadius: 72, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255, 255, 255, 0.035)", borderWidth: 1, borderColor: "rgba(255, 255, 255, 0.06)" },
+  sparkle: { position: "absolute", top: -65, zIndex: 0 },
+  successRing: { width: 116, height: 116, zIndex: 1, borderRadius: 58, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255, 255, 255, 0.07)", borderWidth: 1, borderColor: "rgba(255, 255, 255, 0.08)" },
+  successCircle: { width: 84, height: 84, borderRadius: 42, backgroundColor: Colors.white, alignItems: "center", justifyContent: "center", shadowColor: Colors.black, shadowOpacity: 0.08, shadowOffset: { width: 0, height: 3 }, shadowRadius: 6, elevation: 2 },
   title: { marginTop: 23, fontSize: Fonts.h1 },
   subtitle: { marginTop: 4, fontSize: Fonts.body },
   content: { flex: 1, alignItems: "center", paddingHorizontal: 21, marginTop: -165 },

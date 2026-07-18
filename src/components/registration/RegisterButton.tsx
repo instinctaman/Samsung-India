@@ -17,13 +17,9 @@ export default function RegisterButton({
       title={loading ? "Registering..." : "Complete Registration"}
       onPress={onPress}
       loading={loading}
-      textStyle={{
-        fontSize: Fonts.lg,
-      }}
       rightIcon={
         <Ionicons
           name="arrow-forward"
-          size={20}
           color="#fff"
         />
       }

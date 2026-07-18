@@ -13,6 +13,8 @@ import AppText from "./AppText";
 import { Colors } from "@/theme/colors";
 import { Fonts } from "@/theme/fonts";
 import { FontWeight } from "@/theme/fontWeight";
+import { Radius } from "@/theme/radius";
+import { Spacing } from "@/theme/spacing";
 
 type AppButtonProps = {
   title: string;
@@ -69,7 +71,7 @@ const styles = StyleSheet.create({
   button: {
     backgroundColor: Colors.mainColour1,
     height: 52,
-    borderRadius: 12,
+    borderRadius: Radius.xxl,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -91,6 +93,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
+    gap: Spacing.sm,
   },
 });

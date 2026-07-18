@@ -1,6 +1,8 @@
 import React from "react";
 import { View, StyleSheet, ViewProps } from "react-native";
 import { Colors } from "@/theme/colors";
+import { Radius } from "@/theme/radius";
+import { Shadows } from "@/theme/shadows";
 
 interface AppCardProps extends ViewProps {
   variant?: "mainColour1" | "white";
@@ -33,14 +35,7 @@ export default function AppCard({
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 22,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 5,
+    borderRadius: Radius.xxl,
+    ...Shadows.raised,
   },
 });

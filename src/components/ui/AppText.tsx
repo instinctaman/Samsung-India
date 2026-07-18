@@ -6,16 +6,23 @@ import {
 } from "react-native";
 
 import { Colors } from "@/theme/colors";
+import { FontFamily } from "@/theme/fontFamily";
+
+type TextWeight = "400" | "500" | "600" | "700" | "bold";
+
+const fontFamilyForWeight: Record<TextWeight, keyof typeof FontFamily> = {
+  "400": "regular",
+  "500": "medium",
+  "600": "semiBold",
+  "700": "bold",
+  bold: "bold",
+};
 
 interface AppTextProps extends TextProps {
   children: React.ReactNode;
   size?: number;
   color?: string;
-  weight?:
-    | "400"
-    | "500"
-    | "600"
-    | "700";
+  weight?: TextWeight;
 }
 
 export default function AppText({
@@ -34,7 +41,7 @@ export default function AppText({
         {
           fontSize: size,
           color,
-          fontWeight: weight,
+          fontFamily: FontFamily[fontFamilyForWeight[weight]],
         },
         style,
       ]}

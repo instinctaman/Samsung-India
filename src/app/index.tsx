@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { StyleSheet, View, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-
+import { StatusBar } from "expo-status-bar";
 import AppCard from "@/components/ui/AppCard";
 import AuthHeader from "@/components/common/AppHeader";
 import AppText from "@/components/ui/AppText";
@@ -21,43 +21,48 @@ export default function HomeScreen() {
   const openRegister = () => setIsRegisterOpen(true);
   const closeRegister = () => setIsRegisterOpen(false);
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <AppCard>
-          <View style={styles.header}>
-            <AuthHeader />
+    <>
+      <StatusBar
+        style="dark"
+      />
+      <SafeAreaView style={styles.container}>
+        <View style={styles.content}>
+          <AppCard>
+            <View style={styles.header}>
+              <AuthHeader />
+            </View>
+            <View style={styles.body}>
+              <AppInput
+                label="Company ID / Phone No"
+                placeholder="Enter Company ID or Phone No"
+              />
+              <AppButton
+                title="Continue"
+                onPress={() => router.push("/session")}
+              />
+              <Pressable onPress={openRegister}>
+                <AppText
+                  weight="500"
+                  style={styles.register}
+                >
+                  New User ? Register
+                </AppText>
+              </Pressable>
+            </View>
+          </AppCard>
+          <View style={styles.securityFooter}>
+            <SecurityFooter />
           </View>
-          <View style={styles.body}>
-            <AppInput
-              label="Company ID / Phone No"
-              placeholder="Enter Company ID or Phone No"
-            />
-            <AppButton
-              title="Continue"
-              onPress={() => router.push("/session")}
-            />
-            <Pressable onPress={openRegister}>
-              <AppText
-                weight="500"
-                style={styles.register}
-              >
-                New User ? Register
-              </AppText>
-            </Pressable>
-          </View>
-        </AppCard>
-        <View style={styles.securityFooter}>
-          <SecurityFooter />
-        </View>
-        <RegisterSheet
-          visible={isRegisterOpen}
-          onClose={closeRegister}
-        />
-        {/* <RegisterBottomSheet
+          <RegisterSheet
+            visible={isRegisterOpen}
+            onClose={closeRegister}
+          />
+          {/* <RegisterBottomSheet
           ref={bottomSheetRef}
         /> */}
-      </View>
-    </SafeAreaView>
+        </View>
+      </SafeAreaView>
+    </>
   );
 }
 

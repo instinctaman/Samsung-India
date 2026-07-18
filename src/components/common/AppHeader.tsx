@@ -46,8 +46,8 @@ const styles = StyleSheet.create({
         marginBottom: 20,
     },
     icon: {
-        width: 77,
-        height: 77,
+        width: Fonts.profileIconSize,
+        height: Fonts.profileIconSize,
         backgroundColor: Colors.mainColour1,
         tintColor: "#E8F0FF",
         borderRadius: 45,

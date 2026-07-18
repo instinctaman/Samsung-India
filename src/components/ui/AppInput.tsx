@@ -9,7 +9,9 @@ import {
 
 import { Colors } from "@/theme/colors";
 import { Fonts } from "@/theme/fonts";
-import { FontWeight } from "@/theme/fontWeight";
+import { FontFamily } from "@/theme/fontFamily";
+import { Radius } from "@/theme/radius";
+import { Spacing } from "@/theme/spacing";
 
 interface AppInputProps extends TextInputProps {
   label?: string;
@@ -45,25 +47,25 @@ const styles = StyleSheet.create({
 
   container: {
     width: "100%",
-    marginBottom: 18,
+    marginBottom: Spacing.lg,
   },
 
   label: {
     fontSize: Fonts.body,
     color: Colors.black,
-    marginBottom: 8,
-    fontWeight: "500",
+    marginBottom: Spacing.sm,
+    fontFamily: FontFamily.medium,
   },
 
   input: {
     height: 50,
     borderWidth: 1,
     borderColor: Colors.gray200,
-    borderRadius: 10,
-    paddingHorizontal: 15,
+    borderRadius: Radius.xl,
+    paddingHorizontal: Spacing.lg,
     fontSize: Fonts.xs,
     backgroundColor: Colors.white,
-    fontWeight: FontWeight.regular,
+    fontFamily: FontFamily.regular,
     // borderColor: focused
     //   ? Colors.mainColour1
     //   : Colors.gray200
