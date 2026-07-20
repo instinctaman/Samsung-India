@@ -1,59 +1,106 @@
+import { useCallback, useState } from "react";
 import {
-  Image,
+  ActivityIndicator,
   Pressable,
   StyleSheet,
   View,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import type { ComponentType } from "react";
 import type { SvgProps } from "react-native-svg";
 import { StatusBar } from "expo-status-bar";
 
 import AccountCircle from "@/assets/images/svg/account_circle.svg";
 import Alarm from "@/assets/images/svg/alarm.svg";
-import Calendar from "@/assets/images/svg/calender.svg";
 import GoogleDocs from "@/assets/images/svg/google-docs 1.svg";
-import Loading from "@/assets/images/svg/loading.svg";
 import AppText from "@/components/ui/AppText";
 import AppFooter from "@/components/ui/AppFooter";
 import { Colors } from "@/theme/colors";
-import { FontWeight } from "@/theme/fontWeight";
 import { Fonts } from "@/theme/fonts";
 import SessionHeader from "@/components/session/SessionHeader";
-import SessionTypeIcon from "@/components/session/SessionTypeIcon";
-import SessionStatusBadge from "@/components/session/SessionStatusBadge";
-import SessionButton from "@/components/session/SessionButton";
-import WaitingCard from "@/components/session/WaitingCard";
-import RecordedCard from "@/components/session/RecordedCard";
-import TimelineItem from "@/components/session/TimelineItem";
 import SessionTimeline from "@/components/session/SessionTimeline";
+import { SessionItem } from "@/components/session/TimelineItem";
 import SessionNotice from "@/components/session/SessionNotice";
+import WaitingCard from "@/components/session/WaitingCard";
+import { useAuth } from "@/hooks/useAuth";
+import { ApiError, CurrentSession, SessionModuleKey, getCurrentSession } from "@/api/session";
 
-type SessionItem = {
-  time: string;
-  endTime: string;
-  type: string;
-  duration: string;
-  status: "LIVE NOW" | "Upcoming";
-  icon: keyof typeof Ionicons.glyphMap | ComponentType<SvgProps>;
-  iconColor: string;
+const MODULE_PRESENTATION: Record<SessionModuleKey, { icon: ComponentType<SvgProps>; iconColor: string }> = {
+  ATTENDANCE: { icon: AccountCircle, iconColor: Colors.success },
+  STANDARD_TEST: { icon: GoogleDocs, iconColor: Colors.mainColour1 },
+  LIVE_QUIZ: { icon: Alarm, iconColor: Colors.mainColour1 },
+  SURVEY: { icon: GoogleDocs, iconColor: Colors.mainColour1 },
 };
-
-const sessions: SessionItem[] = [
-  { time: "09:00", endTime: "10:00", type: "ATTENDANCE", duration: "1h", status: "LIVE NOW", icon: AccountCircle, iconColor: Colors.success, },
-  { time: "10:00", endTime: "12:00", type: "QUIZ", duration: "2h", status: "Upcoming", icon: Alarm, iconColor: Colors.mainColour1, },
-  { time: "12:00", endTime: "14:00", type: "POST TEST", duration: "2h", status: "Upcoming", icon: GoogleDocs , iconColor: Colors.mainColour1, },
-  { time: "14:00", endTime: "16:00", type: "POST TEST", duration: "2h", status: "Upcoming", icon: GoogleDocs , iconColor: Colors.mainColour1, },
-];
 
 export default function SessionDetailScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { attendance, quiz } = useLocalSearchParams<{ attendance?: string; quiz?: string }>();
-  const attendanceRecorded = attendance === "recorded";
-  const quizCompleted = quiz === "completed";
+  const { trainee, token } = useAuth();
+
+  const [session, setSession] = useState<CurrentSession | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadSession = useCallback(async () => {
+    if (!token) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getCurrentSession(token);
+      setSession(data);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Couldn't load your session.");
+    } finally {
+      setLoading(false);
+    }
+  }, [token]);
+
+  // Refetch every time this screen regains focus (e.g. after marking
+  // attendance or submitting the standard test) so the timeline reflects
+  // what actually happened, instead of trusting stale nav params.
+  useFocusEffect(
+    useCallback(() => {
+      loadSession();
+    }, [loadSession])
+  );
+
+  const sessionItems: SessionItem[] = (session?.modules ?? []).map((module) => ({
+    key: module.key,
+    time: module.time ?? "--:--",
+    endTime: module.endTime ?? "",
+    duration: module.duration ?? "",
+    type: module.name,
+    isLive: module.isLive,
+    isCompleted: module.isCompleted,
+    completedAt: module.completedAt,
+    score: module.score,
+    ...MODULE_PRESENTATION[module.key],
+  }));
+
+  const handleMarkAttendance = () => {
+    if (!session) return;
+    const attendanceModule = session.modules.find((module) => module.key === "ATTENDANCE");
+    router.push({
+      pathname: "/attendance",
+      params: {
+        conferenceUid: session.conferenceUid,
+        title: session.title,
+        location: session.location ?? "",
+        time: attendanceModule?.time ?? "",
+        endTime: attendanceModule?.endTime ?? "",
+      },
+    });
+  };
+
+  const handleEnterPostTest = () => {
+    const standardTest = session?.modules.find((module) => module.key === "STANDARD_TEST");
+    if (!session || !standardTest?.assessmentSuiteUid) return;
+    router.push({
+      pathname: "/post_test",
+      params: { conferenceUid: session.conferenceUid, suiteUid: standardTest.assessmentSuiteUid },
+    });
+  };
 
   return (
     <>
@@ -63,23 +110,41 @@ export default function SessionDetailScreen() {
         <SessionHeader
           onBack={() => router.back()}
           onLogout={() => console.log("Logout")}
-          userName="Anshu Pandey"
-          confirmationStatus="Not Confirmed"
-          sessionType="One-Day Session"
-          title="Training Session"
-          date="06 Jun 2026"
-          location="New Delhi"
+          userName={trainee?.name ?? "Trainee"}
+          confirmationStatus={session?.confirmationStatus ?? "Not Confirmed"}
+          sessionType={session?.sessionType ?? ""}
+          title={session?.title ?? "Training Session"}
+          date={session?.date ?? ""}
+          location={session?.location ?? ""}
         />
 
         <View style={styles.body}>
-          <SessionTimeline
-            sessions={sessions}
-            attendanceRecorded={attendanceRecorded}
-            quizCompleted={quizCompleted}
-            onMarkAttendance={() => router.push("/attendance")}
-            onEnterQuiz={() => router.push("/wait")}
-            onEnterPostTest={() => router.push("/post_test")}
-          />
+          {loading && !session ? (
+            <View style={styles.centered}>
+              <ActivityIndicator color={Colors.mainColour1} />
+            </View>
+          ) : error ? (
+            <View style={styles.centered}>
+              <AppText style={styles.errorText}>{error}</AppText>
+              <Pressable style={styles.retryButton} onPress={loadSession}>
+                <AppText color={Colors.white}>Retry</AppText>
+              </Pressable>
+            </View>
+          ) : session && !session.started ? (
+            <View style={styles.centered}>
+              <WaitingCard
+                title="Session hasn't started yet"
+                subtitle={session.startsAt ? `Starts ${session.startsAt}` : "Check back soon"}
+              />
+            </View>
+          ) : (
+            <SessionTimeline
+              sessions={sessionItems}
+              onMarkAttendance={handleMarkAttendance}
+              onEnterQuiz={() => router.push("/wait")}
+              onEnterPostTest={handleEnterPostTest}
+            />
+          )}
           <SessionNotice />
         </View>
         <AppFooter activeTab="plan" />
@@ -95,5 +160,23 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 0,
     backgroundColor: Colors.background,
+  },
+  centered: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+    paddingHorizontal: 24,
+  },
+  errorText: {
+    fontSize: Fonts.body,
+    color: Colors.gray600,
+    textAlign: "center",
+  },
+  retryButton: {
+    backgroundColor: Colors.mainColour1,
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 8,
   },
 });

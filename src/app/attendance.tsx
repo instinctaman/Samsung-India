@@ -1,7 +1,8 @@
-import { Pressable, StyleSheet, View } from "react-native";
+import { useCallback, useEffect, useState } from "react";
+import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 
 import AppText from "@/components/ui/AppText";
@@ -9,17 +10,73 @@ import { Colors } from "@/theme/colors";
 import { FontWeight } from "@/theme/fontWeight";
 import { Fonts } from "@/theme/fonts";
 import Sparkle from "@/assets/images/svg/sparkle.svg";
-
-const details = [
-  { label: "Session", value: "Training Session", icon: "calendar" },
-  { label: "Time", value: "10:00 AM - 02:00 PM", icon: "time-outline" },
-  { label: "Date", value: "06 Jun 2026", icon: "calendar" },
-  { label: "Location", value: "New Delhi", icon: "location-outline" },
-] as const;
+import { useAuth } from "@/hooks/useAuth";
+import { ApiError, checkIn } from "@/api/attendance";
 
 export default function AttendanceScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { token } = useAuth();
+  const params = useLocalSearchParams<{
+    conferenceUid: string;
+    title?: string;
+    location?: string;
+    time?: string;
+    endTime?: string;
+  }>();
+
+  const [status, setStatus] = useState<"checking-in" | "done" | "error">("checking-in");
+  const [markedOn, setMarkedOn] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const markAttendance = useCallback(async () => {
+    if (!token || !params.conferenceUid) return;
+    setStatus("checking-in");
+    setError(null);
+    try {
+      const result = await checkIn(token, params.conferenceUid);
+      setMarkedOn(result.markedOn);
+      setStatus("done");
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Couldn't mark your attendance.");
+      setStatus("error");
+    }
+  }, [token, params.conferenceUid]);
+
+  useEffect(() => {
+    markAttendance();
+  }, [markAttendance]);
+
+  const details = [
+    { label: "Session", value: params.title || "Training Session", icon: "calendar" as const },
+    { label: "Time", value: [params.time, params.endTime].filter(Boolean).join(" - ") || "--", icon: "time-outline" as const },
+    { label: "Checked In", value: markedOn ? markedOn.split(" ")[1]?.slice(0, 5) ?? markedOn : "--", icon: "calendar" as const },
+    { label: "Location", value: params.location || "--", icon: "location-outline" as const },
+  ];
+
+  if (status === "checking-in") {
+    return (
+      <SafeAreaView style={styles.loadingContainer}>
+        <ActivityIndicator color={Colors.success} size="large" />
+        <AppText style={styles.loadingText}>Marking your attendance…</AppText>
+      </SafeAreaView>
+    );
+  }
+
+  if (status === "error") {
+    return (
+      <SafeAreaView style={styles.loadingContainer}>
+        <Ionicons name="alert-circle-outline" size={48} color={Colors.danger} />
+        <AppText style={styles.loadingText}>{error}</AppText>
+        <Pressable style={styles.retryButton} onPress={markAttendance}>
+          <AppText color={Colors.white} weight={FontWeight.medium}>Try Again</AppText>
+        </Pressable>
+        <Pressable onPress={() => router.back()} hitSlop={8}>
+          <AppText style={styles.homeText} color={Colors.gray600}>Go Back</AppText>
+        </Pressable>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
@@ -44,7 +101,7 @@ export default function AttendanceScreen() {
         </View>
         <Pressable
           style={styles.continueButton}
-          onPress={() => router.replace({ pathname: "/session_detail", params: { attendance: "recorded" } })}
+          onPress={() => router.back()}
         >
           <AppText style={styles.continueText} color={Colors.white} weight={FontWeight.medium}>Great, Continue</AppText>
           <Ionicons name="arrow-forward" size={20} color={Colors.white} />
@@ -58,7 +115,7 @@ export default function AttendanceScreen() {
   );
 }
 
-function DetailRow({ label, value, icon, isLast }: typeof details[number] & { isLast: boolean }) {
+function DetailRow({ label, value, icon, isLast }: { label: string; value: string; icon: keyof typeof Ionicons.glyphMap; isLast: boolean }) {
   return (
     <View style={[styles.detailRow, !isLast && styles.detailBorder]}>
       <View style={styles.detailIcon}><Ionicons name={icon === "calendar" ? "calendar-outline" : icon} size={20} color={Colors.success} /></View>
@@ -72,6 +129,9 @@ function DetailRow({ label, value, icon, isLast }: typeof details[number] & { is
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F2FFF9" },
+  loadingContainer: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12, paddingHorizontal: 24, backgroundColor: Colors.background },
+  loadingText: { fontSize: Fonts.body, color: Colors.gray600, textAlign: "center" },
+  retryButton: { backgroundColor: Colors.success, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8, marginTop: 4 },
   statusBarBackground: { position: "absolute", top: 0, left: 0, right: 0, backgroundColor: Colors.success },
   successArea: { height: "80%", minHeight: 350, alignItems: "center", justifyContent: "center", backgroundColor: Colors.success, borderBottomLeftRadius: 34, borderBottomRightRadius: 34, paddingBottom: 72 },
   successHalo: { width: 144, height: 144, borderRadius: 72, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255, 255, 255, 0.035)", borderWidth: 1, borderColor: "rgba(255, 255, 255, 0.06)" },

@@ -1,10 +1,14 @@
 import { ScrollView, View, StyleSheet } from "react-native";
+import { useRouter } from "expo-router";
 import { Colors } from "@/theme/colors";
+import { Fonts } from "@/theme/fonts";
 import PersonalDetails from "@/components/registration/PersonalDetails";
 import ProfessionalDetails from "@/components/registration/ProfessionalDetails";
 import RegisterButton from "@/components/registration/RegisterButton";
 import SecurityFooter from "@/components/common/SecurityFooter";
 import AppModal from "@/components/ui/AppModal";
+import AppText from "@/components/ui/AppText";
+import { useRegisterForm } from "@/hooks/useRegisterForm";
 
 type RegisterSheetProps = {
     visible: boolean;
@@ -16,6 +20,14 @@ export default function RegisterSheet({
     visible,
     onClose,
 }: RegisterSheetProps) {
+    const router = useRouter();
+    const { control, errors, setValue, onSubmit, loading, error } = useRegisterForm({
+        onSuccess: () => {
+            onClose();
+            router.push("/session");
+        },
+    });
+
     return (
         <AppModal
             visible={visible}
@@ -35,9 +47,14 @@ export default function RegisterSheet({
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.formContent}
             >
-                <PersonalDetails />
-                <ProfessionalDetails />
-                <RegisterButton onPress={() => { }} />
+                <PersonalDetails control={control} errors={errors} />
+                <ProfessionalDetails control={control} setValue={setValue} errors={errors} />
+
+                {error && (
+                    <AppText style={styles.error}>{error}</AppText>
+                )}
+
+                <RegisterButton onPress={onSubmit} loading={loading} />
 
                 <View style={styles.securityFooter}>
                     <SecurityFooter />
@@ -58,7 +75,14 @@ const styles = StyleSheet.create({
     divider: {
         height: 1,
         backgroundColor: Colors.inputColour2,
-        // opacity: .2, 
+        // opacity: .2,
         marginVertical: 16,
+    },
+
+    error: {
+        color: Colors.danger,
+        fontSize: Fonts.bodySm,
+        marginBottom: 12,
+        textAlign: "center",
     },
 });

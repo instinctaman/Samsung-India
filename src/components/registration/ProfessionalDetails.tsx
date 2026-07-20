@@ -1,5 +1,12 @@
-import React, { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { View, StyleSheet } from "react-native";
+import {
+    Control,
+    Controller,
+    FieldErrors,
+    UseFormSetValue,
+    useWatch,
+} from "react-hook-form";
 
 import AppText from "@/components/ui/AppText";
 import AppInput from "@/components/ui/AppInput";
@@ -9,14 +16,25 @@ import { STATES } from "@/data/states";
 import { Colors } from "@/theme/colors";
 import { Fonts } from "@/theme/fonts";
 import { FontWeight } from "@/theme/fontWeight";
+import { RegisterFormValues } from "@/hooks/useRegisterForm";
 
-export default function ProfessionalDetails() {
-    const [state, setState] = useState("");
-    const [city, setCity] = useState("");
+type ProfessionalDetailsProps = {
+    control: Control<RegisterFormValues>;
+    setValue: UseFormSetValue<RegisterFormValues>;
+    errors: FieldErrors<RegisterFormValues>;
+};
+
+export default function ProfessionalDetails({
+    control,
+    setValue,
+    errors,
+}: ProfessionalDetailsProps) {
+    const state = useWatch({ control, name: "state" });
     const selectedState = useMemo(
         () => STATES.find((item) => item.value === state),
         [state]
     );
+
     return (
         <View>
             <AppText style={styles.sectionTitle}>
@@ -25,58 +43,98 @@ export default function ProfessionalDetails() {
 
             <View style={styles.row}>
                 <View style={styles.half}>
-                    <AppInput
-                        placeholder="Designation*"
-                        autoCapitalize="words"
+                    <Controller
+                        control={control}
+                        name="designation"
+                        rules={{ required: "Designation is required" }}
+                        render={({ field: { value, onChange } }) => (
+                            <AppInput
+                                placeholder="Designation*"
+                                autoCapitalize="words"
+                                value={value}
+                                onChangeText={onChange}
+                            />
+                        )}
                     />
                 </View>
 
                 <View style={styles.half}>
-                    <AppInput
-                        placeholder="Employee ID"
-                        autoCapitalize="characters"
-                        autoCorrect={false}
+                    <Controller
+                        control={control}
+                        name="employee_id"
+                        render={({ field: { value, onChange } }) => (
+                            <AppInput
+                                placeholder="Employee ID"
+                                autoCapitalize="characters"
+                                autoCorrect={false}
+                                value={value}
+                                onChangeText={onChange}
+                            />
+                        )}
                     />
                 </View>
             </View>
+            {errors.designation && (
+                <AppText style={styles.error}>{errors.designation.message}</AppText>
+            )}
 
-            <AppInput
-                placeholder="Supervisor Name"
-                autoCapitalize="words"
+            <Controller
+                control={control}
+                name="supervisorName"
+                render={({ field: { value, onChange } }) => (
+                    <AppInput
+                        placeholder="Supervisor Name"
+                        autoCapitalize="words"
+                        value={value}
+                        onChangeText={onChange}
+                    />
+                )}
             />
 
             <View style={styles.row}>
                 <View style={styles.half}>
-                    <AppSelect
-                        selectedValue={state}
-                        onValueChange={(value) => {
-                            setState(value);
-                            setCity("");
-                        }}
-                        items={[
-                            {
-                                label: "Select State",
-                                value: "",
-                            },
-                            ...STATES.map((item) => ({
-                                label: item.label,
-                                value: item.value,
-                            })),
-                        ]}
+                    <Controller
+                        control={control}
+                        name="state"
+                        render={({ field: { value, onChange } }) => (
+                            <AppSelect
+                                selectedValue={value}
+                                onValueChange={(newValue) => {
+                                    onChange(newValue);
+                                    setValue("district", "");
+                                }}
+                                items={[
+                                    {
+                                        label: "Select State",
+                                        value: "",
+                                    },
+                                    ...STATES.map((item) => ({
+                                        label: item.label,
+                                        value: item.value,
+                                    })),
+                                ]}
+                            />
+                        )}
                     />
                 </View>
 
                 <View style={styles.half}>
-                    <AppSelect
-                        selectedValue={city}
-                        onValueChange={setCity}
-                        items={[
-                            {
-                                label: "Select City",
-                                value: "",
-                            },
-                            ...(selectedState?.cities || []),
-                        ]}
+                    <Controller
+                        control={control}
+                        name="district"
+                        render={({ field: { value, onChange } }) => (
+                            <AppSelect
+                                selectedValue={value}
+                                onValueChange={onChange}
+                                items={[
+                                    {
+                                        label: "Select City",
+                                        value: "",
+                                    },
+                                    ...(selectedState?.cities || []),
+                                ]}
+                            />
+                        )}
                     />
                 </View>
             </View>
@@ -100,5 +158,12 @@ const styles = StyleSheet.create({
 
     half: {
         flex: 1,
+    },
+
+    error: {
+        color: Colors.danger,
+        fontSize: Fonts.bodySm,
+        marginTop: -12,
+        marginBottom: 12,
     },
 });

@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { StyleSheet, View, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -13,13 +13,43 @@ import SecurityFooter from "@/components/common/SecurityFooter";
 // import RegisterBottomSheet from "@/components/bottom-sheet/RegisterSheet";
 import { Colors } from "@/theme/colors";
 import { Fonts } from "@/theme/fonts";
+import { ApiError, loginTrainee } from "@/api/auth";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function HomeScreen() {
   const router = useRouter();
-  // const bottomSheetRef = useRef(null);
+  const { setSession } = useAuth();
+  const [phone, setPhone] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const openRegister = () => setIsRegisterOpen(true);
   const closeRegister = () => setIsRegisterOpen(false);
+
+  const handleContinue = async () => {
+    const trimmed = phone.trim();
+    if (!trimmed) {
+      setError("Enter your Company ID or Phone No");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      const session = await loginTrainee(trimmed);
+      setSession(session);
+      router.push("/session");
+    } catch (err) {
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : "Something went wrong. Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <>
       <StatusBar
@@ -35,10 +65,20 @@ export default function HomeScreen() {
               <AppInput
                 label="Company ID / Phone No"
                 placeholder="Enter Company ID or Phone No"
+                value={phone}
+                onChangeText={(value) => {
+                  setPhone(value);
+                  if (error) setError(null);
+                }}
+                keyboardType="phone-pad"
               />
+              {error && (
+                <AppText style={styles.error}>{error}</AppText>
+              )}
               <AppButton
                 title="Continue"
-                onPress={() => router.push("/session")}
+                onPress={handleContinue}
+                loading={loading}
               />
               <Pressable onPress={openRegister}>
                 <AppText
@@ -86,6 +126,11 @@ const styles = StyleSheet.create({
     textAlign: "center",
     textDecorationLine: "underline",
     fontSize: Fonts.bodySm,
+  },
+  error: {
+    color: Colors.danger,
+    fontSize: Fonts.bodySm,
+    marginBottom: 12,
   },
   content: {
     flex: 1,

@@ -4,7 +4,6 @@ import {
   Dimensions,
   KeyboardAvoidingView,
   Modal,
-  Platform,
   Pressable,
   View,
 } from "react-native";
@@ -14,6 +13,14 @@ import { AppModalProps } from "./types";
 import ModalHeader from "./ModalHeader";
 
 const { width, height } = Dimensions.get("window");
+
+const alignStyleForPosition = {
+  bottom: "alignBottom",
+  top: "alignTop",
+  left: "alignLeft",
+  right: "alignRight",
+  center: "alignCenter",
+} as const;
 
 export default function AppModal({
   visible,
@@ -149,8 +156,8 @@ export default function AppModal({
         />
 
         <KeyboardAvoidingView
-          style={styles.keyboard}
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={[styles.keyboard, styles[alignStyleForPosition[position]]]}
+          behavior="padding"
         >
           <Animated.View
             style={[

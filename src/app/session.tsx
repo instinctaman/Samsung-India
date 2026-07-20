@@ -1,4 +1,4 @@
-import { Image, Pressable, StyleSheet, View } from "react-native";
+import { Image, ImageSourcePropType, Pressable, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -9,28 +9,42 @@ import AppText from "@/components/ui/AppText";
 import SecurityFooter from "@/components/common/SecurityFooter";
 import { Colors } from "@/theme/colors";
 import { Fonts } from "@/theme/fonts";
+import { useAuth } from "@/hooks/useAuth";
 
-const details = [
-  ["SUPERVISOR", "AKASH ROY"],
-  ["DESIGNATION", "COORDINATOR"],
-  ["DISTRICT", "SOUTH"],
-  ["COMPANY ID", "N/A"],
-];
+const AVATAR_BY_GENDER: Record<string, ImageSourcePropType> = {
+  male: require("@/assets/images/user_img/default_male.png"),
+  female: require("@/assets/images/user_img/default_female.png"),
+};
+const DEFAULT_AVATAR: ImageSourcePropType = require("@/assets/images/user_img/default.png");
 
 export default function SessionScreen() {
   const router = useRouter();
+  const { trainee, logout } = useAuth();
+  const avatar = AVATAR_BY_GENDER[trainee?.gender?.toLowerCase() ?? ""] ?? DEFAULT_AVATAR;
+
+  const details = [
+    ["SUPERVISOR", trainee?.supervisorName || "N/A"],
+    ["DESIGNATION", trainee?.designation || "N/A"],
+    ["CITY", trainee?.district || "N/A"],
+    ["COMPANY ID", trainee?.employee_id || "N/A"],
+  ];
+
+  const handleLogout = () => {
+    logout();
+    router.back();
+  };
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.hero}>
         <Image
-          source={require("@/assets/images/Icons/face_icon.png")}
+          source={avatar}
           style={styles.avatar}
         />
         <AppText style={styles.name} color={Colors.white} weight="500">
-          Anshu Pandey
+          {trainee?.name || "Trainee"}
         </AppText>
-        <AppText style={styles.phone} color={Colors.white}>9987898789</AppText>
+        <AppText style={styles.phone} color={Colors.white}>{trainee?.phone || ""}</AppText>
       </View>
 
       <View style={styles.content}>
@@ -58,7 +72,7 @@ export default function SessionScreen() {
             buttonStyle={styles.joinButton}
           />
 
-          <Pressable onPress={() => router.back()} hitSlop={8}>
+          <Pressable onPress={handleLogout} hitSlop={8}>
             <AppText style={styles.logout}>Not you ? Logout</AppText>
           </Pressable>
         </View>

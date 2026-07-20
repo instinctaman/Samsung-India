@@ -13,47 +13,57 @@ export const styles = StyleSheet.create({
     flex: 1,
   },
 
+  alignBottom: {
+    justifyContent: "flex-end",
+  },
+
+  alignTop: {
+    justifyContent: "flex-start",
+  },
+
+  alignLeft: {
+    flexDirection: "row",
+    justifyContent: "flex-start",
+  },
+
+  alignRight: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+  },
+
+  alignCenter: {
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
   content: {
-    position: "absolute",
     backgroundColor: "#FFFFFF",
   },
 
   bottom: {
-    left: 0,
-    right: 0,
-    bottom: 0,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     maxHeight: "90%",
   },
 
   top: {
-    left: 0,
-    right: 0,
-    top: 0,
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
     maxHeight: "100%",
   },
 
   left: {
-    top: 0,
-    bottom: 0,
-    left: 0,
+    alignSelf: "stretch",
     width: "82%",
   },
 
   right: {
-    top: 0,
-    bottom: 0,
-    right: 0,
+    alignSelf: "stretch",
     width: "82%",
   },
 
   center: {
     alignSelf: "center",
-    // alignSelf: "stretch",
-    // marginHorizontal: 24,
     justifyContent: "center",
     borderRadius: 20,
   },

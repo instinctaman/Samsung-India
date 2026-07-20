@@ -11,27 +11,27 @@ import RecordedCard from "./RecordedCard";
 import { Colors } from "@/theme/colors";
 import { Fonts } from "@/theme/fonts";
 import { FontWeight } from "@/theme/fontWeight";
+import type { SessionModuleKey } from "@/api/session";
 
 import type { SvgProps } from "react-native-svg";
 import { Ionicons } from "@expo/vector-icons";
 
-type SessionItem = {
+export type SessionItem = {
+    key: SessionModuleKey;
     time: string;
     endTime: string;
-    type: string;
     duration: string;
-    status: string;
+    type: string;
+    isLive: boolean;
+    isCompleted: boolean;
+    completedAt: string | null;
+    score: string | null;
     icon: keyof typeof Ionicons.glyphMap | ComponentType<SvgProps>;
     iconColor: string;
 };
 
 type Props = {
     session: SessionItem;
-    isAttendanceLive: boolean;
-    isAttendanceRecorded: boolean;
-    isQuizLive: boolean;
-    isQuizCompleted: boolean;
-    isPostTestLive: boolean;
     onMarkAttendance: () => void;
     onEnterQuiz: () => void;
     onEnterPostTest: () => void;
@@ -39,31 +39,28 @@ type Props = {
 
 export default function TimelineItem({
     session,
-    isAttendanceLive,
-    isAttendanceRecorded,
-    isQuizLive,
-    isQuizCompleted,
-    isPostTestLive,
     onMarkAttendance,
     onEnterQuiz,
     onEnterPostTest,
 }: Props) {
-    const isCompleted =
-        isAttendanceRecorded ||
-        isQuizCompleted;
+    const { key, isLive, isCompleted } = session;
+    const isAttendance = key === "ATTENDANCE";
     const indicatorColor = isCompleted
         ? Colors.success
         : Colors.primary;
-    const statusLabel =
-        isAttendanceRecorded
+    const statusLabel = isCompleted
+        ? isAttendance
             ? "Present"
-            : isQuizCompleted
-                ? "Score: 9/15"
-                : isAttendanceLive ||
-                    isQuizLive ||
-                    isPostTestLive
-                    ? "LIVE NOW"
-                    : session.status;
+            : session.score
+                ? `Score: ${session.score}`
+                : "Completed"
+        : isLive
+            ? "LIVE NOW"
+            : session.time
+                ? "Upcoming"
+                : "Please Wait";
+    const handleEnter = key === "LIVE_QUIZ" ? onEnterQuiz : onEnterPostTest;
+
     return (
         <View style={styles.timelineRow}>
             <View style={styles.timeColumn}>
@@ -86,12 +83,9 @@ export default function TimelineItem({
                         },
                     ]}
                 />
-                {!isAttendanceLive &&
-                    !isCompleted &&
-                    !isQuizLive &&
-                    !isPostTestLive && (
-                        <View style={styles.railLine} />
-                    )}
+                {!isLive && !isCompleted && (
+                    <View style={styles.railLine} />
+                )}
             </View>
             <View style={styles.activityCard}>
                 <View style={styles.cardHeader}>
@@ -107,11 +101,7 @@ export default function TimelineItem({
                     </View>
                     <SessionStatusBadge
                         label={statusLabel}
-                        live={
-                            isAttendanceLive ||
-                            isQuizLive ||
-                            isPostTestLive
-                        }
+                        live={isLive}
                         completed={isCompleted}
                     />
                 </View>
@@ -124,7 +114,7 @@ export default function TimelineItem({
                 <AppText style={styles.duration}>
                     {session.duration}
                 </AppText>
-                {isAttendanceRecorded ? (
+                {isCompleted && isAttendance ? (
                     <>
                         <View style={styles.presenceLine}>
                             <View style={styles.presentDot} />
@@ -132,7 +122,7 @@ export default function TimelineItem({
                                 style={styles.presentTime}
                                 color={Colors.success}
                             >
-                                Present (10:25)
+                                {session.completedAt ? `Present (${session.completedAt})` : "Present"}
                             </AppText>
                         </View>
                         <RecordedCard
@@ -141,27 +131,23 @@ export default function TimelineItem({
                             color={Colors.success}
                         />
                     </>
-                ) : isQuizCompleted ? (
+                ) : isCompleted ? (
                     <RecordedCard
                         title="Completed"
                         subtitle="Good Job!"
                         color={Colors.primary}
                         backgroundColor="#DDEEFF"
                     />
-                ) : isAttendanceLive ? (
+                ) : isLive && isAttendance ? (
                     <SessionButton
                         title="Mark Attendance"
                         onPress={onMarkAttendance}
                         backgroundColor={Colors.success}
                     />
-                ) : isQuizLive || isPostTestLive ? (
+                ) : isLive ? (
                     <SessionButton
                         title="Enter Session"
-                        onPress={
-                            isPostTestLive
-                                ? onEnterPostTest
-                                : onEnterQuiz
-                        }
+                        onPress={handleEnter}
                         backgroundColor={Colors.mainColour1}
                     />
                 ) : (
