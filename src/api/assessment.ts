@@ -21,8 +21,14 @@ export type AssessmentResult = {
   totalQuestions: number;
 };
 
+export type AssessmentQuestionsResponse = {
+  title: string | null;
+  testTime: string | null;
+  questions: AssessmentQuestion[];
+};
+
 export function getAssessmentQuestions(token: string, suiteUid: string) {
-  return apiRequest<AssessmentQuestion[]>(`/assessments/${suiteUid}/questions`, {
+  return apiRequest<AssessmentQuestionsResponse>(`/assessments/${suiteUid}/questions`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 }

@@ -8,14 +8,14 @@ from sqlalchemy.orm import Session
 
 from app.core.security import get_current_trainee
 from app.database.database import get_db
-from app.models.quiz import Assessment, AssessmentResult, Question
+from app.models.quiz import Assessment, AssessmentResult, AssessmentSuite, Question
 from app.models.trainee import Trainee
-from app.schemas.assessment import QuestionOut, SubmitRequest, SubmitResult
+from app.schemas.assessment import AssessmentQuestionsOut, QuestionOut, SubmitRequest, SubmitResult
 
 router = APIRouter(prefix="/assessments", tags=["assessments"])
 
 
-@router.get("/{suite_uid}/questions", response_model=List[QuestionOut])
+@router.get("/{suite_uid}/questions", response_model=AssessmentQuestionsOut)
 def get_questions(
     suite_uid: str,
     db: Session = Depends(get_db),
@@ -33,16 +33,26 @@ def get_questions(
             detail="No questions found for this assessment",
         )
 
-    return [
-        QuestionOut(
-            id=q.id,
-            question=q.question or "",
-            question_type=q.question_type,
-            sort_order=q.sort_order or 0,
-            options=json.loads(q.options) if q.options else [],
-        )
-        for q in questions
-    ]
+    suite = (
+        db.query(AssessmentSuite)
+        .filter(AssessmentSuite.assessmentSuiteUid == suite_uid)
+        .first()
+    )
+
+    return AssessmentQuestionsOut(
+        title=(suite.examTitle or suite.courseName) if suite else None,
+        testTime=suite.testTime if suite else None,
+        questions=[
+            QuestionOut(
+                id=q.id,
+                question=q.question or "",
+                question_type=q.question_type,
+                sort_order=q.sort_order or 0,
+                options=json.loads(q.options) if q.options else [],
+            )
+            for q in questions
+        ],
+    )
 
 
 @router.post("/{suite_uid}/submit", response_model=SubmitResult)

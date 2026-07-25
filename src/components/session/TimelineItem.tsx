@@ -24,10 +24,12 @@ export type SessionItem = {
     type: string;
     isLive: boolean;
     isCompleted: boolean;
+    isMissed: boolean;
     completedAt: string | null;
     score: string | null;
     icon: keyof typeof Ionicons.glyphMap | ComponentType<SvgProps>;
     iconColor: string;
+    geoFencing?: boolean;
 };
 
 type Props = {
@@ -35,6 +37,7 @@ type Props = {
     onMarkAttendance: () => void;
     onEnterQuiz: () => void;
     onEnterPostTest: () => void;
+    onEnterSurvey: () => void;
 };
 
 export default function TimelineItem({
@@ -42,24 +45,29 @@ export default function TimelineItem({
     onMarkAttendance,
     onEnterQuiz,
     onEnterPostTest,
+    onEnterSurvey,
 }: Props) {
-    const { key, isLive, isCompleted } = session;
+    const { key, isLive, isCompleted, isMissed } = session;
     const isAttendance = key === "ATTENDANCE";
     const indicatorColor = isCompleted
         ? Colors.success
-        : Colors.primary;
+        : isMissed
+            ? Colors.danger
+            : Colors.primary;
     const statusLabel = isCompleted
         ? isAttendance
             ? "Present"
             : session.score
                 ? `Score: ${session.score}`
                 : "Completed"
-        : isLive
-            ? "LIVE NOW"
-            : session.time
-                ? "Upcoming"
-                : "Please Wait";
-    const handleEnter = key === "LIVE_QUIZ" ? onEnterQuiz : onEnterPostTest;
+        : isMissed
+            ? "Missed"
+            : isLive
+                ? "LIVE NOW"
+                : session.time
+                    ? "Upcoming"
+                    : "Please Wait";
+    const handleEnter = key === "LIVE_QUIZ" ? onEnterQuiz : key === "SURVEY" ? onEnterSurvey : onEnterPostTest;
 
     return (
         <View style={styles.timelineRow}>
@@ -103,6 +111,7 @@ export default function TimelineItem({
                         label={statusLabel}
                         live={isLive}
                         completed={isCompleted}
+                        missed={isMissed}
                     />
                 </View>
                 <AppText
@@ -140,7 +149,8 @@ export default function TimelineItem({
                     />
                 ) : isLive && isAttendance ? (
                     <SessionButton
-                        title="Mark Attendance"
+                        title={session.geoFencing ? "Secure Check-In" : "Mark Attendance"}
+                        icon={session.geoFencing ? "camera" : undefined}
                         onPress={onMarkAttendance}
                         backgroundColor={Colors.success}
                     />
@@ -150,9 +160,27 @@ export default function TimelineItem({
                         onPress={handleEnter}
                         backgroundColor={Colors.mainColour1}
                     />
+                ) : isMissed ? (
+                    <MissedCard />
                 ) : (
                     <WaitingCard />
                 )}
+            </View>
+        </View>
+    );
+}
+
+function MissedCard() {
+    return (
+        <View style={styles.missedContainer}>
+            <Ionicons name="close-circle" size={17} color={Colors.danger} />
+            <View>
+                <AppText style={styles.missedTitle} color={Colors.danger} weight={FontWeight.medium}>
+                    Missed
+                </AppText>
+                <AppText style={styles.missedSubtitle} color={Colors.danger}>
+                    You missed this session, try next time.
+                </AppText>
             </View>
         </View>
     );
@@ -248,5 +276,21 @@ const styles = StyleSheet.create({
     },
     presentTime: {
         fontSize: Fonts.bodySm,
+    },
+    missedContainer: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 7,
+        backgroundColor: "#FEE2E2",
+        borderRadius: 4,
+        paddingHorizontal: 8,
+        paddingVertical: 5,
+        marginTop: 7,
+    },
+    missedTitle: {
+        fontSize: Fonts.caption,
+    },
+    missedSubtitle: {
+        fontSize: Fonts.overline,
     },
 });

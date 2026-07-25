@@ -25,5 +25,7 @@ class Attendance(Base):
     markedOn = Column(String(50))
     status = Column(String(100), nullable=False, server_default=text("'Pending'"))
     checkInDistance = Column(String(50))
+    checkInPhoto = Column(String(255))
+    checkOutTime = Column(DateTime)
 
     timestamp = Column(DateTime, server_default=func.now(), nullable=False)

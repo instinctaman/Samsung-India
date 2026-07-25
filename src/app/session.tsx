@@ -1,7 +1,8 @@
-import { Image, ImageSourcePropType, Pressable, StyleSheet, View } from "react-native";
+import { useCallback, useState } from "react";
+import { ActivityIndicator, Image, ImageSourcePropType, Pressable, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import CheckCircle from "@/assets/images/svg/check_circle.svg";
 
 import AppButton from "@/components/ui/AppButton";
@@ -10,6 +11,7 @@ import SecurityFooter from "@/components/common/SecurityFooter";
 import { Colors } from "@/theme/colors";
 import { Fonts } from "@/theme/fonts";
 import { useAuth } from "@/hooks/useAuth";
+import { CurrentSession, getCurrentSession } from "@/api/session";
 
 const AVATAR_BY_GENDER: Record<string, ImageSourcePropType> = {
   male: require("@/assets/images/user_img/default_male.png"),
@@ -19,8 +21,11 @@ const DEFAULT_AVATAR: ImageSourcePropType = require("@/assets/images/user_img/de
 
 export default function SessionScreen() {
   const router = useRouter();
-  const { trainee, logout } = useAuth();
+  const { trainee, token, logout } = useAuth();
   const avatar = AVATAR_BY_GENDER[trainee?.gender?.toLowerCase() ?? ""] ?? DEFAULT_AVATAR;
+
+  const [session, setSession] = useState<CurrentSession | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const details = [
     ["SUPERVISOR", trainee?.supervisorName || "N/A"],
@@ -28,6 +33,35 @@ export default function SessionScreen() {
     ["CITY", trainee?.district || "N/A"],
     ["COMPANY ID", trainee?.employee_id || "N/A"],
   ];
+
+  const loadSession = useCallback(async () => {
+    if (!token) return;
+    setLoading(true);
+    try {
+      const data = await getCurrentSession(token);
+      setSession(data);
+    } catch {
+      // No trainer session assigned yet (e.g. 404) - fall back to the
+      // "not assigned" notice below instead of surfacing an error.
+      setSession(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [token]);
+
+  // Re-check every time this screen regains focus so a session that just
+  // got approved/started shows up without needing to log out and back in.
+  useFocusEffect(
+    useCallback(() => {
+      loadSession();
+    }, [loadSession])
+  );
+
+  const notice = !session
+    ? "You are registered but not assigned to this session"
+    : !session.started
+    ? `Session with ${session.trainerName || "your trainer"} starts ${session.startsAt || "soon"}`
+    : `Session with ${session.trainerName || "your trainer"} is live now`;
 
   const handleLogout = () => {
     logout();
@@ -59,10 +93,12 @@ export default function SessionScreen() {
           </View>
 
           <View style={styles.notice}>
-            <Ionicons name="information-circle-outline" size={14} color="#3D3D3D" />
-            <AppText style={styles.noticeText}>
-              You are registered but not assigned to this session
-            </AppText>
+            {loading ? (
+              <ActivityIndicator size="small" color={Colors.mainColour1} />
+            ) : (
+              <Ionicons name="information-circle-outline" size={14} color="#3D3D3D" />
+            )}
+            <AppText style={styles.noticeText}>{loading ? "Checking for your session…" : notice}</AppText>
           </View>
 
           <AppButton

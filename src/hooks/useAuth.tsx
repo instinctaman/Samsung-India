@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useMemo, useState } from "react";
 
+import { AdminAccount, AdminAuthSession } from "@/api/admin";
 import { AuthSession, Trainee } from "@/api/auth";
 
 type AuthContextValue = {
@@ -8,12 +9,19 @@ type AuthContextValue = {
   isAuthenticated: boolean;
   setSession: (session: AuthSession) => void;
   logout: () => void;
+
+  admin: AdminAccount | null;
+  adminToken: string | null;
+  isAdminAuthenticated: boolean;
+  setAdminSession: (session: AdminAuthSession) => void;
+  adminLogout: () => void;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSessionState] = useState<AuthSession | null>(null);
+  const [adminSession, setAdminSessionState] = useState<AdminAuthSession | null>(null);
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -22,8 +30,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isAuthenticated: !!session,
       setSession: setSessionState,
       logout: () => setSessionState(null),
+
+      admin: adminSession?.admin ?? null,
+      adminToken: adminSession?.access_token ?? null,
+      isAdminAuthenticated: !!adminSession,
+      setAdminSession: setAdminSessionState,
+      adminLogout: () => setAdminSessionState(null),
     }),
-    [session]
+    [session, adminSession]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -15,10 +15,12 @@ import { Spacing } from "@/theme/spacing";
 
 interface AppInputProps extends TextInputProps {
   label?: string;
+  caption?: string;
 }
 
 export default function AppInput({
   label,
+  caption,
   ...props
 }: AppInputProps) {
   const [focused, setFocused] = useState(false);
@@ -39,6 +41,14 @@ export default function AppInput({
         placeholderTextColor={Colors.gray400}
         {...props}
       />
+
+      {
+        caption && (
+          <Text style={styles.caption}>
+            {caption}
+          </Text>
+        )
+      }
     </View>
   );
 }
@@ -69,6 +79,13 @@ const styles = StyleSheet.create({
     // borderColor: focused
     //   ? Colors.mainColour1
     //   : Colors.gray200
+  },
+
+  caption: {
+    fontSize: Fonts.overline,
+    color: Colors.gray600,
+    marginTop: Spacing.sm,
+    fontFamily: FontFamily.regular,
   },
 
 });

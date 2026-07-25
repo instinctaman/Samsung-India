@@ -15,7 +15,12 @@ class AssessmentSuite(Base):
     assessmentSuiteUid = Column(String(100), unique=True)
     courseName = Column(String(100))
     examTitle = Column(Text)
+    description = Column(Text)
     assessment_type = Column(String(50), server_default=text("'Quiz'"))
+    # JSON blob, e.g. {"type": "Quiz" | "Test" | "Survey"} - the format
+    # dropdown in the builder, distinct from assessment_type (which is the
+    # topic/category dropdown, e.g. "POST TEST").
+    settings = Column(Text)
     noOfQuestion = Column(Integer, server_default=text("0"))
     testTime = Column(String(50))
     status = Column(String(50), nullable=False, server_default=text("'Pending'"))
@@ -36,6 +41,10 @@ class Question(Base):
     correct_answer = Column(Text)
     points = Column(Integer, server_default=text("0"))
     descriptions = Column(Text)
+    # JSON blob, e.g. {"timerSeconds": 30, "explanation": "..."} - the
+    # Answer Key panel's Timer/Explanation fields, which have no dedicated
+    # columns of their own.
+    settings = Column(Text)
     status = Column(String(50), nullable=False, server_default=text("'Approved'"))
 
 

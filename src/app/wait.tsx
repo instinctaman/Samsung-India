@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
   connected: { height: 17, borderRadius: 3, backgroundColor: Colors.success, paddingHorizontal: 5, flexDirection: "row", alignItems: "center", gap: 2 },
   connectedText: { fontSize: Fonts.overline },
 
-  content: { flex: 1, alignItems: "center", paddingHorizontal: 16, paddingTop: 28 },
+  content: { flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 16 },
   trainerIcon: { width: 171, height: 171, borderRadius: 85, borderWidth: 2, borderColor: Colors.primary, alignItems: "center", justifyContent: "center", backgroundColor: Colors.white },
   title: { fontSize: Fonts.h1, lineHeight: 27, marginTop: 20 },
   progress: { width: 44, height: 3, borderRadius: 2, overflow: "hidden", backgroundColor: Colors.gray200, marginTop: 10 },

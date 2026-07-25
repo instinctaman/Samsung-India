@@ -28,6 +28,7 @@ class Trainee(Base):
 
     district = Column(String(100))
     state = Column(String(100))
+    profilePhoto = Column(String(255))
 
     # Not present in the org's original dump - added via migration because the
     # registration form collects it and no dump column maps to a trainee's own

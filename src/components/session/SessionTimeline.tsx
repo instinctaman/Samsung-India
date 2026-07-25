@@ -1,4 +1,5 @@
-import { ScrollView, StyleSheet } from "react-native";
+import { ReactElement } from "react";
+import { RefreshControlProps, ScrollView, StyleSheet } from "react-native";
 
 import TimelineItem, { SessionItem } from "./TimelineItem";
 
@@ -8,6 +9,8 @@ type Props = {
   onMarkAttendance: () => void;
   onEnterQuiz: () => void;
   onEnterPostTest: () => void;
+  onEnterSurvey: () => void;
+  refreshControl?: ReactElement<RefreshControlProps>;
 };
 
 export default function SessionTimeline({
@@ -15,11 +18,14 @@ export default function SessionTimeline({
   onMarkAttendance,
   onEnterQuiz,
   onEnterPostTest,
+  onEnterSurvey,
+  refreshControl,
 }: Props) {
   return (
     <ScrollView
       showsVerticalScrollIndicator={false}
       contentContainerStyle={styles.timeline}
+      refreshControl={refreshControl}
     >
       {sessions.map((session) => (
         <TimelineItem
@@ -28,6 +34,7 @@ export default function SessionTimeline({
           onMarkAttendance={onMarkAttendance}
           onEnterQuiz={onEnterQuiz}
           onEnterPostTest={onEnterPostTest}
+          onEnterSurvey={onEnterSurvey}
         />
       ))}
     </ScrollView>

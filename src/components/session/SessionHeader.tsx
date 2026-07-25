@@ -1,5 +1,5 @@
 import React from "react";
-import { Image, Pressable, StyleSheet, View } from "react-native";
+import { Image, ImageSourcePropType, Pressable, StyleSheet, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 import Calendar from "@/assets/images/svg/calender2.svg";
@@ -8,12 +8,22 @@ import { Colors } from "@/theme/colors";
 import { Fonts } from "@/theme/fonts";
 import { FontWeight } from "@/theme/fontWeight";
 import { Radius } from "@/theme/radius";
+import { API_BASE_URL } from "@/constants/api";
+
+const AVATAR_BY_GENDER: Record<string, ImageSourcePropType> = {
+  male: require("@/assets/images/user_img/default_male.png"),
+  female: require("@/assets/images/user_img/default_female.png"),
+};
+const DEFAULT_AVATAR: ImageSourcePropType = require("@/assets/images/Icons/face_icon.png");
 
 type SessionHeaderProps = {
   onBack: () => void;
   onLogout?: () => void;
+  onHistoryPress?: () => void;
 
   userName: string;
+  gender?: string | null;
+  profilePhoto?: string | null;
   confirmationStatus: string;
 
   sessionType: string;
@@ -25,13 +35,20 @@ type SessionHeaderProps = {
 export default function SessionHeader({
   onBack,
   onLogout,
+  onHistoryPress,
   userName,
+  gender,
+  profilePhoto,
   confirmationStatus,
   sessionType,
   title,
   date,
   location,
 }: SessionHeaderProps) {
+  const avatar: ImageSourcePropType = profilePhoto
+    ? { uri: `${API_BASE_URL}/media/${profilePhoto}` }
+    : AVATAR_BY_GENDER[gender?.toLowerCase() ?? ""] ?? DEFAULT_AVATAR;
+
   return (
     <View style={styles.header}>
       <View style={styles.headerTop}>
@@ -49,8 +66,8 @@ export default function SessionHeader({
 
         <View style={styles.profile}>
           <Image
-            source={require("@/assets/images/Icons/face_icon.png")}
-            style={styles.profileAvatar}
+            source={avatar}
+            style={[styles.profileAvatar, profilePhoto && styles.profileAvatarPhoto]}
           />
 
           <View>
@@ -75,16 +92,32 @@ export default function SessionHeader({
           </View>
         </View>
 
-        <Pressable
-          style={styles.powerButton}
-          onPress={onLogout}
-        >
-          <Ionicons
-            name="power"
-            size={22}
-            color={Colors.mainColour1}
-          />
-        </Pressable>
+        <View style={styles.headerActions}>
+          {onHistoryPress && (
+            <Pressable
+              style={styles.powerButton}
+              onPress={onHistoryPress}
+              accessibilityLabel="Recent sessions"
+            >
+              <Ionicons
+                name="time-outline"
+                size={20}
+                color={Colors.mainColour1}
+              />
+            </Pressable>
+          )}
+
+          <Pressable
+            style={styles.powerButton}
+            onPress={onLogout}
+          >
+            <Ionicons
+              name="power"
+              size={22}
+              color={Colors.mainColour1}
+            />
+          </Pressable>
+        </View>
       </View>
 
       <View style={styles.sessionPill}>
@@ -165,6 +198,10 @@ const styles = StyleSheet.create({
     height: Fonts.iconSize,
   },
 
+  profileAvatarPhoto: {
+    borderRadius: Fonts.iconSize / 2,
+  },
+
   userName: {
     fontSize: Fonts.bodyLg,
   },
@@ -184,6 +221,12 @@ const styles = StyleSheet.create({
 
   confirmationText: {
     fontSize: Fonts.caption,
+  },
+
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
 
   powerButton: {

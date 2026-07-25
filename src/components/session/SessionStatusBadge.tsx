@@ -10,12 +10,14 @@ type Props = {
   label: string;
   live?: boolean;
   completed?: boolean;
+  missed?: boolean;
 };
 
 export default function SessionStatusBadge({
   label,
   live = false,
   completed = false,
+  missed = false,
 }: Props) {
   return (
     <View
@@ -23,6 +25,7 @@ export default function SessionStatusBadge({
         styles.container,
         live && styles.liveContainer,
         completed && styles.completedContainer,
+        missed && styles.missedContainer,
       ]}
     >
       {completed && (
@@ -32,12 +35,20 @@ export default function SessionStatusBadge({
           color={Colors.success}
         />
       )}
+      {missed && (
+        <Ionicons
+          name="close-circle"
+          size={10}
+          color={Colors.danger}
+        />
+      )}
 
       <AppText
         style={[
           styles.text,
           live && styles.liveText,
           completed && styles.completedText,
+          missed && styles.missedText,
         ]}
       >
         {label}
@@ -67,6 +78,13 @@ const styles = StyleSheet.create({
     gap: 3,
   },
 
+  missedContainer: {
+    borderColor: Colors.danger,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+  },
+
   text: {
     fontSize: Fonts.overline,
     color: Colors.primary,
@@ -78,5 +96,9 @@ const styles = StyleSheet.create({
 
   completedText: {
     color: Colors.success,
+  },
+
+  missedText: {
+    color: Colors.danger,
   },
 });

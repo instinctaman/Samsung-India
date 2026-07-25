@@ -12,6 +12,7 @@ export type SessionModule = {
   duration: string | null;
   isLive: boolean;
   isCompleted: boolean;
+  isMissed: boolean;
   completedAt: string | null;
   score: string | null;
   assessmentSuiteUid: string | null;
@@ -27,11 +28,28 @@ export type CurrentSession = {
   confirmationStatus: string;
   started: boolean;
   startsAt: string | null;
+  attendanceGeoFencing: boolean;
   modules: SessionModule[];
 };
 
 export function getCurrentSession(token: string) {
   return apiRequest<CurrentSession>("/sessions/current", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export type SessionHistoryItem = {
+  conferenceUid: string;
+  title: string;
+  date: string | null;
+  trainerName: string | null;
+  attendanceStatus: string | null;
+  score: string | null;
+  passed: boolean | null;
+};
+
+export function getSessionHistory(token: string) {
+  return apiRequest<SessionHistoryItem[]>("/sessions/history", {
     headers: { Authorization: `Bearer ${token}` },
   });
 }

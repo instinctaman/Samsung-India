@@ -16,6 +16,12 @@ class QuestionOut(BaseModel):
     options: List[QuestionOption]
 
 
+class AssessmentQuestionsOut(BaseModel):
+    title: Optional[str] = None
+    testTime: Optional[str] = None
+    questions: List[QuestionOut]
+
+
 class AnswerIn(BaseModel):
     questionId: int
     selectedOption: Optional[str] = None

@@ -158,6 +158,7 @@ export default function AppModal({
         <KeyboardAvoidingView
           style={[styles.keyboard, styles[alignStyleForPosition[position]]]}
           behavior="padding"
+          pointerEvents="box-none"
         >
           <Animated.View
             style={[

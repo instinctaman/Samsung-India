@@ -1,10 +1,6 @@
 import { Pressable, StyleSheet, View } from "react-native";
-import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import AccountCircle from "@/assets/images/svg/account_circle.svg";
-import Calendar1 from "@/assets/images/svg/calender2.svg";
-import Calendar from "@/assets/images/svg/calender.svg";
 import AppText from "@/components/ui/AppText";
 import { Colors } from "@/theme/colors";
 import { Fonts } from "@/theme/fonts";
@@ -12,70 +8,98 @@ import { Radius } from "@/theme/radius";
 import { Shadows } from "@/theme/shadows";
 import { Spacing } from "@/theme/spacing";
 
-type AppFooterProps = {
-  activeTab?: "plan" | "profile";
+export type AppFooterItem = {
+  key: string;
+  label?: string;
+  icon: (props: { size: number; color: string }) => React.ReactNode;
+  onPress: () => void;
+  active?: boolean;
+  /** Marks this item as the raised center action. Defaults to the middle item. */
+  center?: boolean;
+  /** Greys the item out and blocks onPress - e.g. a finished session's action. */
+  disabled?: boolean;
 };
 
-export default function AppFooter({
-  activeTab = "plan",
-}: AppFooterProps) {
-  const router = useRouter();
+type AppFooterProps = {
+  items: AppFooterItem[];
+};
 
-  const isPlanActive = activeTab === "plan";
-  const isProfileActive = activeTab === "profile";
+export default function AppFooter({ items }: AppFooterProps) {
+  const explicitIndex = items.findIndex((item) => item.center);
+  const centerIndex =
+    explicitIndex !== -1
+      ? explicitIndex
+      : items.length >= 3
+        ? Math.floor(items.length / 2)
+        : -1;
+  const centerItem = centerIndex !== -1 ? items[centerIndex] : undefined;
+  const leftItems = centerItem ? items.slice(0, centerIndex) : items;
+  const rightItems = centerItem ? items.slice(centerIndex + 1) : [];
 
   return (
     <SafeAreaView style={styles.bottomArea} edges={["bottom"]}>
-      <View style={styles.navBar}>
-        <Pressable
-          style={styles.navItem}
-          onPress={() => router.replace("/session_detail")}
-        >
-          <Calendar1
-            width={23}
-            height={23}
-            color={isPlanActive ? Colors.mainColour1 : Colors.gray600}
-          />
+      <View
+        style={[
+          styles.navBar,
+          !centerItem && styles.navBarNoCenter,
+        ]}
+      >
+        <View style={styles.sideGroup}>
+          {leftItems.map((item) => (
+            <NavItem key={item.key} item={item} />
+          ))}
+        </View>
 
-          <AppText
-            style={[
-              styles.navLabel,
-              isPlanActive && styles.navLabelActive,
-            ]}
-          >
-            Plan
-          </AppText>
-        </Pressable>
+        {centerItem && (
+          <View style={styles.centerWrap}>
+            <Pressable
+              style={[styles.centerAction, centerItem.disabled && styles.centerActionDisabled]}
+              accessibilityLabel={centerItem.label}
+              disabled={centerItem.disabled}
+              onPress={centerItem.onPress}
+            >
+              {centerItem.icon({ size: 31, color: Colors.white })}
+            </Pressable>
+            {centerItem.label && (
+              <AppText
+                style={[
+                  styles.centerLabel,
+                  centerItem.disabled && styles.centerLabelDisabled,
+                ]}
+              >
+                {centerItem.label}
+              </AppText>
+            )}
+          </View>
+        )}
 
-        <Pressable
-          style={styles.centerAction}
-          accessibilityLabel="Open session calendar"
-          onPress={() => router.replace("/session_detail")}
-        >
-          <Calendar width={31} height={31} />
-        </Pressable>
-
-        <Pressable
-          style={styles.navItem}
-          onPress={() => router.push("/profile")}
-        >
-          <AccountCircle
-            width={23}
-            height={23}
-            color={isProfileActive ? Colors.mainColour1 : Colors.gray600}
-          />
-
-          <AppText
-            style={[
-              styles.navLabel,
-              isProfileActive && styles.navLabelActive,
-            ]}
-          >
-            Profile
-          </AppText>
-        </Pressable>
+        <View style={styles.sideGroup}>
+          {rightItems.map((item) => (
+            <NavItem key={item.key} item={item} />
+          ))}
+        </View>
       </View>
     </SafeAreaView>
+  );
+}
+
+function NavItem({ item }: { item: AppFooterItem }) {
+  const color = item.active ? Colors.mainColour1 : Colors.gray600;
+
+  return (
+    <Pressable style={styles.navItem} onPress={item.onPress}>
+      {item.icon({ size: 23, color })}
+      {item.label && (
+        <AppText
+          style={[
+            styles.navLabel,
+            item.active && styles.navLabelActive,
+          ]}
+        >
+          {item.label}
+        </AppText>
+      )}
+    </Pressable>
   );
 }
 
@@ -83,7 +107,8 @@ const styles = StyleSheet.create({
   bottomArea: {
     backgroundColor: Colors.white,
     paddingTop: Spacing.lg,
-    paddingBottom: Spacing.lg,
+    // paddingBottom: Spacing.lg,
+    paddingBottom: 50,
     paddingHorizontal: 50,
     ...Shadows.footer,
   },
@@ -92,6 +117,16 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    minHeight: 20,
+  },
+
+  navBarNoCenter: {
+    justifyContent: "center",
+  },
+
+  sideGroup: {
+    flexDirection: "row",
+    gap: Spacing.xl,
   },
 
   navItem: {
@@ -108,12 +143,15 @@ const styles = StyleSheet.create({
     color: Colors.mainColour1,
   },
 
-  centerAction: {
+  centerWrap: {
     position: "absolute",
-    alignSelf: "center",
-    left: "50%",
-    marginLeft: -29,
     top: -25,
+    left: 0,
+    right: 0,
+    alignItems: "center",
+  },
+
+  centerAction: {
     width: 58,
     height: 58,
     borderRadius: Radius.pill,
@@ -123,5 +161,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     ...Shadows.raised,
+  },
+
+  centerActionDisabled: {
+    backgroundColor: Colors.gray400,
+  },
+
+  centerLabel: {
+    marginTop: 4,
+    fontSize: Fonts.caption,
+    color: Colors.mainColour1,
+  },
+
+  centerLabelDisabled: {
+    color: Colors.gray400,
   },
 });

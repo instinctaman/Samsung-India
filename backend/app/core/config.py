@@ -14,6 +14,10 @@ class Settings(BaseSettings):
 
     ALLOW_ATTENDANCE_RETEST: bool = False
 
+    # Google Cloud Vision API key used for proctoring face-count checks
+    # during assessments. Leave blank to disable server-side face checks.
+    FACE_DETECTION_API_KEY: str = ""
+
     class Config:
         env_file = ".env"
 
