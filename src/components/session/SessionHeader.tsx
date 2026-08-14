@@ -8,7 +8,6 @@ import { Colors } from "@/theme/colors";
 import { Fonts } from "@/theme/fonts";
 import { FontWeight } from "@/theme/fontWeight";
 import { Radius } from "@/theme/radius";
-import { API_BASE_URL } from "@/constants/api";
 
 const AVATAR_BY_GENDER: Record<string, ImageSourcePropType> = {
   male: require("@/assets/images/user_img/default_male.png"),
@@ -45,8 +44,9 @@ export default function SessionHeader({
   date,
   location,
 }: SessionHeaderProps) {
+  // profilePhoto is a local URI when set by the mock upload service.
   const avatar: ImageSourcePropType = profilePhoto
-    ? { uri: `${API_BASE_URL}/media/${profilePhoto}` }
+    ? { uri: profilePhoto }
     : AVATAR_BY_GENDER[gender?.toLowerCase() ?? ""] ?? DEFAULT_AVATAR;
 
   return (

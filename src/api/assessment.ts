@@ -1,5 +1,3 @@
-import { apiRequest } from "./client";
-
 export type AssessmentQuestion = {
   id: number;
   question: string;
@@ -27,23 +25,7 @@ export type AssessmentQuestionsResponse = {
   questions: AssessmentQuestion[];
 };
 
-export function getAssessmentQuestions(token: string, suiteUid: string) {
-  return apiRequest<AssessmentQuestionsResponse>(`/assessments/${suiteUid}/questions`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-}
+// Demo implementations — no network calls.
+export { getAssessmentQuestions, submitAssessment } from "@/api/mockService";
+export { ApiError } from "@/api/client";
 
-export function submitAssessment(
-  token: string,
-  suiteUid: string,
-  conferenceUid: string,
-  answers: AssessmentAnswer[]
-) {
-  return apiRequest<AssessmentResult>(`/assessments/${suiteUid}/submit`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ conferenceUid, answers }),
-  });
-}
-
-export { ApiError } from "./client";

@@ -1,4 +1,4 @@
-import { apiRequest } from "./client";
+﻿// All types are preserved — they are used extensively across screens.
 
 export type ModuleConfig = {
   category?: string;
@@ -35,14 +35,11 @@ export type TrainingCreatePayload = {
   region?: string;
   company?: string;
   requestedBy?: string;
-
   trainerEmployeeId?: string;
   trainerName?: string;
-
   state?: string;
   district?: string;
   venue?: string;
-
   isResidential: boolean;
   conferenceDate: string;
   conferenceTime: string;
@@ -51,7 +48,6 @@ export type TrainingCreatePayload = {
   sessionType?: string;
   trainingType?: string;
   batchSize?: string;
-
   sessionFlow?: SessionFlowConfig;
   checklist?: string[];
 };
@@ -147,85 +143,6 @@ export type SessionDashboard = {
   auditLog: AuditLogEntry[];
 };
 
-export function createTraining(token: string, payload: TrainingCreatePayload) {
-  return apiRequest<TrainingOut>("/admin/trainings", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
-    body: JSON.stringify(payload),
-  });
-}
-
-export function fetchTrainerAgenda(token: string, range?: { start?: string; end?: string }) {
-  const params = new URLSearchParams();
-  if (range?.start) params.set("start", range.start);
-  if (range?.end) params.set("end", range.end);
-  const query = params.toString();
-  return apiRequest<TrainingAgendaItem[]>(`/admin/trainings${query ? `?${query}` : ""}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-}
-
-export function fetchSessionDashboard(token: string, conferenceUid: string) {
-  return apiRequest<SessionDashboard>(`/admin/trainings/${encodeURIComponent(conferenceUid)}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-}
-
-export function startTraining(token: string, conferenceUid: string) {
-  return apiRequest<TrainingOut>(`/admin/trainings/${encodeURIComponent(conferenceUid)}/start`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
-  });
-}
-
-export function endTraining(token: string, conferenceUid: string) {
-  return apiRequest<TrainingOut>(`/admin/trainings/${encodeURIComponent(conferenceUid)}/end`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
-  });
-}
-
-export function advanceModule(token: string, conferenceUid: string) {
-  return apiRequest<TrainingOut>(`/admin/trainings/${encodeURIComponent(conferenceUid)}/advance-module`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
-  });
-}
-
-export function markAttendance(token: string, conferenceUid: string, traineeUid: string, status: "Present" | "Absent") {
-  return apiRequest<SessionDashboard>(
-    `/admin/trainings/${encodeURIComponent(conferenceUid)}/attendance/${encodeURIComponent(traineeUid)}`,
-    {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ status }),
-    }
-  );
-}
-
-export function resetAttendance(token: string, conferenceUid: string, traineeUid: string) {
-  return apiRequest<SessionDashboard>(
-    `/admin/trainings/${encodeURIComponent(conferenceUid)}/attendance/${encodeURIComponent(traineeUid)}`,
-    {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    }
-  );
-}
-
-export function fetchAssessmentSuites(token: string) {
-  return apiRequest<AssessmentSuiteOut[]>("/admin/assessment-suites", {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-}
-
-export function fetchTrainerName(token: string, username: string) {
-  return apiRequest<{ username: string; name: string }>(
-    `/admin/trainers/${encodeURIComponent(username)}`,
-    { headers: { Authorization: `Bearer ${token}` } }
-  );
-}
-
 export type PendingSessionItem = {
   conferenceUid: string;
   title: string;
@@ -234,26 +151,6 @@ export type PendingSessionItem = {
   conferenceTime: string | null;
   status: string;
 };
-
-export function fetchPendingTrainings(token: string) {
-  return apiRequest<PendingSessionItem[]>("/admin/trainings/pending", {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-}
-
-export function approveTraining(token: string, conferenceUid: string) {
-  return apiRequest<TrainingOut>(`/admin/trainings/${encodeURIComponent(conferenceUid)}/approve`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
-  });
-}
-
-export function rejectTraining(token: string, conferenceUid: string) {
-  return apiRequest<TrainingOut>(`/admin/trainings/${encodeURIComponent(conferenceUid)}/reject`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
-  });
-}
 
 export type QuestionOption = { id: string; text: string };
 
@@ -298,36 +195,24 @@ export type AssessmentSuiteCreatePayload = {
   type?: string;
 };
 
-export function createAssessmentSuite(token: string, payload: AssessmentSuiteCreatePayload) {
-  return apiRequest<AssessmentSuiteDetail>("/admin/assessment-suites", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
-    body: JSON.stringify(payload),
-  });
-}
-
-export function fetchAssessmentSuiteDetail(token: string, suiteUid: string) {
-  return apiRequest<AssessmentSuiteDetail>(`/admin/assessment-suites/${encodeURIComponent(suiteUid)}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-}
-
-export function addAssessmentQuestion(token: string, suiteUid: string, payload: QuestionCreatePayload) {
-  return apiRequest<AssessmentSuiteDetail>(`/admin/assessment-suites/${encodeURIComponent(suiteUid)}/questions`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
-    body: JSON.stringify(payload),
-  });
-}
-
-export function deleteAssessmentQuestion(token: string, suiteUid: string, questionId: number) {
-  return apiRequest<AssessmentSuiteDetail>(
-    `/admin/assessment-suites/${encodeURIComponent(suiteUid)}/questions/${questionId}`,
-    {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    }
-  );
-}
-
-export { ApiError } from "./client";
+// Demo implementations — no network calls.
+export {
+  createTraining,
+  fetchTrainerAgenda,
+  fetchSessionDashboard,
+  startTraining,
+  endTraining,
+  advanceModule,
+  markAttendance,
+  resetAttendance,
+  fetchAssessmentSuites,
+  fetchTrainerName,
+  fetchPendingTrainings,
+  approveTraining,
+  rejectTraining,
+  createAssessmentSuite,
+  fetchAssessmentSuiteDetail,
+  addAssessmentQuestion,
+  deleteAssessmentQuestion,
+} from "@/api/mockService";
+export { ApiError } from "@/api/client";

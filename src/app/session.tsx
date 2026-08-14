@@ -1,17 +1,24 @@
-import { useCallback, useState } from "react";
-import { ActivityIndicator, Image, ImageSourcePropType, Pressable, StyleSheet, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import CheckCircle from "@/assets/images/svg/check_circle.svg";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
-import CheckCircle from "@/assets/images/svg/check_circle.svg";
+import { useCallback, useState } from "react";
+import {
+  ActivityIndicator,
+  Image,
+  ImageSourcePropType,
+  Pressable,
+  StyleSheet,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
+import { CurrentSession, getCurrentSession } from "@/api/session";
+import SecurityFooter from "@/components/common/SecurityFooter";
 import AppButton from "@/components/ui/AppButton";
 import AppText from "@/components/ui/AppText";
-import SecurityFooter from "@/components/common/SecurityFooter";
+import { useAuth } from "@/hooks/useAuth";
 import { Colors } from "@/theme/colors";
 import { Fonts } from "@/theme/fonts";
-import { useAuth } from "@/hooks/useAuth";
-import { CurrentSession, getCurrentSession } from "@/api/session";
 
 const AVATAR_BY_GENDER: Record<string, ImageSourcePropType> = {
   male: require("@/assets/images/user_img/default_male.png"),
@@ -22,7 +29,8 @@ const DEFAULT_AVATAR: ImageSourcePropType = require("@/assets/images/user_img/de
 export default function SessionScreen() {
   const router = useRouter();
   const { trainee, token, logout } = useAuth();
-  const avatar = AVATAR_BY_GENDER[trainee?.gender?.toLowerCase() ?? ""] ?? DEFAULT_AVATAR;
+  const avatar =
+    AVATAR_BY_GENDER[trainee?.gender?.toLowerCase() ?? ""] ?? DEFAULT_AVATAR;
 
   const [session, setSession] = useState<CurrentSession | null>(null);
   const [loading, setLoading] = useState(true);
@@ -54,14 +62,14 @@ export default function SessionScreen() {
   useFocusEffect(
     useCallback(() => {
       loadSession();
-    }, [loadSession])
+    }, [loadSession]),
   );
 
   const notice = !session
     ? "You are registered but not assigned to this session"
     : !session.started
-    ? `Session with ${session.trainerName || "your trainer"} starts ${session.startsAt || "soon"}`
-    : `Session with ${session.trainerName || "your trainer"} is live now`;
+      ? `Session with ${session.trainerName || "your trainer"} starts ${session.startsAt || "soon"}`
+      : `Session with ${session.trainerName || "your trainer"} is live now`;
 
   const handleLogout = () => {
     logout();
@@ -71,14 +79,13 @@ export default function SessionScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.hero}>
-        <Image
-          source={avatar}
-          style={styles.avatar}
-        />
+        <Image source={avatar} style={styles.avatar} />
         <AppText style={styles.name} color={Colors.white} weight="500">
           {trainee?.name || "Trainee"}
         </AppText>
-        <AppText style={styles.phone} color={Colors.white}>{trainee?.phone || ""}</AppText>
+        <AppText style={styles.phone} color={Colors.white}>
+          {trainee?.phone || ""}
+        </AppText>
       </View>
 
       <View style={styles.content}>
@@ -87,7 +94,9 @@ export default function SessionScreen() {
             {details.map(([label, value]) => (
               <View key={label} style={styles.detail}>
                 <AppText style={styles.label}>{label}</AppText>
-                <AppText style={styles.value} weight="700">{value}</AppText>
+                <AppText style={styles.value} weight="700">
+                  {value}
+                </AppText>
               </View>
             ))}
           </View>
@@ -96,15 +105,23 @@ export default function SessionScreen() {
             {loading ? (
               <ActivityIndicator size="small" color={Colors.mainColour1} />
             ) : (
-              <Ionicons name="information-circle-outline" size={14} color="#3D3D3D" />
+              <Ionicons
+                name="information-circle-outline"
+                size={14}
+                color="#3D3D3D"
+              />
             )}
-            <AppText style={styles.noticeText}>{loading ? "Checking for your session…" : notice}</AppText>
+            <AppText style={styles.noticeText}>
+              {loading ? "Checking for your session…" : notice}
+            </AppText>
           </View>
 
           <AppButton
             title="Join Session"
             onPress={() => router.push("/session_detail")}
-            leftIcon={<CheckCircle width={Fonts.bodyLg} height={Fonts.bodyLg} />}
+            leftIcon={
+              <CheckCircle width={Fonts.bodyLg} height={Fonts.bodyLg} />
+            }
             buttonStyle={styles.joinButton}
           />
 
@@ -131,7 +148,11 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: Fonts.br,
     borderTopRightRadius: Fonts.br,
   },
-  avatar: { width: Fonts.profileIconSize, height: Fonts.profileIconSize, marginBottom: 12 },
+  avatar: {
+    width: Fonts.profileIconSize,
+    height: Fonts.profileIconSize,
+    marginBottom: 12,
+  },
   name: { fontSize: Fonts.h2 },
   phone: {
     fontSize: Fonts.body,
@@ -164,9 +185,25 @@ const styles = StyleSheet.create({
   detail: { width: "50%" },
   label: { fontSize: Fonts.bodySm, color: "#505050", marginBottom: 6 },
   value: { fontSize: Fonts.body, color: "#303030" },
-  notice: { flexDirection: "row", alignItems: "center", marginTop: 26, marginBottom: 13 },
-  noticeText: { flex: 1, fontSize: Fonts.caption, color: "#3D3D3D", marginLeft: 4 },
+  notice: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 26,
+    marginBottom: 13,
+  },
+  noticeText: {
+    flex: 1,
+    fontSize: Fonts.caption,
+    color: "#3D3D3D",
+    marginLeft: 4,
+  },
   joinButton: { height: 40, borderRadius: 8 },
-  logout: { marginTop: 14, textAlign: "center", textDecorationLine: "underline", fontSize: Fonts.bodySm, color: "#4D4D4D" },
+  logout: {
+    marginTop: 14,
+    textAlign: "center",
+    textDecorationLine: "underline",
+    fontSize: Fonts.bodySm,
+    color: "#4D4D4D",
+  },
   footer: { marginTop: 36 },
 });

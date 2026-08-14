@@ -1,6 +1,5 @@
-import { apiRequest, apiUpload } from "./client";
-
 // Field names mirror the `trainee` table from the legacy database dump.
+// Types are used by useAuth.tsx and multiple screens — must remain exported.
 export type Trainee = {
   id: number;
   traineeUid: string;
@@ -35,20 +34,6 @@ export type RegisterPayload = {
   district?: string;
 };
 
-export function registerTrainee(payload: RegisterPayload) {
-  return apiRequest<Trainee>("/trainees/register", {
-    method: "POST",
-    body: JSON.stringify({ ...payload, phone: Number(payload.phone) }),
-  });
-}
-
-export function loginTrainee(phone: string) {
-  return apiRequest<AuthSession>("/trainees/login", {
-    method: "POST",
-    body: JSON.stringify({ phone: Number(phone) }),
-  });
-}
-
 export type UpdateProfilePayload = Partial<{
   name: string;
   phone: string;
@@ -61,32 +46,18 @@ export type UpdateProfilePayload = Partial<{
   district: string;
 }>;
 
-export function updateTrainee(token: string, payload: UpdateProfilePayload) {
-  return apiRequest<AuthSession>("/trainees/me", {
-    method: "PATCH",
-    headers: { Authorization: `Bearer ${token}` },
-    body: JSON.stringify({
-      ...payload,
-      phone: payload.phone ? Number(payload.phone) : undefined,
-    }),
-  });
-}
-
 export type PickedImage = {
   uri: string;
   name: string;
   type: string;
 };
 
-export function uploadTraineePhoto(token: string, image: PickedImage) {
-  const formData = new FormData();
-  formData.append("file", {
-    uri: image.uri,
-    name: image.name,
-    type: image.type,
-  } as unknown as Blob);
+// Demo implementations — no network calls.
+export {
+  registerTrainee,
+  loginTrainee,
+  updateTrainee,
+  uploadTraineePhoto,
+} from "@/api/mockService";
+export { ApiError } from "@/api/client";
 
-  return apiUpload<Trainee>("/trainees/me/photo", formData, token);
-}
-
-export { ApiError } from "./client";

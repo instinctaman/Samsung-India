@@ -1,5 +1,4 @@
-import { apiRequest } from "./client";
-
+// Types used by useAuth.tsx — must remain exported from this file.
 export type AdminAccount = {
   username: string;
   name: string;
@@ -12,11 +11,7 @@ export type AdminAuthSession = {
   admin: AdminAccount;
 };
 
-export function loginAdmin(username: string, password: string) {
-  return apiRequest<AdminAuthSession>("/admin/login", {
-    method: "POST",
-    body: JSON.stringify({ username, password }),
-  });
-}
+// Demo implementation — no network calls.
+export { loginAdmin } from "@/api/mockService";
+export { ApiError } from "@/api/client";
 
-export { ApiError } from "./client";

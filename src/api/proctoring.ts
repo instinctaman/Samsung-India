@@ -1,15 +1,8 @@
-import { apiRequest } from "./client";
-
 export type FaceCheckResult = {
   faceCount: number;
 };
 
-export function checkFrameForFaces(token: string, imageBase64: string) {
-  return apiRequest<FaceCheckResult>("/proctoring/check-frame", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ image: imageBase64 }),
-  });
-}
+// Demo implementation — always returns faceCount: 1 (no warnings in demo mode).
+export { checkFrameForFaces } from "@/api/mockService";
+export { ApiError } from "@/api/client";
 
-export { ApiError } from "./client";

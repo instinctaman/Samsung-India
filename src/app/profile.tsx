@@ -12,7 +12,6 @@ import AppText from "@/components/ui/AppText";
 import AppFooter from "@/components/ui/AppFooter";
 import EditProfileSheet from "@/components/common/EditProfileSheet";
 import { STATES } from "@/data/states";
-import { API_BASE_URL } from "@/constants/api";
 import { Colors } from "@/theme/colors";
 import { FontWeight } from "@/theme/fontWeight";
 import { Fonts } from "@/theme/fonts";
@@ -98,7 +97,7 @@ export default function ProfileScreen() {
                 <View style={styles.profile}>
                     <Pressable style={styles.avatarWrap} onPress={handlePickPhoto} disabled={uploading}>
                         <Image
-                            source={trainee?.profilePhoto ? { uri: `${API_BASE_URL}/media/${trainee.profilePhoto}` } : require("@/assets/images/Icons/face_icon.png")}
+                            source={trainee?.profilePhoto ? { uri: trainee.profilePhoto } : require("@/assets/images/Icons/face_icon.png")}
                             style={[styles.avatar, trainee?.profilePhoto && styles.avatarPhoto]}
                         />
                         <View style={styles.avatarBadge}>

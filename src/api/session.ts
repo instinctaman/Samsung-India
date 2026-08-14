@@ -1,5 +1,3 @@
-import { apiRequest } from "./client";
-
 export type SessionModuleKey = "ATTENDANCE" | "STANDARD_TEST" | "LIVE_QUIZ" | "SURVEY";
 
 // Field names mirror the /sessions/current response built from the
@@ -32,12 +30,6 @@ export type CurrentSession = {
   modules: SessionModule[];
 };
 
-export function getCurrentSession(token: string) {
-  return apiRequest<CurrentSession>("/sessions/current", {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-}
-
 export type SessionHistoryItem = {
   conferenceUid: string;
   title: string;
@@ -48,10 +40,7 @@ export type SessionHistoryItem = {
   passed: boolean | null;
 };
 
-export function getSessionHistory(token: string) {
-  return apiRequest<SessionHistoryItem[]>("/sessions/history", {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-}
+// Demo implementations — no network calls.
+export { getCurrentSession, getSessionHistory } from "@/api/mockService";
+export { ApiError } from "@/api/client";
 
-export { ApiError } from "./client";

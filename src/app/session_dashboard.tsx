@@ -17,7 +17,6 @@ import { FontWeight } from "@/theme/fontWeight";
 import { Radius } from "@/theme/radius";
 import { Shadows } from "@/theme/shadows";
 import { useAuth } from "@/hooks/useAuth";
-import { API_BASE_URL } from "@/constants/api";
 import {
   ApiError,
   AuditLogEntry,
@@ -819,7 +818,7 @@ function TraineeListRow({
   return (
     <View style={styles.traineeRow}>
       {row.profilePhoto ? (
-        <Image source={{ uri: `${API_BASE_URL}/media/${row.profilePhoto}` }} style={styles.avatar} />
+        <Image source={{ uri: row.profilePhoto! }} style={styles.avatar} />
       ) : (
         <View style={[styles.avatar, { backgroundColor: avatarColorFor(row.name) }]}>
           <AppText style={styles.avatarText} color={Colors.white} weight={FontWeight.semiBold}>
