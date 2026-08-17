@@ -4,7 +4,10 @@ export type AssessmentQuestion = {
   question_type: string;
   sort_order: number;
   options: { id: string; text: string }[];
+  correctAnswer?: string | null;
+  explanation?: string | null;
 };
+
 
 export type AssessmentAnswer = {
   questionId: number;

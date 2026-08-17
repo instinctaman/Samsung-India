@@ -1,5 +1,5 @@
-import { Image, Pressable, StyleSheet, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { Image, Pressable, StyleSheet, View } from "react-native";
 
 import AppText from "@/components/ui/AppText";
 import ScreenBanner from "@/components/ui/ScreenBanner";
@@ -66,7 +66,7 @@ export default function DashboardHeader({
           accessibilityRole="button"
           accessibilityLabel="Logout"
         >
-          <Ionicons name="power" size={24} color={Colors.mainColour1} />
+          <Ionicons name="power" size={25} color={Colors.mainColour1} />
         </Pressable>
       </View>
 
@@ -88,11 +88,10 @@ export default function DashboardHeader({
 
 const styles = StyleSheet.create({
   banner: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 22,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
+    paddingHorizontal: 14,
+    paddingTop: 20,
+    paddingBottom: 18,
+    borderRadius: 20,
   },
   topRow: {
     flexDirection: "row",
@@ -102,25 +101,25 @@ const styles = StyleSheet.create({
   avatarWithId: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: 30,
   },
   avatarWrapper: {
     position: "relative",
-    width: 60,
-    height: 60,
+    width: 52,
+    height: 52,
   },
   avatarImage: {
-    width: 60,
+    width: 81,
     height: 60,
-    borderRadius: 30,
+    borderRadius: 26,
   },
   avatarOnlineBadge: {
     position: "absolute",
     bottom: 1,
     right: 1,
-    width: 14,
-    height: 14,
-    borderRadius: 7,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
     backgroundColor: "#22C55E",
     borderWidth: 2,
     borderColor: Colors.mainColour1,
@@ -129,33 +128,32 @@ const styles = StyleSheet.create({
     gap: 1,
   },
   companyIdLabel: {
-    fontSize: 10,
-    opacity: 0.85,
+    fontSize: 7.5,
   },
   companyIdValue: {
-    fontSize: 13,
+    fontSize: 10.5,
     letterSpacing: 0.3,
   },
   powerButton: {
-    width: 46,
-    height: 46,
-    borderRadius: 14,
+    width: 41,
+    height: 40,
+    borderRadius: 10,
     backgroundColor: Colors.white,
     alignItems: "center",
     justifyContent: "center",
     ...Shadows.card,
   },
   welcomeSection: {
-    marginTop: 18,
+    marginTop: 14,
   },
   welcomeGreeting: {
-    fontSize: 15,
-    lineHeight: 20,
+    fontSize: 12.5,
+    lineHeight: 18,
     opacity: 0.9,
   },
   welcomeName: {
-    fontSize: 24,
-    lineHeight: 30,
+    fontSize: 20,
+    lineHeight: 26,
     marginTop: 2,
   },
 });

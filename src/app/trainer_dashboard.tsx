@@ -4,11 +4,11 @@ import { RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { TrainingAgendaItem, fetchTrainerAgenda } from "@/api/training";
+import Calendar from "@/components/calendar/Calendar";
 import AccountPanel from "@/components/trainer/AccountPanel";
 import DashboardBottomNav from "@/components/trainer/dashboard/DashboardBottomNav";
 import DashboardHeader from "@/components/trainer/dashboard/DashboardHeader";
 import { calculateDashboardStats } from "@/components/trainer/dashboard/dashboardUtils";
-import Calendar from "@/components/calendar/Calendar";
 import QuickActionsCard from "@/components/trainer/dashboard/QuickActionsCard";
 import RecentSessionsCard from "@/components/trainer/dashboard/RecentSessionsCard";
 import SummaryStatsRow from "@/components/trainer/dashboard/SummaryStatsRow";
@@ -82,6 +82,13 @@ export default function TrainerDashboardScreen() {
     setDateRange(range);
     setDatePreset(preset);
     setDateDropOpen(false);
+    router.push({
+      pathname: "/sessions",
+      params: {
+        start: toApiDate(range.start),
+        end: toApiDate(range.end),
+      },
+    });
   };
 
   const handleLogout = () => {
@@ -115,7 +122,13 @@ export default function TrainerDashboardScreen() {
     if (tab === "home") {
       // Return to home view
     } else if (tab === "plan") {
-      setDateDropOpen(true);
+      router.push({
+        pathname: "/sessions",
+        params: {
+          start: toApiDate(dateRange.start),
+          end: toApiDate(dateRange.end),
+        },
+      });
     } else if (tab === "profile") {
       setAccountOpen(true);
     } else if (tab === "more") {
@@ -245,9 +258,9 @@ const styles = StyleSheet.create({
   },
   twoColumnRow: {
     flexDirection: "row",
-    gap: 10,
-    paddingHorizontal: 16,
-    marginTop: 12,
+    gap: 8,
+    paddingHorizontal: 12,
+    marginTop: 10,
   },
   leftPanel: {
     width: "80%",

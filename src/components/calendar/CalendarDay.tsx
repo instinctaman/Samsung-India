@@ -1,6 +1,6 @@
+import { Colors } from "@/theme/colors";
 import { Pressable, StyleSheet, Text } from "react-native";
 import { isToday } from "./calendarUtils";
-import { Colors } from "@/theme/colors";
 
 type CalendarDayProps = {
   date: Date;
@@ -53,12 +53,12 @@ export default function CalendarDay({
 
 const styles = StyleSheet.create({
   cell: {
-    width: 21,
-    height: 21,
+    width: 18.5,
+    height: 18.5,
     alignItems: "center",
     justifyContent: "center",
-    marginVertical: 1.5,
-    borderRadius: 5,
+    marginVertical: 1,
+    borderRadius: 4,
   },
   cellSelected: {
     backgroundColor: Colors.mainColour1,
@@ -67,8 +67,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#EFF6FF",
   },
   text: {
-    fontSize: 9.5,
+    fontSize: 8.5,
     color: "#1F2937",
+    fontWeight: "500",
   },
   textSelected: {
     color: Colors.white,

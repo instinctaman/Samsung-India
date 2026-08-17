@@ -1,13 +1,10 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { TrainingAgendaItem } from "@/api/training";
-import {
-  formatSessionTime,
-  getSessionStatusInfo,
-} from "./dashboardUtils";
 import { Colors } from "@/theme/colors";
 import { Shadows } from "@/theme/shadows";
+import { formatSessionTime, getSessionStatusInfo } from "./dashboardUtils";
 
 type RecentSessionsCardProps = {
   sessions: TrainingAgendaItem[];
@@ -20,7 +17,6 @@ export default function RecentSessionsCard({
   onViewAll,
   onSelectSession,
 }: RecentSessionsCardProps) {
-  // If API returned sessions, use the latest 2; otherwise show default demo items matching the design
   const items =
     sessions.length > 0
       ? sessions.slice(0, 2)
@@ -62,11 +58,12 @@ export default function RecentSessionsCard({
             session.conferenceStatus === "Ongoing"
               ? "Ongoing"
               : session.conferenceStatus === "Completed"
-              ? "Completed"
-              : "Scheduled"
+                ? "Completed"
+                : "Scheduled",
           );
 
-          const isCompleted = index === 0 || session.conferenceStatus === "Completed";
+          const isCompleted =
+            index === 0 || session.conferenceStatus === "Completed";
           const iconBorder = isCompleted ? "#A7F3D0" : "#BFDBFE";
           const iconColor = isCompleted ? "#10B981" : "#0066FF";
           const iconBg = isCompleted ? "#ECFDF5" : "#EFF6FF";
@@ -87,7 +84,7 @@ export default function RecentSessionsCard({
                   >
                     <Ionicons
                       name="calendar-outline"
-                      size={16}
+                      size={14}
                       color={iconColor}
                     />
                   </View>
@@ -99,13 +96,13 @@ export default function RecentSessionsCard({
                     <Text style={styles.sessionDateTime}>
                       {formatSessionTime(
                         session.conferenceDate,
-                        session.conferenceTime
+                        session.conferenceTime,
                       )}
                     </Text>
                   </View>
                 </View>
 
-                {/* Right aligned status badge at the bottom of the item */}
+                {/* Status badge */}
                 <View style={styles.statusBadgeRow}>
                   <View
                     style={[
@@ -136,43 +133,43 @@ const styles = StyleSheet.create({
   card: {
     flex: 1,
     backgroundColor: Colors.white,
-    borderRadius: 18,
+    borderRadius: 14,
     borderWidth: 1.2,
     borderColor: "#EAECF0",
-    padding: 12,
+    padding: 8,
     ...Shadows.card,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 8,
+    marginBottom: 6,
   },
   title: {
-    fontSize: 12,
+    fontSize: 10.5,
     fontWeight: "700",
     color: "#111827",
   },
   viewAllPill: {
     borderWidth: 1,
     borderColor: "#D1D5DB",
-    borderRadius: 6,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    borderRadius: 5,
+    paddingHorizontal: 5,
+    paddingVertical: 1.5,
     backgroundColor: Colors.white,
   },
   viewAllText: {
-    fontSize: 9,
+    fontSize: 7.1,
     color: "#4B5563",
     fontWeight: "500",
   },
   list: {
-    gap: 4,
+    gap: 2,
   },
   divider: {
     height: 1,
     backgroundColor: "#F3F4F6",
-    marginVertical: 6,
+    marginVertical: 4,
   },
   itemRow: {
     paddingVertical: 2,
@@ -180,11 +177,11 @@ const styles = StyleSheet.create({
   itemContent: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 6,
   },
   calendarBox: {
-    width: 32,
-    height: 32,
+    width: 30,
+    height: 30,
     borderRadius: 8,
     borderWidth: 1,
     alignItems: "center",
@@ -194,27 +191,27 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sessionTitle: {
-    fontSize: 10,
+    fontSize: 8,
     fontWeight: "700",
     color: "#111827",
   },
   sessionDateTime: {
-    fontSize: 8,
+    fontSize: 7,
     color: "#6B7280",
-    marginTop: 2,
+    marginTop: 1,
   },
   statusBadgeRow: {
     flexDirection: "row",
     justifyContent: "flex-end",
-    marginTop: 4,
+    marginTop: 2,
   },
   statusBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
+    paddingHorizontal: 4,
+    paddingVertical: 1.5,
+    borderRadius: 3,
   },
   statusBadgeText: {
-    fontSize: 8,
+    fontSize: 7.5,
     fontWeight: "600",
   },
 });

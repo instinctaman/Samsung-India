@@ -1,13 +1,9 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import {
-  DatePreset,
-  formatDisplayDate,
-} from "./dashboardUtils";
 import { Colors } from "@/theme/colors";
-import { Radius } from "@/theme/radius";
 import { Shadows } from "@/theme/shadows";
+import { DatePreset, formatDisplayDate } from "./dashboardUtils";
 
 type DateRangeSelectorProps = {
   startDate: Date;
@@ -44,9 +40,7 @@ export default function DateRangeSelector({
             size={15}
             color={Colors.mainColour1}
           />
-          <Text style={styles.dateBoxText}>
-            {formatDisplayDate(startDate)}
-          </Text>
+          <Text style={styles.dateBoxText}>{formatDisplayDate(startDate)}</Text>
         </Pressable>
 
         <Ionicons name="arrow-forward" size={15} color="#9CA3AF" />
@@ -62,9 +56,7 @@ export default function DateRangeSelector({
             size={15}
             color={Colors.mainColour1}
           />
-          <Text style={styles.dateBoxText}>
-            {formatDisplayDate(endDate)}
-          </Text>
+          <Text style={styles.dateBoxText}>{formatDisplayDate(endDate)}</Text>
         </Pressable>
 
         <Pressable

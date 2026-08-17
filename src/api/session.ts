@@ -13,8 +13,10 @@ export type SessionModule = {
   isMissed: boolean;
   completedAt: string | null;
   score: string | null;
+  ranDuration?: string | null;
   assessmentSuiteUid: string | null;
 };
+
 
 export type CurrentSession = {
   conferenceUid: string;

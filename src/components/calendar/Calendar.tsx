@@ -1,20 +1,18 @@
+import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 
-import CalendarHeader from "./CalendarHeader";
+import { Colors } from "@/theme/colors";
+import { Shadows } from "@/theme/shadows";
 import CalendarGrid from "./CalendarGrid";
+import CalendarHeader from "./CalendarHeader";
 import {
   DatePreset,
   DateRange,
   formatDisplayDate,
   formatMonthDay,
-  rangeForPreset,
   startOfDay,
 } from "./calendarUtils";
-import { Colors } from "@/theme/colors";
-import { Radius } from "@/theme/radius";
-import { Shadows } from "@/theme/shadows";
 
 type CalendarProps = {
   range: DateRange;
@@ -98,7 +96,7 @@ export default function Calendar({
         start: newStart,
         end: newEnd,
       },
-      "custom"
+      "custom",
     );
   };
 
@@ -118,7 +116,7 @@ export default function Calendar({
         start: newStart,
         end: newEnd,
       },
-      "custom"
+      "custom",
     );
   };
 
@@ -128,15 +126,14 @@ export default function Calendar({
         start: selectedStart,
         end: selectedEnd,
       },
-      activePreset
+      activePreset,
     );
-    // Toggle expand state or keep updated
     setIsExpanded((prev) => !prev);
   };
 
   return (
     <View style={styles.container}>
-      {/* Top Filter Bar - Clicking datefield or filter opens/closes calendar */}
+      {/* Top Filter Bar */}
       <View style={styles.topFilterBar}>
         <Pressable
           style={styles.dateBox}
@@ -146,7 +143,7 @@ export default function Calendar({
         >
           <Ionicons
             name="calendar-outline"
-            size={15}
+            size={13}
             color={Colors.mainColour1}
           />
           <Text style={styles.dateBoxText}>
@@ -154,7 +151,7 @@ export default function Calendar({
           </Text>
         </Pressable>
 
-        <Ionicons name="arrow-forward" size={15} color="#9CA3AF" />
+        <Ionicons name="arrow-forward" size={13} color="#9CA3AF" />
 
         <Pressable
           style={styles.dateBox}
@@ -164,7 +161,7 @@ export default function Calendar({
         >
           <Ionicons
             name="calendar-outline"
-            size={15}
+            size={13}
             color={Colors.mainColour1}
           />
           <Text style={styles.dateBoxText}>
@@ -178,7 +175,7 @@ export default function Calendar({
           accessibilityRole="button"
           accessibilityLabel="Filter"
         >
-          <Ionicons name="calendar-outline" size={15} color={Colors.white} />
+          <Ionicons name="calendar-outline" size={13} color={Colors.white} />
           <Text style={styles.filterButtonText}>Filter</Text>
         </Pressable>
       </View>
@@ -224,7 +221,7 @@ export default function Calendar({
             <View style={styles.arrowContainer}>
               <Ionicons
                 name="arrow-forward"
-                size={16}
+                size={14}
                 color={Colors.mainColour1}
               />
             </View>
@@ -262,7 +259,7 @@ export default function Calendar({
           {/* Summary Info Notice Banner */}
           <View style={styles.infoBanner}>
             <View style={styles.infoIconCircle}>
-              <Ionicons name="information" size={14} color={Colors.white} />
+              <Ionicons name="information" size={11} color={Colors.white} />
             </View>
             <Text style={styles.infoText}>
               Showing data from{" "}
@@ -285,35 +282,35 @@ export default function Calendar({
 const styles = StyleSheet.create({
   container: {
     backgroundColor: Colors.white,
-    borderRadius: 20,
+    borderRadius: 16,
     borderWidth: 1.2,
     borderColor: "#EAECF0",
-    padding: 12,
-    marginHorizontal: 16,
-    marginTop: 12,
+    padding: 8,
+    marginHorizontal: 12,
+    marginTop: 10,
     ...Shadows.card,
   },
   topFilterBar: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 6,
+    gap: 4,
   },
   dateBox: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 5,
+    gap: 4,
     backgroundColor: Colors.white,
     borderWidth: 1,
     borderColor: "#D1D5DB",
-    borderRadius: 10,
-    paddingHorizontal: 6,
-    paddingVertical: 8,
+    borderRadius: 8,
+    paddingHorizontal: 4,
+    paddingVertical: 6,
   },
   dateBoxText: {
-    fontSize: 11,
+    fontSize: 9.5,
     color: "#374151",
     fontWeight: "500",
   },
@@ -321,14 +318,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 5,
+    gap: 4,
     backgroundColor: Colors.mainColour1,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
   },
   filterButtonText: {
-    fontSize: 11.5,
+    fontSize: 10,
     color: Colors.white,
     fontWeight: "700",
   },
@@ -338,79 +335,80 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     backgroundColor: "#EAECF0",
-    marginTop: 10,
-    marginBottom: 8,
+    marginTop: 8,
+    marginBottom: 6,
     marginHorizontal: 2,
   },
   calendarsRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 4,
+    gap: 2,
   },
   arrowContainer: {
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 1,
+    paddingHorizontal: 0,
+    width: 14,
   },
   card: {
     flex: 1,
     backgroundColor: Colors.white,
-    borderRadius: 14,
-    borderWidth: 1.2,
+    borderRadius: 12,
+    borderWidth: 1,
     borderColor: "#EAECF0",
-    padding: 8,
+    padding: 4,
   },
   cardTitle: {
-    fontSize: 11,
+    fontSize: 9.5,
     fontWeight: "700",
     color: "#111827",
-    marginBottom: 6,
+    marginBottom: 4,
     letterSpacing: 0.5,
   },
   summaryBadge: {
-    marginTop: 8,
+    marginTop: 6,
     backgroundColor: "#EFF6FF",
-    borderRadius: 8,
-    paddingVertical: 5,
-    paddingHorizontal: 6,
+    borderRadius: 6,
+    paddingVertical: 3.5,
+    paddingHorizontal: 4,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 6,
+    gap: 4,
   },
   summaryLabel: {
-    fontSize: 9.5,
+    fontSize: 8,
     color: "#374151",
   },
   summaryValue: {
-    fontSize: 10.5,
+    fontSize: 8.5,
     color: Colors.mainColour1,
     fontWeight: "700",
   },
   infoBanner: {
-    marginTop: 12,
+    marginTop: 8,
     backgroundColor: "#EFF6FF",
-    borderRadius: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
+    borderRadius: 10,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: 6,
   },
   infoIconCircle: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
     backgroundColor: Colors.mainColour1,
     alignItems: "center",
     justifyContent: "center",
   },
   infoText: {
     flex: 1,
-    fontSize: 11.5,
+    fontSize: 9.5,
     color: "#1F2937",
-    lineHeight: 16,
+    lineHeight: 13,
   },
   infoHighlight: {
     color: Colors.mainColour1,

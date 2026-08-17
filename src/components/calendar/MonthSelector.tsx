@@ -35,7 +35,7 @@ export default function MonthSelector({
         accessibilityLabel="Select month"
       >
         <Text style={styles.dropdownPillText}>{MONTH_NAMES[currentMonth]}</Text>
-        <Ionicons name="chevron-down" size={12} color="#6B7280" />
+        <Ionicons name="chevron-down" size={9} color="#6B7280" />
       </Pressable>
 
       <Pressable
@@ -45,7 +45,7 @@ export default function MonthSelector({
         accessibilityLabel="Select year"
       >
         <Text style={styles.dropdownPillText}>{currentYear}</Text>
-        <Ionicons name="chevron-down" size={12} color="#6B7280" />
+        <Ionicons name="chevron-down" size={9} color="#6B7280" />
       </Pressable>
 
       {pickerMode !== null && (
@@ -87,7 +87,7 @@ export default function MonthSelector({
                       {isSelected && (
                         <Ionicons
                           name="checkmark"
-                          size={16}
+                          size={14}
                           color={Colors.mainColour1}
                         />
                       )}
@@ -121,7 +121,7 @@ export default function MonthSelector({
                       {isSelected && (
                         <Ionicons
                           name="checkmark"
-                          size={16}
+                          size={14}
                           color={Colors.mainColour1}
                         />
                       )}
@@ -140,22 +140,22 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 3,
     zIndex: 20,
   },
   dropdownPill: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
+    gap: 2,
     backgroundColor: Colors.white,
-    borderWidth: 1.2,
+    borderWidth: 1,
     borderColor: "#D1D5DB",
-    borderRadius: Radius.md,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    borderRadius: 4,
+    paddingHorizontal: 4,
+    paddingVertical: 1.5,
   },
   dropdownPillText: {
-    fontSize: 11,
+    fontSize: 8.5,
     color: "#1F2937",
     fontWeight: "500",
   },
@@ -169,40 +169,40 @@ const styles = StyleSheet.create({
   },
   dropdownCard: {
     position: "absolute",
-    top: 36,
-    left: 0,
-    right: 0,
-    maxHeight: 280,
+    top: 28,
+    left: -20,
+    right: -20,
+    maxHeight: 220,
     backgroundColor: Colors.white,
-    borderRadius: Radius.xl,
-    padding: 12,
+    borderRadius: Radius.lg,
+    padding: 10,
     borderWidth: 1,
     borderColor: "#E5E7EB",
     ...Shadows.raised,
   },
   modalTitle: {
-    fontSize: 13,
+    fontSize: 11,
     fontWeight: "700",
     color: "#111827",
-    marginBottom: 8,
+    marginBottom: 6,
     textAlign: "center",
   },
   modalList: {
-    maxHeight: 220,
+    maxHeight: 180,
   },
   modalOption: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: Radius.md,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    borderRadius: Radius.sm,
   },
   modalOptionSelected: {
     backgroundColor: "#EFF6FF",
   },
   modalOptionText: {
-    fontSize: 13,
+    fontSize: 11,
     color: "#374151",
   },
   modalOptionTextSelected: {

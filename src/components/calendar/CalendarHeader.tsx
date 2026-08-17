@@ -25,11 +25,11 @@ export default function CalendarHeader({
       <Pressable
         style={styles.navArrow}
         onPress={onPrevMonth}
-        hitSlop={8}
+        hitSlop={6}
         accessibilityRole="button"
         accessibilityLabel="Previous month"
       >
-        <Ionicons name="chevron-back" size={16} color="#374151" />
+        <Ionicons name="chevron-back" size={12} color="#374151" />
       </Pressable>
 
       <MonthSelector
@@ -42,11 +42,11 @@ export default function CalendarHeader({
       <Pressable
         style={styles.navArrow}
         onPress={onNextMonth}
-        hitSlop={8}
+        hitSlop={6}
         accessibilityRole="button"
         accessibilityLabel="Next month"
       >
-        <Ionicons name="chevron-forward" size={16} color="#374151" />
+        <Ionicons name="chevron-forward" size={12} color="#374151" />
       </Pressable>
     </View>
   );
@@ -57,12 +57,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 10,
+    marginBottom: 6,
   },
   navArrow: {
-    width: 28,
-    height: 28,
-    borderRadius: 6,
+    width: 18,
+    height: 18,
+    borderRadius: 4,
     alignItems: "center",
     justifyContent: "center",
   },

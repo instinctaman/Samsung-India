@@ -1,6 +1,8 @@
 import { TrainingAgendaItem } from "@/api/training";
 import { DatePreset } from "@/components/trainer/DateDrop";
 
+export type { DatePreset };
+
 export const PRESET_LABELS: Record<DatePreset, string> = {
   today: "Today",
   this_month: "This Month",

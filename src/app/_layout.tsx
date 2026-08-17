@@ -1,21 +1,54 @@
-import { DefaultTheme, Stack, ThemeProvider } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import * as SystemUI from 'expo-system-ui';
+import {
+  Poppins_300Light,
+  Poppins_400Regular,
+  Poppins_500Medium,
+  Poppins_600SemiBold,
+  Poppins_700Bold,
+  Poppins_800ExtraBold,
+  Poppins_900Black,
+  useFonts,
+} from "@expo-google-fonts/poppins";
+import { DefaultTheme, Stack, ThemeProvider } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
+import * as SystemUI from "expo-system-ui";
+import { useEffect } from "react";
 
-import { AnimatedSplashOverlay } from '@/components/animated-icon';
-import { AuthProvider } from '@/hooks/useAuth';
+import { AnimatedSplashOverlay } from "@/components/animated-icon";
+import { AuthProvider } from "@/hooks/useAuth";
 
 SplashScreen.preventAutoHideAsync();
 
-// Android no longer lets expo-status-bar paint a background color behind
-// the status bar (edge-to-edge is mandatory as of SDK 57) - the status bar
-// just shows whatever the root view's own background is. Some devices
-// don't pick that up from our screens' own styling, leaving the OS default
-// (black) behind the status bar instead. Setting it here, once, at the
-// native root-view level keeps it consistent across devices.
-SystemUI.setBackgroundColorAsync('#EEF4FF');
+SystemUI.setBackgroundColorAsync("#EEF4FF");
 
 export default function RootLayout() {
+  const [fontsLoaded, fontError] = useFonts({
+    "Poppins-Light": Poppins_300Light,
+    "Poppins-Regular": Poppins_400Regular,
+    "Poppins-Medium": Poppins_500Medium,
+    "Poppins-SemiBold": Poppins_600SemiBold,
+    "Poppins-Bold": Poppins_700Bold,
+    "Poppins-ExtraBold": Poppins_800ExtraBold,
+    "Poppins-Black": Poppins_900Black,
+    Poppins: Poppins_400Regular,
+    Poppins_300Light,
+    Poppins_400Regular,
+    Poppins_500Medium,
+    Poppins_600SemiBold,
+    Poppins_700Bold,
+    Poppins_800ExtraBold,
+    Poppins_900Black,
+  });
+
+  useEffect(() => {
+    if (fontsLoaded || fontError) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded, fontError]);
+
+  if (!fontsLoaded && !fontError) {
+    return null;
+  }
+
   return (
     <AuthProvider>
       <ThemeProvider value={DefaultTheme}>
@@ -29,6 +62,7 @@ export default function RootLayout() {
           <Stack.Screen name="add_training" />
           <Stack.Screen name="pending_trainings" />
           <Stack.Screen name="training_list" />
+          <Stack.Screen name="sessions" />
           <Stack.Screen name="session_dashboard" />
           <Stack.Screen name="session" />
           <Stack.Screen name="session_detail" />
@@ -37,7 +71,9 @@ export default function RootLayout() {
           <Stack.Screen name="quiz" />
           <Stack.Screen name="quiz_leaderboard" />
           <Stack.Screen name="post_test" />
+          <Stack.Screen name="post_test_proctoring" />
           <Stack.Screen name="survey" />
+
           <Stack.Screen name="profile" />
           <Stack.Screen name="explore" />
         </Stack>
