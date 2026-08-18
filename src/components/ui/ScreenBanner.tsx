@@ -1,13 +1,11 @@
 import { ReactNode } from "react";
-import { StyleSheet, View, ViewStyle } from "react-native";
+import { StyleProp, StyleSheet, View, ViewStyle } from "react-native";
 import { StatusBar } from "expo-status-bar";
-
-import { Radius } from "@/theme/radius";
 
 type Props = {
   backgroundColor: string;
   children: ReactNode;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
 };
 
 /** Colored, rounded-bottom header shell that also flips the status bar
@@ -27,7 +25,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 12,
     paddingBottom: 24,
-    borderBottomLeftRadius: Radius.xxxl,
-    borderBottomRightRadius: Radius.xxxl,
-  },
+    },
 });

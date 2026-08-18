@@ -1,5 +1,8 @@
+import { USE_MOCK_DATA } from "@/config/dataSource";
+import { apiRequest, apiUpload } from "./client";
+import * as mock from "./mockService";
+
 // Field names mirror the `trainee` table from the legacy database dump.
-// Types are used by useAuth.tsx and multiple screens — must remain exported.
 export type Trainee = {
   id: number;
   traineeUid: string;
@@ -34,6 +37,22 @@ export type RegisterPayload = {
   district?: string;
 };
 
+export function registerTrainee(payload: RegisterPayload) {
+  if (USE_MOCK_DATA) return mock.registerTrainee(payload);
+  return apiRequest<Trainee>("/trainees/register", {
+    method: "POST",
+    body: JSON.stringify({ ...payload, phone: Number(payload.phone) }),
+  });
+}
+
+export function loginTrainee(phone: string) {
+  if (USE_MOCK_DATA) return mock.loginTrainee(phone);
+  return apiRequest<AuthSession>("/trainees/login", {
+    method: "POST",
+    body: JSON.stringify({ phone: Number(phone) }),
+  });
+}
+
 export type UpdateProfilePayload = Partial<{
   name: string;
   phone: string;
@@ -46,18 +65,34 @@ export type UpdateProfilePayload = Partial<{
   district: string;
 }>;
 
+export function updateTrainee(token: string, payload: UpdateProfilePayload) {
+  if (USE_MOCK_DATA) return mock.updateTrainee(token, payload);
+  return apiRequest<AuthSession>("/trainees/me", {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({
+      ...payload,
+      phone: payload.phone ? Number(payload.phone) : undefined,
+    }),
+  });
+}
+
 export type PickedImage = {
   uri: string;
   name: string;
   type: string;
 };
 
-// Demo implementations — no network calls.
-export {
-  registerTrainee,
-  loginTrainee,
-  updateTrainee,
-  uploadTraineePhoto,
-} from "@/api/mockService";
-export { ApiError } from "@/api/client";
+export function uploadTraineePhoto(token: string, image: PickedImage) {
+  if (USE_MOCK_DATA) return mock.uploadTraineePhoto(token, image);
+  const formData = new FormData();
+  formData.append("file", {
+    uri: image.uri,
+    name: image.name,
+    type: image.type,
+  } as unknown as Blob);
 
+  return apiUpload<Trainee>("/trainees/me/photo", formData, token);
+}
+
+export { ApiError } from "./client";

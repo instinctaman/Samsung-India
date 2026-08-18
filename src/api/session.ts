@@ -1,3 +1,7 @@
+import { USE_MOCK_DATA } from "@/config/dataSource";
+import { apiRequest } from "./client";
+import * as mock from "./mockService";
+
 export type SessionModuleKey = "ATTENDANCE" | "STANDARD_TEST" | "LIVE_QUIZ" | "SURVEY";
 
 // Field names mirror the /sessions/current response built from the
@@ -30,6 +34,13 @@ export type CurrentSession = {
   modules: SessionModule[];
 };
 
+export function getCurrentSession(token: string) {
+  if (USE_MOCK_DATA) return mock.getCurrentSession(token);
+  return apiRequest<CurrentSession>("/sessions/current", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
 export type SessionHistoryItem = {
   conferenceUid: string;
   title: string;
@@ -40,7 +51,11 @@ export type SessionHistoryItem = {
   passed: boolean | null;
 };
 
-// Demo implementations — no network calls.
-export { getCurrentSession, getSessionHistory } from "@/api/mockService";
-export { ApiError } from "@/api/client";
+export function getSessionHistory(token: string) {
+  if (USE_MOCK_DATA) return mock.getSessionHistory(token);
+  return apiRequest<SessionHistoryItem[]>("/sessions/history", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
 
+export { ApiError } from "./client";

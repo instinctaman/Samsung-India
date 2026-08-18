@@ -2,6 +2,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/theme/colors";
 import { Shadows } from "@/theme/shadows";
+import { JSX } from "react/jsx-runtime";
 
 export type DashboardTab = "home" | "plan" | "profile" | "more";
 

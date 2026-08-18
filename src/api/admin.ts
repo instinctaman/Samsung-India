@@ -1,4 +1,7 @@
-// Types used by useAuth.tsx — must remain exported from this file.
+import { USE_MOCK_DATA } from "@/config/dataSource";
+import { apiRequest } from "./client";
+import * as mock from "./mockService";
+
 export type AdminAccount = {
   username: string;
   name: string;
@@ -11,7 +14,12 @@ export type AdminAuthSession = {
   admin: AdminAccount;
 };
 
-// Demo implementation — no network calls.
-export { loginAdmin } from "@/api/mockService";
-export { ApiError } from "@/api/client";
+export function loginAdmin(username: string, password: string) {
+  if (USE_MOCK_DATA) return mock.loginAdmin(username, password);
+  return apiRequest<AdminAuthSession>("/admin/login", {
+    method: "POST",
+    body: JSON.stringify({ username, password }),
+  });
+}
 
+export { ApiError } from "./client";

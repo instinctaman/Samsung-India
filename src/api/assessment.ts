@@ -1,3 +1,7 @@
+import { USE_MOCK_DATA } from "@/config/dataSource";
+import { apiRequest } from "./client";
+import * as mock from "./mockService";
+
 export type AssessmentQuestion = {
   id: number;
   question: string;
@@ -25,7 +29,25 @@ export type AssessmentQuestionsResponse = {
   questions: AssessmentQuestion[];
 };
 
-// Demo implementations — no network calls.
-export { getAssessmentQuestions, submitAssessment } from "@/api/mockService";
-export { ApiError } from "@/api/client";
+export function getAssessmentQuestions(token: string, suiteUid: string) {
+  if (USE_MOCK_DATA) return mock.getAssessmentQuestions(token, suiteUid);
+  return apiRequest<AssessmentQuestionsResponse>(`/assessments/${suiteUid}/questions`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
 
+export function submitAssessment(
+  token: string,
+  suiteUid: string,
+  conferenceUid: string,
+  answers: AssessmentAnswer[]
+) {
+  if (USE_MOCK_DATA) return mock.submitAssessment(token, suiteUid, conferenceUid, answers);
+  return apiRequest<AssessmentResult>(`/assessments/${suiteUid}/submit`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ conferenceUid, answers }),
+  });
+}
+
+export { ApiError } from "./client";

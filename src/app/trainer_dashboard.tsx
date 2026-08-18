@@ -1,10 +1,9 @@
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
-import { RefreshControl, ScrollView, StyleSheet, View } from "react-native";
+import { Alert, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { TrainingAgendaItem, fetchTrainerAgenda } from "@/api/training";
-import AccountPanel from "@/components/trainer/AccountPanel";
 import DashboardBottomNav from "@/components/trainer/dashboard/DashboardBottomNav";
 import DashboardHeader from "@/components/trainer/dashboard/DashboardHeader";
 import { calculateDashboardStats } from "@/components/trainer/dashboard/dashboardUtils";
@@ -18,7 +17,7 @@ import DateDrop, {
   DateRange,
   rangeForPreset,
 } from "@/components/trainer/DateDrop";
-import SidebarMenu from "@/components/trainer/SidebarMenu";
+import MoreMenuGrid from "@/components/trainer/dashboard/MoreMenuGrid";
 import TrainingsQuickPanel from "@/components/trainer/TrainingsQuickPanel";
 import AppModal from "@/components/ui/AppModal";
 import { useAuth } from "@/hooks/useAuth";
@@ -37,7 +36,6 @@ export default function TrainerDashboardScreen() {
   >("home");
   const [menuOpen, setMenuOpen] = useState(false);
   const [quickActionsOpen, setQuickActionsOpen] = useState(false);
-  const [accountOpen, setAccountOpen] = useState(false);
   const [dateDropOpen, setDateDropOpen] = useState(false);
   const [datePreset, setDatePreset] = useState<DatePreset>("today");
   const [dateRange, setDateRange] = useState<DateRange>(() =>
@@ -85,7 +83,6 @@ export default function TrainerDashboardScreen() {
   };
 
   const handleLogout = () => {
-    setAccountOpen(false);
     adminLogout();
     router.replace("/trainer_login");
   };
@@ -101,12 +98,26 @@ export default function TrainerDashboardScreen() {
 
   const handleNavigate = (label: string) => {
     closePanels();
-    if (label === "Add New Trainings") {
+    if (label === "Add New Trainings" || label === "New Training") {
       router.push("/add_training");
-    } else if (label === "Pending Trainings") {
+    } else if (label === "Pending Trainings" || label === "Pending Training") {
       router.push("/pending_trainings");
     } else if (label === "Training List") {
       router.push("/training_list");
+    } else if (label === "Attendance List") {
+      router.push("/attendance_list");
+    } else if (label === "New Trainee") {
+      router.push("/new_trainee");
+    } else if (label === "Trainee List") {
+      router.push("/trainee_list");
+    } else if (label === "Pending Trainee") {
+      router.push("/pending_trainee");
+    } else if (label === "Confirmed Attendance") {
+      router.push("/confirmed_attendance");
+    } else if (label === "Pending Attendance") {
+      router.push("/pending_attendance");
+    } else if (label === "View Reports" || label === "View Sessions") {
+      Alert.alert("Coming Soon", `${label} isn't available yet.`);
     }
   };
 
@@ -117,7 +128,7 @@ export default function TrainerDashboardScreen() {
     } else if (tab === "plan") {
       setDateDropOpen(true);
     } else if (tab === "profile") {
-      setAccountOpen(true);
+      router.push("/trainer_profile");
     } else if (tab === "more") {
       setMenuOpen(true);
     }
@@ -141,7 +152,7 @@ export default function TrainerDashboardScreen() {
           {/* Header */}
           <DashboardHeader
             name={admin?.name ?? "Demo Trainer"}
-            onOpenProfile={() => setAccountOpen(true)}
+            onOpenProfile={() => router.push("/trainer_profile")}
             onLogout={handleLogout}
           />
 
@@ -188,10 +199,10 @@ export default function TrainerDashboardScreen() {
       <AppModal
         visible={menuOpen}
         onClose={closePanels}
-        position="left"
-        contentStyle={styles.leftPanel}
+        position="bottom"
+        contentStyle={styles.moreSheet}
       >
-        <SidebarMenu onNavigate={handleNavigate} />
+        <MoreMenuGrid onSelect={handleNavigate} />
       </AppModal>
 
       <AppModal
@@ -216,20 +227,6 @@ export default function TrainerDashboardScreen() {
           onApply={applyDateRange}
         />
       </AppModal>
-
-      <AppModal
-        visible={accountOpen}
-        onClose={() => setAccountOpen(false)}
-        position="right"
-        contentStyle={styles.rightPanel}
-      >
-        <AccountPanel
-          name={admin?.name ?? "Trainer"}
-          role={admin?.role ?? "Trainer"}
-          onSettings={() => setAccountOpen(false)}
-          onLogout={handleLogout}
-        />
-      </AppModal>
     </>
   );
 }
@@ -249,16 +246,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginTop: 12,
   },
-  leftPanel: {
-    width: "80%",
-    height: "100%",
+  moreSheet: {
+    width: "100%",
   },
   topPanel: {
     width: "100%",
-  },
-  rightPanel: {
-    width: "80%",
-    height: "100%",
   },
   dateDropPanel: {
     width: "100%",

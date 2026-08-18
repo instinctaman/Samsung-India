@@ -34,6 +34,161 @@ export const DEMO_TRAINEE = {
   status: "Active",
 };
 
+// ─── Trainer Profile ───────────────────────────────────────────────────────────
+export const DEMO_TRAINER_PROFILE = {
+  name: "Demo Trainer",
+  email: "demotrainer@123.com",
+  mobileNumber: "9877521454",
+  altPhone: "9898521458",
+  gender: "Male",
+  dob: "06/05/2002",
+
+  city: "New Delhi",
+  district: "New Delhi",
+  state: "Delhi",
+  pincode: "110030",
+  landmark: "SBI Bank Sultanpur Branch",
+  permanentSameAsLocal: false,
+
+  aadharNumber: "",
+  aadharFile: "",
+  profilePicture: "",
+  about: "Please design your content",
+  resume: "",
+  otherDocument: "",
+
+  facebookUsername: "",
+  twitterUsername: "",
+  instagramUsername: "",
+  linkedinUsername: "",
+  youtubeUsername: "",
+  github: "",
+
+  jobStatus: "Approved",
+  joinedOn: "02/01/2025",
+  role: "Trainer",
+  designation: "ASM",
+  salary: "",
+  companyEmail: "",
+  visitingCard: "",
+  idCard: "",
+  offerLetter: "",
+  letterhead: "",
+  promocode: "",
+
+  username: "demotrainer",
+  password: "",
+  remarks: "",
+  agreedToTerms: true,
+};
+
+// ─── New Trainee Registration (Trainer-created) ───────────────────────────────
+export type NewTraineeRecord = {
+  traineeUid: string;
+  registeredAt: string;
+  approvalStatus: "Approved" | "Pending" | "Rejected";
+  profilePhoto: string | null;
+  agencyId: string | null;
+  fullName: string;
+  designation: string;
+  gender: string;
+  dob: string | null;
+  primaryEmail: string;
+  primaryPhone: string;
+  altEmail: string | null;
+  altPhone: string | null;
+  address: string | null;
+  state: string | null;
+  district: string | null;
+  zone: string;
+  region: string;
+  company: string;
+  requestedBy: string;
+  trainerId: string;
+  trainerName: string;
+  supervisorId: string;
+  supervisorName: string;
+  supervisorDesignation: string | null;
+  joinedOn: string;
+  jobStatus: string;
+  jobCity: string | null;
+  jobPincode: string | null;
+  resignedOn: string | null;
+  username: string;
+  password: string;
+};
+
+// First 17 names/statuses mirror the reference Trainee List screenshot exactly;
+// the rest pad the list out to the same "159 entries" scale.
+const _seedTraineeNames: { name: string; approvalStatus: "Approved" | "Pending" | "Rejected" }[] = [
+  { name: "Amit Kumar", approvalStatus: "Approved" },
+  { name: "Sumit Roy", approvalStatus: "Approved" },
+  { name: "Anuj Tyagi", approvalStatus: "Approved" },
+  { name: "Ankit Pandey", approvalStatus: "Approved" },
+  { name: "Ishan Saxena", approvalStatus: "Approved" },
+  { name: "Naveen", approvalStatus: "Approved" },
+  { name: "Amit Sehgal", approvalStatus: "Pending" },
+  { name: "Anand Roy", approvalStatus: "Approved" },
+  { name: "Amit Kumar", approvalStatus: "Approved" },
+  { name: "Aamir Khan", approvalStatus: "Pending" },
+  { name: "Som Shekhar", approvalStatus: "Approved" },
+  { name: "Priyanshu", approvalStatus: "Pending" },
+  { name: "Praveen Kumar", approvalStatus: "Approved" },
+  { name: "Sahil Khan", approvalStatus: "Approved" },
+  { name: "Ch. Aman", approvalStatus: "Approved" },
+  { name: "Aashish Maan", approvalStatus: "Pending" },
+  { name: "Ameerul", approvalStatus: "Rejected" },
+];
+
+function _makeDemoTrainee(
+  index: number,
+  name: string,
+  approvalStatus: "Approved" | "Pending" | "Rejected"
+): NewTraineeRecord {
+  const n = index + 1;
+  return {
+    traineeUid: `demo-trainee-${String(n).padStart(3, "0")}`,
+    registeredAt: "2026-07-25 09:00:00",
+    approvalStatus,
+    profilePhoto: null,
+    agencyId: null,
+    fullName: name,
+    designation: "Sales Associate",
+    gender: "male",
+    dob: null,
+    primaryEmail: `trainee${n}@samsung.com`,
+    primaryPhone: `98765${String(40000 + n).slice(-5)}`,
+    altEmail: null,
+    altPhone: null,
+    address: null,
+    state: "delhi",
+    district: "new_delhi",
+    zone: "North",
+    region: "Delhi NCR",
+    company: "Samsung India",
+    requestedBy: "Demo Trainer",
+    trainerId: "demo-trainer-001",
+    trainerName: "Demo Trainer",
+    supervisorId: "demo-supervisor-001",
+    supervisorName: "Priya Sharma",
+    supervisorDesignation: "Regional Manager",
+    joinedOn: "2026-07-25",
+    jobStatus: "Active",
+    jobCity: null,
+    jobPincode: null,
+    resignedOn: null,
+    username: `trainee${n}`,
+    password: "demo1234",
+  };
+}
+
+const TRAINEE_LIST_TOTAL = 159;
+
+export const DEMO_REGISTERED_TRAINEES: NewTraineeRecord[] = Array.from({ length: TRAINEE_LIST_TOTAL }, (_, i) => {
+  const seed = _seedTraineeNames[i % _seedTraineeNames.length];
+  return _makeDemoTrainee(i, seed.name, seed.approvalStatus);
+});
+
 export const DEMO_AUTH_SESSION = {
   access_token: "demo-access-token-trainee",
   token_type: "bearer",
@@ -105,10 +260,24 @@ export const DEMO_SESSION_HISTORY = [
 
 // ─── Trainer Agenda ───────────────────────────────────────────────────────────
 export const DEMO_AGENDA = [
-  { conferenceUid: "demo-conf-uid-main",    title: "Samsung Galaxy S26 Product Training",  conferenceDate: TODAY_STR     as string | null, conferenceTime: "10:00" as string | null, conferenceStatus: "Ongoing",   approvalStatus: "Approved", location: "Samsung Training Hub, New Delhi"        as string | null, batchSize: "25" as string | null, trainingType: "Product Training"    as string | null, state: "delhi"   as string | null, trainingHub: "Delhi"        as string | null },
-  { conferenceUid: "demo-conf-uid-sched-1", title: "Galaxy AI Features Deep Dive",          conferenceDate: TOMORROW_STR  as string | null, conferenceTime: "09:00" as string | null, conferenceStatus: "Scheduled", approvalStatus: "Approved", location: "Samsung Experience Centre, Gurugram"    as string | null, batchSize: "30" as string | null, trainingType: "Classroom Training" as string | null, state: "haryana" as string | null, trainingHub: "Not Assigned" as string | null },
-  { conferenceUid: "demo-conf-uid-comp-1",  title: "Samsung Smart Home Ecosystem",          conferenceDate: YESTERDAY_STR as string | null, conferenceTime: "11:00" as string | null, conferenceStatus: "Completed", approvalStatus: "Approved", location: "Samsung Service Centre, Noida"          as string | null, batchSize: "20" as string | null, trainingType: "Webinar"            as string | null, state: "up"      as string | null, trainingHub: "Delhi"        as string | null },
-  { conferenceUid: "demo-conf-uid-pend-1",  title: "SEC Plan Refresher Workshop",            conferenceDate: TOMORROW_STR  as string | null, conferenceTime: "14:00" as string | null, conferenceStatus: "Scheduled", approvalStatus: "Pending",  location: "Samsung Training Hub, Lucknow"          as string | null, batchSize: "15" as string | null, trainingType: "Product Training"    as string | null, state: "up"      as string | null, trainingHub: "Not Assigned" as string | null },
+  { conferenceUid: "demo-conf-uid-main",    title: "Samsung Galaxy S26 Product Training",  trainerName: "Demo Trainer" as string | null, conferenceDate: TODAY_STR     as string | null, conferenceTime: "10:00" as string | null, conferenceStatus: "Ongoing",   approvalStatus: "Approved", location: "Samsung Training Hub, New Delhi"        as string | null, batchSize: "25" as string | null, trainingType: "Product Training"    as string | null, state: "delhi"   as string | null, trainingHub: "Delhi"        as string | null },
+  { conferenceUid: "demo-conf-uid-sched-1", title: "Galaxy AI Features Deep Dive",          trainerName: "Demo Trainer" as string | null, conferenceDate: TOMORROW_STR  as string | null, conferenceTime: "09:00" as string | null, conferenceStatus: "Scheduled", approvalStatus: "Approved", location: "Samsung Experience Centre, Gurugram"    as string | null, batchSize: "30" as string | null, trainingType: "Classroom Training" as string | null, state: "haryana" as string | null, trainingHub: "Not Assigned" as string | null },
+  { conferenceUid: "demo-conf-uid-comp-1",  title: "Samsung Smart Home Ecosystem",          trainerName: "Demo Trainer" as string | null, conferenceDate: YESTERDAY_STR as string | null, conferenceTime: "11:00" as string | null, conferenceStatus: "Completed", approvalStatus: "Approved", location: "Samsung Service Centre, Noida"          as string | null, batchSize: "20" as string | null, trainingType: "Webinar"            as string | null, state: "up"      as string | null, trainingHub: "Delhi"        as string | null },
+  { conferenceUid: "demo-conf-uid-pend-1",  title: "SEC Plan Refresher Workshop",            trainerName: "Demo Trainer" as string | null, conferenceDate: TOMORROW_STR  as string | null, conferenceTime: "14:00" as string | null, conferenceStatus: "Scheduled", approvalStatus: "Pending",  location: "Samsung Training Hub, Lucknow"          as string | null, batchSize: "15" as string | null, trainingType: "Product Training"    as string | null, state: "up"      as string | null, trainingHub: "Not Assigned" as string | null },
+  { conferenceUid: "demo-conf-uid-pend-2",  title: "MX Training – Partner Staff Induction",  trainerName: "Demo Trainer" as string | null, conferenceDate: _daysFromToday(2)  as string | null, conferenceTime: "16:00" as string | null, conferenceStatus: "Scheduled", approvalStatus: "Pending",  location: "Samsung Training Hub, Chennai"          as string | null, batchSize: "18" as string | null, trainingType: "Classroom Training"  as string | null, state: "tn"      as string | null, trainingHub: "Not Assigned" as string | null },
+  { conferenceUid: "demo-conf-uid-appr-2",  title: "SEC LITE GT Onboarding",                 trainerName: "Demo Trainer" as string | null, conferenceDate: _daysFromToday(3)  as string | null, conferenceTime: "09:30" as string | null, conferenceStatus: "Scheduled", approvalStatus: "Approved", location: "Samsung Experience Centre, Pune"        as string | null, batchSize: "22" as string | null, trainingType: "Classroom Training"  as string | null, state: "mh"      as string | null, trainingHub: "Not Assigned" as string | null },
+  { conferenceUid: "demo-conf-uid-rej-1",   title: "Festive SEC Readiness Drive",            trainerName: "Demo Trainer" as string | null, conferenceDate: _daysFromToday(-2) as string | null, conferenceTime: "10:00" as string | null, conferenceStatus: "Scheduled", approvalStatus: "Rejected", location: "Samsung Training Hub, Bengaluru"        as string | null, batchSize: "12" as string | null, trainingType: "Product Training"    as string | null, state: "ka"      as string | null, trainingHub: "Not Assigned" as string | null },
+  { conferenceUid: "demo-conf-uid-rej-2",   title: "OT SEC Compliance Refresher",            trainerName: "Demo Trainer" as string | null, conferenceDate: _daysFromToday(-4) as string | null, conferenceTime: "12:00" as string | null, conferenceStatus: "Scheduled", approvalStatus: "Rejected", location: "Samsung Service Centre, Kolkata"        as string | null, batchSize: "10" as string | null, trainingType: "Webinar"             as string | null, state: "wb"      as string | null, trainingHub: "Not Assigned" as string | null },
+  { conferenceUid: "demo-conf-uid-10",      title: "Galaxy Watch Ecosystem Training",        trainerName: "Demo Trainer" as string | null, conferenceDate: _daysFromToday(-5)  as string | null, conferenceTime: "09:00" as string | null, conferenceStatus: "Completed", approvalStatus: "Approved", location: "Samsung Training Hub, New Delhi"        as string | null, batchSize: "24" as string | null, trainingType: "Classroom Training"  as string | null, state: "delhi"   as string | null, trainingHub: "Delhi"        as string | null },
+  { conferenceUid: "demo-conf-uid-11",      title: "NHIT Field Sales Bootcamp",              trainerName: "Demo Trainer" as string | null, conferenceDate: _daysFromToday(-6)  as string | null, conferenceTime: "09:00" as string | null, conferenceStatus: "Completed", approvalStatus: "Approved", location: "Samsung Experience Centre, Hyderabad"   as string | null, batchSize: "16" as string | null, trainingType: "Classroom Training"  as string | null, state: "ts"      as string | null, trainingHub: "Not Assigned" as string | null },
+  { conferenceUid: "demo-conf-uid-12",      title: "ASE and ZSE Certification Prep",         trainerName: "Demo Trainer" as string | null, conferenceDate: _daysFromToday(-7)  as string | null, conferenceTime: "14:00" as string | null, conferenceStatus: "Completed", approvalStatus: "Pending",  location: "Samsung Service Centre, Jaipur"         as string | null, batchSize: "20" as string | null, trainingType: "Product Training"    as string | null, state: "rj"      as string | null, trainingHub: "Not Assigned" as string | null },
+  { conferenceUid: "demo-conf-uid-13",      title: "Galaxy AI Retail Enablement",            trainerName: "Demo Trainer" as string | null, conferenceDate: _daysFromToday(-8)  as string | null, conferenceTime: "09:00" as string | null, conferenceStatus: "Completed", approvalStatus: "Approved", location: "Samsung Training Hub, Mumbai"           as string | null, batchSize: "28" as string | null, trainingType: "Classroom Training"  as string | null, state: "mh"      as string | null, trainingHub: "Not Assigned" as string | null },
+  { conferenceUid: "demo-conf-uid-14",      title: "Smart TV Product Walkthrough",           trainerName: "Demo Trainer" as string | null, conferenceDate: _daysFromToday(-9)  as string | null, conferenceTime: "10:00" as string | null, conferenceStatus: "Completed", approvalStatus: "Rejected", location: "Samsung Service Centre, Ahmedabad"      as string | null, batchSize: "14" as string | null, trainingType: "Webinar"             as string | null, state: "gj"      as string | null, trainingHub: "Not Assigned" as string | null },
+  { conferenceUid: "demo-conf-uid-15",      title: "PC Training – Galaxy Book Series",       trainerName: "Demo Trainer" as string | null, conferenceDate: _daysFromToday(4)   as string | null, conferenceTime: "11:00" as string | null, conferenceStatus: "Scheduled", approvalStatus: "Pending",  location: "Samsung Experience Centre, Chandigarh"  as string | null, batchSize: "18" as string | null, trainingType: "Product Training"    as string | null, state: "ch"      as string | null, trainingHub: "Not Assigned" as string | null },
+  { conferenceUid: "demo-conf-uid-16",      title: "Sales Team Quarterly Refresher",         trainerName: "Demo Trainer" as string | null, conferenceDate: _daysFromToday(5)   as string | null, conferenceTime: "09:30" as string | null, conferenceStatus: "Scheduled", approvalStatus: "Approved", location: "Samsung Training Hub, Bhopal"           as string | null, batchSize: "26" as string | null, trainingType: "Classroom Training"  as string | null, state: "mp"      as string | null, trainingHub: "Not Assigned" as string | null },
+  { conferenceUid: "demo-conf-uid-17",      title: "Partner Staff Induction – Retail",       trainerName: "Demo Trainer" as string | null, conferenceDate: _daysFromToday(6)   as string | null, conferenceTime: "13:00" as string | null, conferenceStatus: "Scheduled", approvalStatus: "Approved", location: "Samsung Service Centre, Patna"          as string | null, batchSize: "19" as string | null, trainingType: "Webinar"             as string | null, state: "bh"      as string | null, trainingHub: "Not Assigned" as string | null },
+  { conferenceUid: "demo-conf-uid-18",      title: "FESTIVE SEC Launch Readiness",           trainerName: "Demo Trainer" as string | null, conferenceDate: _daysFromToday(7)   as string | null, conferenceTime: "10:30" as string | null, conferenceStatus: "Scheduled", approvalStatus: "Rejected", location: "Samsung Training Hub, Bengaluru"        as string | null, batchSize: "11" as string | null, trainingType: "Product Training"    as string | null, state: "ka"      as string | null, trainingHub: "Not Assigned" as string | null },
+  { conferenceUid: "demo-conf-uid-19",      title: "SGC Store Excellence Program",           trainerName: "Demo Trainer" as string | null, conferenceDate: _daysFromToday(8) as string | null, conferenceTime: "15:00" as string | null, conferenceStatus: "Scheduled", approvalStatus: "Pending",  location: "Samsung Experience Centre, Indore"      as string | null, batchSize: "23" as string | null, trainingType: "Classroom Training"  as string | null, state: "mp"      as string | null, trainingHub: "Not Assigned" as string | null },
 ];
 
 // ─── Session Dashboard — Trainee Rows ────────────────────────────────────────

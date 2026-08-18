@@ -22,6 +22,9 @@ import {
   DEMO_SUITE_DETAIL_BASE,
   DEMO_SURVEY_QUESTIONS,
   DEMO_TRAINEE,
+  DEMO_TRAINER_PROFILE,
+  DEMO_REGISTERED_TRAINEES,
+  NewTraineeRecord,
 } from "@/data/mockData";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -43,6 +46,8 @@ let _pending = JSON.parse(JSON.stringify(DEMO_PENDING_SESSIONS)) as typeof DEMO_
 
 type SuiteDetail = typeof DEMO_SUITE_DETAIL_BASE;
 let _suites: SuiteDetail[] = [JSON.parse(JSON.stringify(DEMO_SUITE_DETAIL_BASE))];
+let _registeredTrainees: NewTraineeRecord[] = [...DEMO_REGISTERED_TRAINEES];
+let _trainerProfile = { ...DEMO_TRAINER_PROFILE };
 
 // ─── Admin Auth ───────────────────────────────────────────────────────────────
 export async function loginAdmin(username: string, _password: string) {
@@ -111,6 +116,46 @@ export async function uploadTraineePhoto(
   await delay(1200);
   _trainee = { ..._trainee, profilePhoto: image.uri };
   return { ..._trainee };
+}
+
+// ─── Trainer-managed Trainee Registration ─────────────────────────────────────
+export async function registerNewTrainee(
+  _token: string,
+  payload: Omit<NewTraineeRecord, "registeredAt" | "approvalStatus">
+): Promise<NewTraineeRecord> {
+  await delay();
+  const record: NewTraineeRecord = { ...payload, registeredAt: nowStr(), approvalStatus: "Pending" };
+  _registeredTrainees.push(record);
+  return record;
+}
+
+export async function fetchTraineeList(_token: string): Promise<NewTraineeRecord[]> {
+  await delay();
+  return _registeredTrainees.map((row) => ({ ...row }));
+}
+
+// ─── Attendance List (Trainer-facing) ─────────────────────────────────────────
+export async function fetchAttendanceList(_token: string) {
+  await delay();
+  return _registeredTrainees.map((t) => ({
+    traineeUid: t.traineeUid,
+    name: t.fullName,
+    trainerName: t.trainerName,
+    date: t.registeredAt,
+    marked: t.approvalStatus === "Approved",
+  }));
+}
+
+// ─── Trainer Profile ───────────────────────────────────────────────────────────
+export async function fetchTrainerProfile(_token: string) {
+  await delay();
+  return { ..._trainerProfile };
+}
+
+export async function updateTrainerProfile(_token: string, payload: Partial<typeof DEMO_TRAINER_PROFILE>) {
+  await delay();
+  _trainerProfile = { ..._trainerProfile, ...payload };
+  return { ..._trainerProfile };
 }
 
 // ─── Session ──────────────────────────────────────────────────────────────────
@@ -292,6 +337,7 @@ export async function createTraining(
   _agenda.push({
     conferenceUid:    uid,
     title:            (payload.title as string) || "New Training Session",
+    trainerName:      (payload.trainerName as string | null) ?? DEMO_ADMIN_TRAINER.name,
     conferenceDate:   (payload.conferenceDate as string | null) ?? null,
     conferenceTime:   (payload.conferenceTime as string | null) ?? null,
     conferenceStatus: "Scheduled",
