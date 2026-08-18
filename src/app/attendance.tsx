@@ -12,6 +12,7 @@ import { FontWeight } from "@/theme/fontWeight";
 import { Fonts } from "@/theme/fonts";
 import { useAuth } from "@/hooks/useAuth";
 import { ApiError, checkIn } from "@/api/attendance";
+import { setAttendanceState, setSessionFlowState } from "@/api/session";
 
 export default function AttendanceScreen() {
   const router = useRouter();
@@ -98,8 +99,20 @@ export default function AttendanceScreen() {
         { label: "Checked In", value: markedOn ? markedOn.split(" ")[1]?.slice(0, 5) ?? markedOn : "--", icon: "calendar-outline" },
         { label: "Location", value: params.location || "--", icon: "location-outline" },
       ]}
-      onContinue={() => router.back()}
-      onHome={() => router.replace("/")}
+      onContinue={() => {
+        setSessionFlowState("ATTENDANCE_RECORDED");
+        router.replace({
+          pathname: "/session_detail",
+          params: { flow: "ATTENDANCE_RECORDED", attendance: "completed" },
+        });
+      }}
+      onHome={() => {
+        setSessionFlowState("ATTENDANCE_RECORDED");
+        router.replace({
+          pathname: "/session_detail",
+          params: { flow: "ATTENDANCE_RECORDED", attendance: "completed" },
+        });
+      }}
     />
   );
 }

@@ -223,12 +223,16 @@ const styles = StyleSheet.create({
   content: {
     flexGrow: 1,
     minHeight: "100%",
+    width: "100%",
+    maxWidth: "100%",
     paddingHorizontal: 16,
     paddingTop: 8,
     paddingBottom: 28,
   },
   activeTopSection: {
     flex: 1,
+    width: "100%",
+    maxWidth: "100%",
     gap: 12,
   },
   timerContainer: {

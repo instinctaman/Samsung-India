@@ -41,6 +41,8 @@ export default function QuizExplanation({
 
 const styles = StyleSheet.create({
   container: {
+    width: "100%",
+    maxWidth: "100%",
     backgroundColor: "#D8F3E5",
     borderRadius: 14,
     padding: 13,
@@ -56,6 +58,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.recordedGreen,
     alignItems: "center",
     justifyContent: "center",
+    flexShrink: 0,
   },
   textWrap: {
     flex: 1,

@@ -4,6 +4,7 @@ import { StyleSheet, View } from "react-native";
 import AppText from "@/components/ui/AppText";
 import { Colors } from "@/theme/colors";
 import { FontWeight } from "@/theme/fontWeight";
+import { createShadow } from "@/theme/shadows";
 
 export type QuizTimerProps = {
   duration?: number;
@@ -93,11 +94,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginVertical: 4,
-    shadowColor: Colors.black,
-    shadowOpacity: 0.04,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 6,
-    elevation: 2,
+    ...createShadow({ x: 0, y: 2, blur: 6, opacity: 0.04, elevation: 2 }),
   },
 
   timerText: {

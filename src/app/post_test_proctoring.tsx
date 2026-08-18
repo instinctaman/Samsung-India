@@ -18,8 +18,12 @@ export default function PostTestProctoringScreen() {
 
   const handleStartTest = async () => {
     if (loading) return;
+    if (typeof document !== "undefined") {
+      (document.activeElement as HTMLElement)?.blur?.();
+    }
     setLoading(true);
     setError(null);
+
 
     try {
       if (!permission?.granted) {

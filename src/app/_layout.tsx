@@ -8,10 +8,11 @@ import {
   Poppins_900Black,
   useFonts,
 } from "@expo-google-fonts/poppins";
-import { DefaultTheme, Stack, ThemeProvider } from "expo-router";
+import { DefaultTheme, Stack, ThemeProvider, usePathname } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import * as SystemUI from "expo-system-ui";
 import { useEffect } from "react";
+import { Platform } from "react-native";
 
 import { AnimatedSplashOverlay } from "@/components/animated-icon";
 import { AuthProvider } from "@/hooks/useAuth";
@@ -21,6 +22,7 @@ SplashScreen.preventAutoHideAsync();
 SystemUI.setBackgroundColorAsync("#EEF4FF");
 
 export default function RootLayout() {
+  const pathname = usePathname();
   const [fontsLoaded, fontError] = useFonts({
     "Poppins-Light": Poppins_300Light,
     "Poppins-Regular": Poppins_400Regular,
@@ -45,6 +47,13 @@ export default function RootLayout() {
     }
   }, [fontsLoaded, fontError]);
 
+  // Globally blur active element on route changes to eliminate aria-hidden accessibility warnings on React Native Web
+  useEffect(() => {
+    if (Platform.OS === "web" && typeof document !== "undefined") {
+      (document.activeElement as HTMLElement)?.blur?.();
+    }
+  }, [pathname]);
+
   if (!fontsLoaded && !fontError) {
     return null;
   }
@@ -66,6 +75,7 @@ export default function RootLayout() {
           <Stack.Screen name="session_dashboard" />
           <Stack.Screen name="session" />
           <Stack.Screen name="session_detail" />
+          <Stack.Screen name="secure_checkin" />
           <Stack.Screen name="attendance" />
           <Stack.Screen name="wait" />
           <Stack.Screen name="quiz" />

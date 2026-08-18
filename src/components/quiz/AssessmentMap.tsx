@@ -1,4 +1,3 @@
-import React from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -8,10 +7,11 @@ import {
 } from "react-native";
 
 import AppText from "@/components/ui/AppText";
-import AssessmentMapHeader from "./AssessmentMapHeader";
-import QuestionStatusGrid from "./QuestionStatusGrid";
 import { Colors } from "@/theme/colors";
 import { FontWeight } from "@/theme/fontWeight";
+import { createShadow } from "@/theme/shadows";
+import AssessmentMapHeader from "./AssessmentMapHeader";
+import QuestionStatusGrid from "./QuestionStatusGrid";
 
 export type AssessmentMapProps = {
   totalQuestions: number;
@@ -41,7 +41,10 @@ export default function AssessmentMap({
   const expiredCount = Object.values(answers).filter((a) => a === null).length;
   const attemptedCount = answeredCount - expiredCount;
   const skippedCount = Math.max(0, totalQuestions - answeredCount);
-  const progressPercent = totalQuestions > 0 ? Math.round((answeredCount / totalQuestions) * 100) : 100;
+  const progressPercent =
+    totalQuestions > 0
+      ? Math.round((answeredCount / totalQuestions) * 100)
+      : 100;
 
   return (
     <ScrollView
@@ -204,11 +207,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginTop: 14,
     overflow: "hidden",
-    shadowColor: Colors.black,
-    shadowOpacity: 0.08,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 10,
-    elevation: 3,
+    ...createShadow({ x: 0, y: 4, blur: 10, opacity: 0.08, elevation: 3 }),
   },
   hero: {
     backgroundColor: Colors.headerBlue,

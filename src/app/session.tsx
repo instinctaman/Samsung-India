@@ -12,13 +12,20 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { CurrentSession, getCurrentSession } from "@/api/session";
+import {
+  CurrentSession,
+  getCurrentSession,
+  isAttendanceRecorded,
+  setSessionFlowState,
+} from "@/api/session";
 import SecurityFooter from "@/components/common/SecurityFooter";
 import AppButton from "@/components/ui/AppButton";
 import AppText from "@/components/ui/AppText";
 import { useAuth } from "@/hooks/useAuth";
 import { Colors } from "@/theme/colors";
 import { Fonts } from "@/theme/fonts";
+import { createShadow } from "@/theme/shadows";
+
 
 const AVATAR_BY_GENDER: Record<string, ImageSourcePropType> = {
   male: require("@/assets/images/user_img/default_male.png"),
@@ -118,7 +125,25 @@ export default function SessionScreen() {
 
           <AppButton
             title="Join Session"
-            onPress={() => router.push("/session_detail")}
+            onPress={() => {
+              if (isAttendanceRecorded()) {
+                router.push({
+                  pathname: "/session_detail",
+                  params: {
+                    flow: "ATTENDANCE_RECORDED",
+                    attendance: "completed",
+                  },
+                });
+                return;
+              }
+              setSessionFlowState("SECURE_CHECKIN");
+              router.push({
+                pathname: "/session_detail",
+                params: {
+                  flow: "SECURE_CHECKIN",
+                },
+              });
+            }}
             leftIcon={
               <CheckCircle width={Fonts.bodyLg} height={Fonts.bodyLg} />
             }
@@ -175,12 +200,9 @@ const styles = StyleSheet.create({
     borderRadius: 27,
     padding: 24,
     marginTop: "-10%",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 5,
+    ...createShadow({ x: 0, y: 3, blur: 8, opacity: 0.08, elevation: 5 }),
   },
+
   details: { flexDirection: "row", flexWrap: "wrap", rowGap: 20 },
   detail: { width: "50%" },
   label: { fontSize: Fonts.bodySm, color: "#505050", marginBottom: 6 },

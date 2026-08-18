@@ -137,15 +137,117 @@ export async function uploadTraineePhoto(
 }
 
 // ─── Session ──────────────────────────────────────────────────────────────────
+export type SessionFlowState =
+  | "JOINED"
+  | "SECURE_CHECKIN"
+  | "LOCATION_VERIFIED"
+  | "CAMERA_VERIFIED"
+  | "MARK_ATTENDANCE"
+  | "ACCESS_GRANTED"
+  | "ATTENDANCE_RECORDED";
+
+export type AttendanceState = SessionFlowState;
+
+let _flowState: SessionFlowState = "JOINED";
+let _attendanceRecorded = false;
 let _currentSession = {
   ...DEMO_CURRENT_SESSION,
   modules: DEMO_CURRENT_SESSION.modules.map((m) => ({ ...m })),
 };
 
+export function isAttendanceRecorded(): boolean {
+  return _attendanceRecorded || _flowState === "ATTENDANCE_RECORDED";
+}
+
+export function getSessionFlowState(): SessionFlowState {
+  if (_attendanceRecorded) {
+    return "ATTENDANCE_RECORDED";
+  }
+  return _flowState;
+}
+
+export function setSessionFlowState(state: SessionFlowState) {
+  if (_attendanceRecorded && state !== "ATTENDANCE_RECORDED") {
+    // Attendance was already recorded — keep it recorded for all tests!
+    _flowState = "ATTENDANCE_RECORDED";
+    return;
+  }
+
+  _flowState = state;
+
+  if (state === "ATTENDANCE_RECORDED") {
+    _attendanceRecorded = true;
+    const att = _currentSession.modules.find((m) => m.key === "ATTENDANCE");
+    if (att) {
+      att.isCompleted = true;
+      att.isLive = false;
+      att.completedAt = att.completedAt ?? "10:25";
+      att.ranDuration = att.ranDuration ?? "Ran : 45m 3s";
+    }
+    const quiz = _currentSession.modules.find((m) => m.key === "LIVE_QUIZ");
+    if (quiz && !quiz.isCompleted) {
+      quiz.isLive = true;
+    }
+  }
+}
+
+export function resetSessionFlowState() {
+  _flowState = "JOINED";
+  _attendanceRecorded = false;
+  const att = _currentSession.modules.find((m) => m.key === "ATTENDANCE");
+  if (att) {
+    att.isCompleted = false;
+    att.isLive = true;
+    att.completedAt = null;
+    att.ranDuration = null;
+  }
+  const quiz = _currentSession.modules.find((m) => m.key === "LIVE_QUIZ");
+  if (quiz) {
+    quiz.isLive = false;
+    quiz.isCompleted = false;
+  }
+}
+
+export function getAttendanceState(): AttendanceState {
+  return getSessionFlowState();
+}
+
+export function setAttendanceState(state: AttendanceState) {
+  setSessionFlowState(state);
+}
+
+export async function setSecurityCheckInCompleted(completed: boolean) {
+  if (completed && (_flowState === "JOINED" || _flowState === "SECURE_CHECKIN" || _flowState === "LOCATION_VERIFIED")) {
+    setSessionFlowState("CAMERA_VERIFIED");
+  }
+}
+
 export async function getCurrentSession(_token: string) {
   await delay();
+
+  if (_attendanceRecorded) {
+    _flowState = "ATTENDANCE_RECORDED";
+    const att = _currentSession.modules.find((m) => m.key === "ATTENDANCE");
+    if (att) {
+      att.isCompleted = true;
+      att.isLive = false;
+      att.completedAt = att.completedAt ?? "10:25";
+      att.ranDuration = att.ranDuration ?? "Ran : 45m 3s";
+    }
+  }
+
+  const isSecurityDone =
+    _attendanceRecorded ||
+    _flowState === "CAMERA_VERIFIED" ||
+    _flowState === "MARK_ATTENDANCE" ||
+    _flowState === "ACCESS_GRANTED" ||
+    _flowState === "ATTENDANCE_RECORDED";
+
   return {
     ..._currentSession,
+    flowState: _flowState,
+    attendanceState: _flowState,
+    securityCheckInCompleted: isSecurityDone,
     modules: _currentSession.modules.map((m) => ({ ...m })),
   };
 }
@@ -158,6 +260,7 @@ export async function getSessionHistory(_token: string) {
 // ─── Attendance ───────────────────────────────────────────────────────────────
 export async function checkIn(_token: string, _conferenceUid: string) {
   await delay();
+  setSessionFlowState("ATTENDANCE_RECORDED");
   return { status: "Present", markedOn: nowStr(), distanceMeters: 42 };
 }
 
@@ -171,7 +274,7 @@ export async function verifyLocation(
   return {
     distanceMeters: 38,
     withinRadius: true,
-    venueLabel: "Samsung Training Hub",
+    venueLabel: "Gurugram Sector 4",
   };
 }
 
@@ -185,6 +288,13 @@ export async function secureCheckIn(
   },
 ) {
   await delay(1400);
+  const att = _currentSession.modules.find((m) => m.key === "ATTENDANCE");
+  if (att) {
+    att.isCompleted = true;
+    att.isLive = false;
+    att.completedAt = "10:25";
+    att.ranDuration = "Ran : 45m 3s";
+  }
   return { status: "Present", markedOn: nowStr(), distanceMeters: 42 };
 }
 
@@ -205,10 +315,11 @@ export async function getAssessmentQuestions(_token: string, suiteUid: string) {
       ? DEMO_ASSESSMENT_QUESTIONS.slice(0, 4)
       : DEMO_ASSESSMENT_QUESTIONS;
   const title = isSurvey
-    ? "Training Feedback Survey"
+    ? "SECs Feedback | June\nClassroom Training Sessions"
     : isQuiz
       ? "Galaxy AI Live Quiz"
       : "Samsung Galaxy S26 Post Test";
+
   return {
     title,
     testTime: isSurvey ? null : isQuiz ? "2" : "30",
@@ -223,43 +334,85 @@ export async function submitAssessment(
   answers: { questionId: number; selectedOption: string | null }[],
 ) {
   await delay(900);
+  const isSurvey = suiteUid.includes("survey");
   const isQuiz = suiteUid.includes("quiz");
-  const questions = isQuiz
-    ? DEMO_ASSESSMENT_QUESTIONS.slice(0, 4)
-    : DEMO_ASSESSMENT_QUESTIONS;
-  const totalQuestions = answers.length || (isQuiz ? 4 : 10);
+  const isPostTest = !isSurvey && !isQuiz;
+
+  const questions = isSurvey
+    ? DEMO_SURVEY_QUESTIONS
+    : isQuiz
+      ? DEMO_ASSESSMENT_QUESTIONS.slice(0, 4)
+      : DEMO_ASSESSMENT_QUESTIONS;
+  const totalQuestions = answers.length || (isQuiz ? 4 : (isSurvey ? 4 : 15));
   let correctCount = 0;
   answers.forEach((ans, idx) => {
     const q =
       questions.find((item) => item.id === ans.questionId) ?? questions[idx];
-    if (q && ans.selectedOption && ans.selectedOption === q.correctAnswer) {
+    const correctAnswer = (q as { correctAnswer?: string | null })?.correctAnswer;
+    if (q && ans.selectedOption && ans.selectedOption === correctAnswer) {
       correctCount++;
     }
   });
 
   if (answers.length === 0) {
-    correctCount = isQuiz ? 3 : 9;
+    correctCount = isQuiz ? 3 : 12;
   }
 
-  const scoreStr = `${correctCount}/${totalQuestions}`;
+  const scoreStr = isSurvey ? null : `${correctCount}/${totalQuestions}`;
 
   _currentSession = {
     ..._currentSession,
     modules: _currentSession.modules.map((m) => {
-      if (m.key === "LIVE_QUIZ") {
+      if (isQuiz && m.key === "LIVE_QUIZ") {
         return {
           ...m,
           isCompleted: true,
           isLive: false,
-          score: scoreStr,
+          score: scoreStr ?? "9/15",
           completedAt: "Completed successfully",
           ranDuration: "Ran : 1h 55m",
         };
       }
-      if (m.key === "STANDARD_TEST") {
+      if (isQuiz && m.key === "STANDARD_TEST") {
         return {
           ...m,
           isLive: true,
+        };
+      }
+      if (isPostTest && m.key === "LIVE_QUIZ") {
+        return {
+          ...m,
+          isCompleted: true,
+          isLive: false,
+          score: m.score ?? "9/15",
+          completedAt: "Completed successfully",
+          ranDuration: m.ranDuration ?? "Ran : 1h 55m",
+        };
+      }
+      if (isPostTest && m.key === "STANDARD_TEST") {
+        return {
+          ...m,
+          isCompleted: true,
+          isLive: false,
+          score: scoreStr ?? "12/15",
+          completedAt: "Completed successfully",
+          ranDuration: "Ran : 1h 50m",
+        };
+      }
+      if (isPostTest && m.key === "SURVEY") {
+        return {
+          ...m,
+          isLive: true,
+          isCompleted: false,
+        };
+      }
+      if (isSurvey && m.key === "SURVEY") {
+        return {
+          ...m,
+          isCompleted: true,
+          isLive: false,
+          completedAt: "Completed successfully",
+          ranDuration: "Ran : 25m",
         };
       }
       return m;
@@ -274,6 +427,45 @@ export async function submitAssessment(
     totalQuestions,
   };
 }
+
+/**
+ * Terminates a Post Test due to a security violation.
+ * Marks the test as locked — does NOT complete it successfully.
+ * Survey remains Upcoming (not unlocked).
+ */
+export async function terminateAssessmentWithViolation(
+  _token: string,
+  suiteUid: string,
+  _conferenceUid: string,
+  violationType: string,
+  answers: { questionId: number; selectedOption: string | null }[],
+) {
+  await delay(400);
+  const isPostTest = !suiteUid.includes("survey") && !suiteUid.includes("quiz");
+  if (!isPostTest) return { locked: false };
+
+  _currentSession = {
+    ..._currentSession,
+    modules: _currentSession.modules.map((m) => {
+      if (m.key === "STANDARD_TEST") {
+        return {
+          ...m,
+          isCompleted: false,
+          isLive: false,
+          isLocked: true,
+          completedAt: `Security Violation: ${violationType}`,
+          score: null,
+          ranDuration: null,
+        };
+      }
+      // Survey stays Upcoming — not unlocked by a violated post test
+      return m;
+    }),
+  };
+
+  return { locked: true, violationType, attemptedCount: answers.length };
+}
+
 
 // ─── Trainer Agenda ───────────────────────────────────────────────────────────
 export async function fetchTrainerAgenda(

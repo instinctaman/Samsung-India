@@ -1,6 +1,13 @@
-import React, { useEffect, useRef } from "react";
-import { Animated, Easing, Pressable, StyleSheet, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import React, { useEffect, useRef } from "react";
+import {
+  Animated,
+  Easing,
+  Platform,
+  Pressable,
+  StyleSheet,
+  View,
+} from "react-native";
 
 import Bell from "@/assets/images/svg/bell.svg";
 import Clock from "@/assets/images/svg/clock.svg";
@@ -11,6 +18,10 @@ import AppText from "@/components/ui/AppText";
 import { Colors } from "@/theme/colors";
 import { Fonts } from "@/theme/fonts";
 import { FontWeight } from "@/theme/fontWeight";
+import { createShadow } from "@/theme/shadows";
+
+export const QUIZ_WAITING_ICON_SIZE = 26;
+export const QUIZ_WAITING_CONTAINER_SIZE = 49;
 
 export type QuizWaitingProps = {
   onSyncNow?: () => void;
@@ -31,8 +42,8 @@ export default function QuizWaiting({
         toValue: 1,
         duration: 1150,
         easing: Easing.inOut(Easing.cubic),
-        useNativeDriver: true,
-      })
+        useNativeDriver: Platform.OS !== "web",
+      }),
     );
 
     progressAnimation.start();
@@ -78,11 +89,19 @@ export default function QuizWaiting({
         />
       </View>
 
-      <AppText style={styles.message} weight={FontWeight.medium}>{message}</AppText>
+      <AppText style={styles.message} weight={FontWeight.medium}>
+        {message}
+      </AppText>
 
       <View style={styles.infoCard}>
         <InfoItem
-          icon={<Clock width={49} height={49} />}
+          icon={
+            <Clock
+              width={QUIZ_WAITING_ICON_SIZE}
+              height={QUIZ_WAITING_ICON_SIZE}
+              style={styles.statusSvgIcon}
+            />
+          }
           title="Stay Ready"
           text={
             nextQuestionNumber
@@ -92,19 +111,30 @@ export default function QuizWaiting({
           color="#DDEEFF"
         />
         <InfoItem
-          icon={<Eye width={49} height={49} />}
+          icon={
+            <Eye
+              width={QUIZ_WAITING_ICON_SIZE}
+              height={QUIZ_WAITING_ICON_SIZE}
+              style={styles.statusSvgIcon}
+            />
+          }
           title="Stay Focused"
           text="Keep your eyes on the main screen"
           color="#D8F8EB"
         />
         <InfoItem
-          icon={<Bell width={49} height={49} />}
+          icon={
+            <Bell
+              width={QUIZ_WAITING_ICON_SIZE}
+              height={QUIZ_WAITING_ICON_SIZE}
+              style={styles.statusSvgIcon}
+            />
+          }
           title="Stay Connected"
           text="Do not refresh or leave the page"
           color="#FFF2C7"
         />
       </View>
-
 
       {onSyncNow && (
         <Pressable
@@ -135,7 +165,7 @@ export default function QuizWaiting({
   );
 }
 
-function InfoItem({
+export function InfoItem({
   icon,
   title,
   text,
@@ -148,11 +178,15 @@ function InfoItem({
 }) {
   return (
     <View style={styles.infoItem}>
-      <View style={[styles.infoIcon, { backgroundColor: color }]}>{icon}</View>
+      <View style={[styles.infoIcon, { backgroundColor: color }]}>
+        <View style={styles.iconWrapper}>{icon}</View>
+      </View>
       <AppText style={styles.infoTitle} weight={FontWeight.medium}>
         {title}
       </AppText>
-      <AppText style={styles.infoText} weight={FontWeight.medium}>{text}</AppText>
+      <AppText style={styles.infoText} weight={FontWeight.medium}>
+        {text}
+      </AppText>
     </View>
   );
 }
@@ -209,24 +243,30 @@ const styles = StyleSheet.create({
     padding: 12,
     flexDirection: "row",
     justifyContent: "space-between",
-    shadowColor: Colors.black,
-    shadowOpacity: 0.06,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 6,
-    elevation: 2,
+    ...createShadow({ x: 0, y: 2, blur: 6, opacity: 0.06, elevation: 2 }),
   },
   infoItem: {
     width: "31%",
     alignItems: "center",
   },
   infoIcon: {
-    width: 49,
-    height: 49,
-    borderRadius: 24.5,
+    width: QUIZ_WAITING_CONTAINER_SIZE,
+    height: QUIZ_WAITING_CONTAINER_SIZE,
+    borderRadius: QUIZ_WAITING_CONTAINER_SIZE / 2,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+  },
+  iconWrapper: {
+    width: QUIZ_WAITING_ICON_SIZE,
+    height: QUIZ_WAITING_ICON_SIZE,
     alignItems: "center",
     justifyContent: "center",
   },
-
+  statusSvgIcon: {
+    width: QUIZ_WAITING_ICON_SIZE,
+    height: QUIZ_WAITING_ICON_SIZE,
+  },
   infoTitle: {
     fontSize: 12,
     marginTop: 7,
@@ -269,4 +309,3 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
 });
-

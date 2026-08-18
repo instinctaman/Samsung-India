@@ -3,9 +3,15 @@ import { useCallback, useEffect, useState } from "react";
 
 import {
   ApiError,
+  AttendanceState,
   CurrentSession,
+  SessionFlowState,
   SessionModuleKey,
   getCurrentSession,
+  getSessionFlowState,
+  isAttendanceRecorded,
+  setAttendanceState,
+  setSessionFlowState,
 } from "@/api/session";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -22,17 +28,25 @@ export interface SessionActivityData {
   isLive: boolean;
   isCompleted: boolean;
   isMissed: boolean;
+  /** True when a Post Test was terminated due to security violation */
+  isLocked?: boolean;
   completedAt: string | null;
   score: string | null;
   ranDuration?: string | null;
   geoFencing?: boolean;
+  securityCheckInCompleted?: boolean;
+  attendanceState?: AttendanceState;
 }
 
 export function useTraineeHome() {
   const router = useRouter();
   const params = useLocalSearchParams<{
+    flow?: SessionFlowState;
     attendance?: string;
+    checkIn?: string;
     quiz?: string;
+    postTest?: string;
+    survey?: string;
     score?: string;
     duration?: string;
   }>();
@@ -55,8 +69,157 @@ export function useTraineeHome() {
 
       try {
         const data = await getCurrentSession(token);
-        if (params.quiz === "completed") {
+        const hasAttendanceRecorded =
+          isAttendanceRecorded() ||
+          params.flow === "ATTENDANCE_RECORDED" ||
+          params.attendance === "completed" ||
+          params.quiz === "completed" ||
+          params.postTest === "completed" ||
+          params.postTest === "security_locked" ||
+          params.survey === "completed";
+
+        if (hasAttendanceRecorded) {
+          setSessionFlowState("ATTENDANCE_RECORDED");
+          data.flowState = "ATTENDANCE_RECORDED";
           data.modules = data.modules.map((m) => {
+            if (m.key === "ATTENDANCE") {
+              return {
+                ...m,
+                isCompleted: true,
+                isLive: false,
+                completedAt: m.completedAt ?? "10:25",
+                ranDuration: m.ranDuration ?? "Ran : 45m 3s",
+              };
+            }
+            if (m.key === "LIVE_QUIZ" && !m.isCompleted && !params.quiz && !params.postTest && !params.survey) {
+              return {
+                ...m,
+                isLive: true,
+              };
+            }
+            return m;
+          });
+        }
+
+        if (params.survey === "completed") {
+          data.modules = data.modules.map((m) => {
+            if (m.key === "ATTENDANCE") {
+              return {
+                ...m,
+                isCompleted: true,
+                isLive: false,
+                completedAt: m.completedAt ?? "10:25",
+                ranDuration: m.ranDuration ?? "Ran : 45m 3s",
+              };
+            }
+            if (m.key === "LIVE_QUIZ") {
+              return {
+                ...m,
+                isCompleted: true,
+                isLive: false,
+                score: m.score ?? "9/15",
+                completedAt: "Completed successfully",
+                ranDuration: m.ranDuration ?? "Ran : 1h 55m",
+              };
+            }
+            if (m.key === "STANDARD_TEST") {
+              return {
+                ...m,
+                isCompleted: true,
+                isLive: false,
+                score: m.score ?? "12/15",
+                completedAt: "Completed successfully",
+                ranDuration: m.ranDuration ?? "Ran : 1h 50m",
+              };
+            }
+            if (m.key === "SURVEY") {
+              return {
+                ...m,
+                isCompleted: true,
+                isLive: false,
+                completedAt: "Completed successfully",
+                ranDuration: "Ran : 25m",
+              };
+            }
+            return m;
+          });
+        } else if (params.postTest === "security_locked") {
+          // Post Test was terminated due to security violation — NOT completed
+          // Survey stays Upcoming
+          data.modules = data.modules.map((m) => {
+            if (m.key === "ATTENDANCE") {
+              return {
+                ...m,
+                isCompleted: true,
+                isLive: false,
+                completedAt: m.completedAt ?? "10:25",
+                ranDuration: m.ranDuration ?? "Ran : 45m 3s",
+              };
+            }
+            if (m.key === "STANDARD_TEST") {
+              return {
+                ...m,
+                isCompleted: false,
+                isLive: false,
+                isLocked: true,
+                completedAt: "Security Violation",
+                score: null,
+              };
+            }
+            // Survey remains Upcoming
+            return m;
+          });
+        } else if (params.postTest === "completed") {
+          data.modules = data.modules.map((m) => {
+            if (m.key === "ATTENDANCE") {
+              return {
+                ...m,
+                isCompleted: true,
+                isLive: false,
+                completedAt: m.completedAt ?? "10:25",
+                ranDuration: m.ranDuration ?? "Ran : 45m 3s",
+              };
+            }
+            if (m.key === "LIVE_QUIZ") {
+              return {
+                ...m,
+                isCompleted: true,
+                isLive: false,
+                score: m.score ?? "9/15",
+                completedAt: "Completed successfully",
+                ranDuration: m.ranDuration ?? "Ran : 1h 55m",
+              };
+            }
+            if (m.key === "STANDARD_TEST") {
+              return {
+                ...m,
+                isCompleted: true,
+                isLive: false,
+                score: params.score ?? m.score ?? "12/15",
+                completedAt: "Completed successfully",
+                ranDuration: params.duration ?? m.ranDuration ?? "Ran : 1h 50m",
+              };
+            }
+            if (m.key === "SURVEY") {
+              return {
+                ...m,
+                isLive: true,
+                isCompleted: false,
+              };
+            }
+            return m;
+          });
+        } else if (params.quiz === "completed") {
+          data.modules = data.modules.map((m) => {
+            if (m.key === "ATTENDANCE") {
+              return {
+                ...m,
+                isCompleted: true,
+                isLive: false,
+                completedAt: m.completedAt ?? "10:25",
+                ranDuration: m.ranDuration ?? "Ran : 45m 3s",
+              };
+            }
             if (m.key === "LIVE_QUIZ") {
               return {
                 ...m,
@@ -75,10 +238,24 @@ export function useTraineeHome() {
             }
             return m;
           });
+        } else if (
+          params.flow === "CAMERA_VERIFIED" ||
+          params.checkIn === "verified"
+        ) {
+          if (!hasAttendanceRecorded) {
+            setSessionFlowState("CAMERA_VERIFIED");
+            data.flowState = "CAMERA_VERIFIED";
+          }
+        } else if (params.flow === "SECURE_CHECKIN") {
+          if (!hasAttendanceRecorded) {
+            setSessionFlowState("SECURE_CHECKIN");
+            data.flowState = "SECURE_CHECKIN";
+          }
         }
         setSession(data);
         setNotAssigned(false);
       } catch (err) {
+
         if (err instanceof ApiError && err.status === 404) {
           setSession(null);
           setNotAssigned(true);
@@ -116,46 +293,116 @@ export function useTraineeHome() {
     return () => clearInterval(interval);
   }, [shouldPoll, loadSession]);
 
+  const currentFlow: SessionFlowState =
+    isAttendanceRecorded() ||
+    session?.flowState === "ATTENDANCE_RECORDED" ||
+    getSessionFlowState() === "ATTENDANCE_RECORDED" ||
+    params.flow === "ATTENDANCE_RECORDED" ||
+    params.attendance === "completed" ||
+    params.quiz === "completed" ||
+    params.postTest === "completed" ||
+    params.postTest === "security_locked" ||
+    params.survey === "completed"
+      ? "ATTENDANCE_RECORDED"
+      : params.flow === "CAMERA_VERIFIED" ||
+        params.checkIn === "verified" ||
+        session?.flowState === "CAMERA_VERIFIED"
+      ? "CAMERA_VERIFIED"
+      : session?.flowState || getSessionFlowState() || "SECURE_CHECKIN";
+
   const activities: SessionActivityData[] = (session?.modules ?? []).map(
-    (module) => ({
-      id: module.key,
-      key: module.key,
-      startTime: module.time ?? "09:00",
-      endTime: module.endTime ?? "10:00",
-      duration: module.duration ?? (module.key === "ATTENDANCE" ? "1h" : "2h"),
-      type: module.name,
-      title: "Session Activity",
-      isLive: module.isLive,
-      isCompleted: module.isCompleted,
-      isMissed: module.isMissed,
-      completedAt: module.completedAt,
-      score: module.score,
-      ranDuration: module.ranDuration,
-      geoFencing:
-        module.key === "ATTENDANCE" ? session?.attendanceGeoFencing : undefined,
-    }),
+    (module) => {
+      const isAttendance = module.key === "ATTENDANCE";
+      const isAttendanceCompleted =
+        isAttendance && currentFlow === "ATTENDANCE_RECORDED";
+
+      const isLiveModule = isAttendance
+        ? currentFlow !== "ATTENDANCE_RECORDED"
+        : currentFlow === "ATTENDANCE_RECORDED"
+          ? module.isLive ||
+            (module.key === "LIVE_QUIZ" && !module.isCompleted)
+          : false;
+
+      return {
+        id: module.key,
+        key: module.key,
+        startTime: module.time ?? "09:00",
+        endTime: module.endTime ?? "10:00",
+        duration: module.duration ?? (isAttendance ? "1h" : "2h"),
+        type: module.name,
+        title: "Session Activity",
+        isLive: isLiveModule,
+        isCompleted: isAttendance ? isAttendanceCompleted : module.isCompleted,
+        isMissed: module.isMissed,
+        isLocked: (module as { isLocked?: boolean }).isLocked ?? false,
+        completedAt: isAttendanceCompleted
+          ? module.completedAt ?? "10:25"
+          : module.completedAt,
+        score: module.score,
+        ranDuration: isAttendanceCompleted
+          ? module.ranDuration ?? "Ran : 45m 3s"
+          : module.ranDuration,
+        geoFencing: isAttendance ? session?.attendanceGeoFencing : undefined,
+        securityCheckInCompleted: isAttendance
+          ? currentFlow === "CAMERA_VERIFIED" ||
+            currentFlow === "MARK_ATTENDANCE" ||
+            currentFlow === "ACCESS_GRANTED" ||
+            currentFlow === "ATTENDANCE_RECORDED"
+          : undefined,
+        attendanceState: isAttendance ? currentFlow : undefined,
+      };
+    },
   );
+
+  const blurActiveElement = () => {
+    if (typeof document !== "undefined") {
+      (document.activeElement as HTMLElement)?.blur?.();
+    }
+  };
 
   const handleMarkAttendance = () => {
     if (!session) return;
+    blurActiveElement();
     const attendanceModule = session.modules.find(
       (module) => module.key === "ATTENDANCE",
     );
-    router.push({
-      pathname: session.attendanceGeoFencing
-        ? "/secure_checkin"
-        : "/attendance",
-      params: {
-        conferenceUid: session.conferenceUid,
-        title: session.title,
-        location: session.location ?? "",
-        time: attendanceModule?.time ?? "",
-        endTime: attendanceModule?.endTime ?? "",
-      },
-    });
+
+    if (currentFlow === "ATTENDANCE_RECORDED") {
+      return;
+    }
+
+    if (currentFlow === "CAMERA_VERIFIED") {
+      // Step 5: Mark Attendance button opens Attendance verification
+      setSessionFlowState("MARK_ATTENDANCE");
+      router.push({
+        pathname: "/attendance",
+        params: {
+          conferenceUid: session.conferenceUid,
+          title: session.title,
+          location: session.location ?? "",
+          time: attendanceModule?.time ?? "",
+          endTime: attendanceModule?.endTime ?? "",
+        },
+      });
+    } else {
+      // Step 2 -> Step 3: Secure Check-In button opens Location Verification
+      setSessionFlowState("LOCATION_VERIFIED");
+      router.push({
+        pathname: "/secure_checkin",
+        params: {
+          conferenceUid: session.conferenceUid,
+          title: session.title,
+          location: session.location ?? "",
+          time: attendanceModule?.time ?? "",
+          endTime: attendanceModule?.endTime ?? "",
+          mode: "entry",
+        },
+      });
+    }
   };
 
   const handleEnterLiveQuiz = () => {
+    blurActiveElement();
     const liveQuiz = session?.modules.find(
       (module) => module.key === "LIVE_QUIZ",
     );
@@ -169,6 +416,7 @@ export function useTraineeHome() {
   };
 
   const handleEnterPostTest = () => {
+    blurActiveElement();
     const standardTest = session?.modules.find(
       (module) => module.key === "STANDARD_TEST",
     );
@@ -183,6 +431,7 @@ export function useTraineeHome() {
   };
 
   const handleEnterSurvey = () => {
+    blurActiveElement();
     const survey = session?.modules.find((module) => module.key === "SURVEY");
     if (!session || !survey?.assessmentSuiteUid) return;
     router.push({

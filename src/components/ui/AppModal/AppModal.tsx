@@ -4,6 +4,7 @@ import {
   Dimensions,
   KeyboardAvoidingView,
   Modal,
+  Platform,
   Pressable,
   View,
 } from "react-native";
@@ -69,42 +70,46 @@ export default function AppModal({
       opacity.setValue(0);
       scale.setValue(0.9);
 
+      const useNativeDriver = Platform.OS !== "web";
+
       Animated.parallel([
         Animated.timing(translate, {
           toValue: 0,
           duration: animationDuration,
-          useNativeDriver: true,
+          useNativeDriver,
         }),
 
         Animated.timing(opacity, {
           toValue: 1,
           duration: animationDuration,
-          useNativeDriver: true,
+          useNativeDriver,
         }),
 
         Animated.spring(scale, {
           toValue: 1,
-          useNativeDriver: true,
+          useNativeDriver,
         }),
       ]).start();
     } else if (isMounted) {
+      const useNativeDriver = Platform.OS !== "web";
+
       Animated.parallel([
         Animated.timing(translate, {
           toValue: getInitialValue(),
           duration: animationDuration,
-          useNativeDriver: true,
+          useNativeDriver,
         }),
 
         Animated.timing(opacity, {
           toValue: 0,
           duration: animationDuration,
-          useNativeDriver: true,
+          useNativeDriver,
         }),
 
         Animated.timing(scale, {
           toValue: 0.9,
           duration: animationDuration,
-          useNativeDriver: true,
+          useNativeDriver,
         }),
       ]).start(() => {
         setIsMounted(false);

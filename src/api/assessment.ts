@@ -29,6 +29,7 @@ export type AssessmentQuestionsResponse = {
 };
 
 // Demo implementations — no network calls.
-export { getAssessmentQuestions, submitAssessment } from "@/api/mockService";
+export { getAssessmentQuestions, submitAssessment, terminateAssessmentWithViolation } from "@/api/mockService";
 export { ApiError } from "@/api/client";
+
 

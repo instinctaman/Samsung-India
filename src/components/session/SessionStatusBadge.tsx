@@ -8,28 +8,33 @@ import { FontWeight } from "@/theme/fontWeight";
 type Props = {
   label: string;
   live?: boolean;
+  liveColor?: string;
   completed?: boolean;
   missed?: boolean;
   scoreBadge?: boolean;
+  locked?: boolean;
 };
 
 export default function SessionStatusBadge({
   label,
   live = false,
+  liveColor,
   completed = false,
   missed = false,
   scoreBadge = false,
+  locked = false,
 }: Props) {
-  const isUpcoming = !live && !completed && !missed && !scoreBadge;
+  const isUpcoming = !live && !completed && !missed && !scoreBadge && !locked;
 
   return (
     <View
       style={[
         styles.container,
-        live && styles.liveContainer,
+        live && [styles.liveContainer, liveColor ? { backgroundColor: liveColor } : undefined],
         completed && styles.completedContainer,
         scoreBadge && styles.scoreBadgeContainer,
         missed && styles.missedContainer,
+        locked && styles.lockedContainer,
         isUpcoming && styles.upcomingContainer,
       ]}
     >
@@ -41,6 +46,8 @@ export default function SessionStatusBadge({
         <View style={styles.liveDot} />
       ) : missed ? (
         <Ionicons name="close-circle" size={11} color={Colors.danger} />
+      ) : locked ? (
+        <Ionicons name="lock-closed" size={11} color={Colors.white} />
       ) : null}
 
       <AppText
@@ -49,6 +56,7 @@ export default function SessionStatusBadge({
           (live || scoreBadge) && styles.liveText,
           completed && styles.completedText,
           missed && styles.missedText,
+          locked && styles.lockedText,
           isUpcoming && styles.upcomingText,
         ]}
         weight={FontWeight.bold}
@@ -107,5 +115,11 @@ const styles = StyleSheet.create({
   },
   upcomingText: {
     color: Colors.headerBlue,
+  },
+  lockedContainer: {
+    backgroundColor: "#EF4444",
+  },
+  lockedText: {
+    color: Colors.white,
   },
 });

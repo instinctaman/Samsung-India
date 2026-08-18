@@ -55,6 +55,8 @@ export default function QuizResult({
 const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
+    width: "100%",
+    maxWidth: "100%",
     paddingHorizontal: 16,
     paddingTop: 4,
     paddingBottom: 28,

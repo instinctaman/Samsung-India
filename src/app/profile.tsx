@@ -15,6 +15,8 @@ import { STATES } from "@/data/states";
 import { Colors } from "@/theme/colors";
 import { FontWeight } from "@/theme/fontWeight";
 import { Fonts } from "@/theme/fonts";
+import { createShadow } from "@/theme/shadows";
+
 import { useAuth } from "@/hooks/useAuth";
 import { ApiError, uploadTraineePhoto } from "@/api/auth";
 
@@ -208,8 +210,9 @@ const styles = StyleSheet.create({
     sessionPill: { marginTop: 12, alignSelf: "flex-start", borderRadius: 12, backgroundColor: Colors.white, paddingHorizontal: 9, paddingVertical: 4, flexDirection: "row", alignItems: "center", gap: 5 },
     sessionText: { color: Colors.primary, fontSize: Fonts.caption },
     content: { padding: 11, gap: 11, paddingBottom: 100 },
-    card: { backgroundColor: Colors.white, borderRadius: 12, padding: 12, shadowColor: Colors.black, shadowOpacity: 0.08, shadowRadius: 6, elevation: 2 },
+    card: { backgroundColor: Colors.white, borderRadius: 12, padding: 12, ...createShadow({ x: 0, y: 2, blur: 6, opacity: 0.08, elevation: 2 }) },
     cardLabel: { alignSelf: "flex-start", backgroundColor: "#DDEEFF", borderRadius: 3, paddingHorizontal: 5, paddingVertical: 3, fontSize: Fonts.overline },
+
     detailRow: { minHeight: 43, flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 7, borderBottomWidth: 1, borderBottomColor: Colors.gray200 },
     lastRow: { borderBottomWidth: 0 },
     iconBox: { width: 29, height: 29, borderRadius: 4, backgroundColor: "#DDEEFF", alignItems: "center", justifyContent: "center" },

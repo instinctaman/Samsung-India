@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, View } from "react-native";
 import AppText from "@/components/ui/AppText";
 import { Colors } from "@/theme/colors";
 import { FontWeight } from "@/theme/fontWeight";
+import { createShadow } from "@/theme/shadows";
 
 export type OptionLetter = "A" | "B" | "C" | "D" | string;
 
@@ -97,7 +98,14 @@ export default function QuizOption({
           borderColor,
           borderWidth,
           borderBottomWidth,
-          shadowColor: borderColor,
+          ...createShadow({
+            x: 0,
+            y: 3,
+            blur: 3,
+            color: borderColor,
+            opacity: 0.25,
+            elevation: 3,
+          }),
         },
         !isResultMode && isSelected && { backgroundColor: theme.bg },
         pressed && !disabled && styles.pressed,
@@ -149,7 +157,8 @@ export default function QuizOption({
 
 const styles = StyleSheet.create({
   container: {
-    minWidth: 340,
+    width: "100%",
+    maxWidth: "100%",
     minHeight: 74,
     borderRadius: 18,
     backgroundColor: Colors.white,
@@ -159,10 +168,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 14,
     marginTop: 12,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3,
-    elevation: 3,
   },
   pressed: {
     opacity: 0.9,
@@ -177,12 +182,14 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
+    flexShrink: 0,
   },
   letterText: {
     fontSize: 20,
   },
   optionText: {
     flex: 1,
+    flexShrink: 1,
     fontSize: 13,
     lineHeight: 19,
   },
@@ -192,6 +199,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
+    flexShrink: 0,
   },
   correctBadgeText: {
     fontSize: 10,
@@ -203,6 +211,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
+    flexShrink: 0,
   },
   yourAnswerBadgeText: {
     fontSize: 10,
@@ -210,4 +219,3 @@ const styles = StyleSheet.create({
     letterSpacing: 0.1,
   },
 });
-

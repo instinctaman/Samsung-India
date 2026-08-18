@@ -18,6 +18,17 @@ export type SessionModule = {
 };
 
 
+export type SessionFlowState =
+  | "JOINED"
+  | "SECURE_CHECKIN"
+  | "LOCATION_VERIFIED"
+  | "CAMERA_VERIFIED"
+  | "MARK_ATTENDANCE"
+  | "ACCESS_GRANTED"
+  | "ATTENDANCE_RECORDED";
+
+export type AttendanceState = SessionFlowState;
+
 export type CurrentSession = {
   conferenceUid: string;
   title: string;
@@ -29,6 +40,9 @@ export type CurrentSession = {
   started: boolean;
   startsAt: string | null;
   attendanceGeoFencing: boolean;
+  securityCheckInCompleted?: boolean;
+  attendanceState?: AttendanceState;
+  flowState?: SessionFlowState;
   modules: SessionModule[];
 };
 
@@ -43,6 +57,16 @@ export type SessionHistoryItem = {
 };
 
 // Demo implementations — no network calls.
-export { getCurrentSession, getSessionHistory } from "@/api/mockService";
+export {
+  getCurrentSession,
+  getSessionHistory,
+  setSecurityCheckInCompleted,
+  getAttendanceState,
+  setAttendanceState,
+  getSessionFlowState,
+  setSessionFlowState,
+  resetSessionFlowState,
+  isAttendanceRecorded,
+} from "@/api/mockService";
 export { ApiError } from "@/api/client";
 

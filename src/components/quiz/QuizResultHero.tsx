@@ -1,10 +1,10 @@
-import React from "react";
-import { StyleSheet, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { StyleSheet, View } from "react-native";
 
 import AppText from "@/components/ui/AppText";
 import { Colors } from "@/theme/colors";
 import { FontWeight } from "@/theme/fontWeight";
+import { createShadow } from "@/theme/shadows";
 
 export type QuizResultType = "correct" | "incorrect" | "timeout";
 
@@ -82,10 +82,7 @@ export default function QuizResultHero({
             ]}
           >
             <View
-              style={[
-                styles.iconCircleInner,
-                { backgroundColor: heroColor },
-              ]}
+              style={[styles.iconCircleInner, { backgroundColor: heroColor }]}
             >
               <Ionicons
                 name={isCorrect ? "checkmark" : "close"}
@@ -140,11 +137,7 @@ const styles = StyleSheet.create({
     borderRadius: 37,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: Colors.black,
-    shadowOpacity: 0.12,
-    shadowOffset: { width: 0, height: 3 },
-    shadowRadius: 6,
-    elevation: 3,
+    ...createShadow({ x: 0, y: 3, blur: 6, opacity: 0.12, elevation: 3 }),
   },
   alarmWrapper: {
     flexDirection: "row",

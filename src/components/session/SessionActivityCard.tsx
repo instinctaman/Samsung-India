@@ -27,23 +27,27 @@ export default function SessionActivityCard({
   onEnterPostTest,
   onEnterSurvey,
 }: SessionActivityCardProps) {
-  const { key, isLive, isCompleted, isMissed } = activity;
+  const { key, isLive, isCompleted, isMissed, isLocked } = activity;
   const isAttendance = key === "ATTENDANCE";
   const isQuiz = key === "LIVE_QUIZ";
+  const isPostTest = key === "STANDARD_TEST";
+  const isSurvey = key === "SURVEY";
 
-  const statusLabel = isCompleted
-    ? isAttendance
-      ? "Present"
-      : isQuiz
-        ? `Score : ${activity.score ?? "9/15"}`
-        : activity.score
-          ? `Score: ${activity.score}`
-          : "Completed"
-    : isMissed
-      ? "Missed"
-      : isLive
-        ? "LIVE NOW"
-        : "Upcoming";
+  const statusLabel = isLocked
+    ? "Locked"
+    : isCompleted
+      ? isAttendance
+        ? "Recorded"
+        : isQuiz
+          ? `Score : ${activity.score ?? "9/15"}`
+          : isPostTest
+            ? `Score : ${activity.score ?? "12/15"}`
+            : "Completed"
+      : isMissed
+        ? "Missed"
+        : isLive
+          ? "LIVE NOW"
+          : "Upcoming";
 
   const handleEnterAction = () => {
     if (key === "LIVE_QUIZ") {
@@ -115,12 +119,22 @@ export default function SessionActivityCard({
             </View>
           )}
 
+          {isPostTest && isCompleted && (
+            <View style={styles.runtimePill}>
+              <AppText style={styles.runtimeText} weight={FontWeight.medium}>
+                {activity.ranDuration ?? "Ran : 1h 50m"}
+              </AppText>
+            </View>
+          )}
+
           <SessionStatusBadge
             label={statusLabel}
-            live={isLive}
-            completed={isCompleted && !isQuiz}
-            scoreBadge={isCompleted && isQuiz}
+            live={isLive && !isLocked}
+            liveColor={isAttendance ? Colors.recordedGreen : Colors.headerBlue}
+            completed={isCompleted && isAttendance}
+            scoreBadge={isCompleted && (isQuiz || isPostTest)}
             missed={isMissed}
+            locked={isLocked}
           />
         </View>
       </View>
@@ -149,7 +163,7 @@ export default function SessionActivityCard({
           </View>
         )}
 
-        {isCompleted && isQuiz && (
+        {isCompleted && (isQuiz || isPostTest) && (
           <View style={styles.completedQuizInfo}>
             <Ionicons name="trophy" size={14} color="#F59E0B" />
             <AppText
@@ -171,24 +185,28 @@ export default function SessionActivityCard({
           color={Colors.recordedGreen}
           backgroundColor={Colors.recordedGreenBg}
         />
-      ) : isCompleted && isQuiz ? (
+      ) : isCompleted && (isQuiz || isPostTest) ? (
         <RecordedCard
           title="Completed"
           subtitle="Good Job !"
-          color={Colors.headerBlue}
-          backgroundColor="#DDEEFF"
+          color={Colors.recordedGreen}
+          backgroundColor={Colors.recordedGreenBg}
         />
       ) : isCompleted ? (
         <RecordedCard
-          title="Recorded"
+          title="Completed"
           subtitle="Good Job !"
-          color={Colors.headerBlue}
-          backgroundColor={Colors.waitingBlueBg}
+          color={Colors.recordedGreen}
+          backgroundColor={Colors.recordedGreenBg}
         />
       ) : isLive && isAttendance ? (
         <SessionButton
-          title={activity.geoFencing ? "Secure Check-In" : "Mark Attendance"}
-          icon={activity.geoFencing ? "camera" : undefined}
+          title={
+            activity.securityCheckInCompleted
+              ? "Mark Attendance"
+              : "Secure Check-In"
+          }
+          icon={activity.securityCheckInCompleted ? undefined : "camera"}
           onPress={onMarkAttendance}
           backgroundColor={Colors.recordedGreen}
         />
@@ -200,12 +218,15 @@ export default function SessionActivityCard({
         />
       ) : isMissed ? (
         <MissedBanner />
-      ) : key === "STANDARD_TEST" ? (
+      ) : isLocked ? (
+        <LockedViolationCard />
+      ) : !isCompleted ? (
         <WaitingCard
           title="Please Wait"
           subtitle="Trainer will unlock soon..."
         />
       ) : null}
+
     </View>
   );
 }
@@ -224,6 +245,26 @@ function MissedBanner() {
         </AppText>
         <AppText style={styles.missedSubtitle} color={Colors.danger}>
           You missed this session, try next time.
+        </AppText>
+      </View>
+    </View>
+  );
+}
+
+function LockedViolationCard() {
+  return (
+    <View style={styles.lockedBanner}>
+      <Ionicons name="lock-closed" size={20} color="#EF4444" />
+      <View style={styles.missedTextColumn}>
+        <AppText
+          style={styles.lockedTitle}
+          color="#EF4444"
+          weight={FontWeight.bold}
+        >
+          Security Violation
+        </AppText>
+        <AppText style={styles.lockedSubtitle} color="#B91C1C">
+          Test was locked due to proctoring violation.
         </AppText>
       </View>
     </View>
@@ -338,6 +379,24 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   missedSubtitle: {
+    fontSize: 11,
+  },
+  lockedBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    backgroundColor: "#FEE2E2",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: "#FECACA",
+  },
+  lockedTitle: {
+    fontSize: 13,
+  },
+  lockedSubtitle: {
     fontSize: 11,
   },
 });

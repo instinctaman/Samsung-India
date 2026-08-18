@@ -1,11 +1,11 @@
-import React from "react";
-import { Pressable, StyleSheet, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { Pressable, StyleSheet, View } from "react-native";
 
 import AppText from "@/components/ui/AppText";
-import LeaderboardRow, { LeaderboardUser } from "./LeaderboardRow";
 import { Colors } from "@/theme/colors";
 import { FontWeight } from "@/theme/fontWeight";
+import { createShadow } from "@/theme/shadows";
+import LeaderboardRow, { LeaderboardUser } from "./LeaderboardRow";
 
 export type LeaderboardListProps = {
   users?: LeaderboardUser[];
@@ -50,7 +50,6 @@ export default function LeaderboardList({
       isYou: true,
     },
   ];
-
 
   return (
     <View style={styles.card}>
@@ -103,11 +102,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     marginTop: 14,
-    shadowColor: Colors.black,
-    shadowOpacity: 0.05,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 6,
-    elevation: 2,
+    ...createShadow({ x: 0, y: 2, blur: 6, opacity: 0.05, elevation: 2 }),
   },
   header: {
     flexDirection: "row",

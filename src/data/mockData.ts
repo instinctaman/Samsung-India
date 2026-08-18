@@ -75,7 +75,7 @@ export const DEMO_CURRENT_SESSION = {
   confirmationStatus: "Not Confirmed",
   started: true,
   startsAt: "09:00 AM" as string | null,
-  attendanceGeoFencing: false,
+  attendanceGeoFencing: true,
   modules: [
     {
       key: "ATTENDANCE" as
@@ -87,12 +87,12 @@ export const DEMO_CURRENT_SESSION = {
       time: "09:00" as string | null,
       endTime: "10:00" as string | null,
       duration: "1h" as string | null,
-      isLive: false,
-      isCompleted: true,
+      isLive: true,
+      isCompleted: false,
       isMissed: false,
-      completedAt: "10:25" as string | null,
+      completedAt: null as string | null,
       score: null as string | null,
-      ranDuration: "Ran : 45m 3s" as string | null,
+      ranDuration: null as string | null,
       assessmentSuiteUid: null as string | null,
     },
     {
@@ -105,7 +105,7 @@ export const DEMO_CURRENT_SESSION = {
       time: "10:00" as string | null,
       endTime: "12:00" as string | null,
       duration: "2h" as string | null,
-      isLive: true,
+      isLive: false,
       isCompleted: false,
       isMissed: false,
       completedAt: null as string | null,
@@ -571,57 +571,131 @@ export const DEMO_ASSESSMENT_QUESTIONS = [
 export const DEMO_SURVEY_QUESTIONS = [
   {
     id: 101,
-    question: "How would you rate the overall quality of today's training?",
+    question: "How would you rate the June Activity-led classroom session?",
     question_type: "multiple_choice",
     sort_order: 1,
     options: [
-      { id: "A", text: "Excellent" },
-      { id: "B", text: "Good" },
-      { id: "C", text: "Average" },
-      { id: "D", text: "Poor" },
+      { id: "A", text: "Very Effective" },
+      { id: "B", text: "Effective" },
+      { id: "C", text: "Neutral" },
+      { id: "D", text: "Ineffective" },
+      { id: "E", text: "Very Ineffective" },
     ],
   },
   {
     id: 102,
     question:
-      "Was the training content relevant to your daily sales activities?",
+      "How effective is K.C.D. approach for Sales pitch practice & recall?",
     question_type: "multiple_choice",
     sort_order: 2,
     options: [
-      { id: "A", text: "Very Relevant" },
-      { id: "B", text: "Somewhat Relevant" },
+      { id: "A", text: "Very Effective" },
+      { id: "B", text: "Effective" },
       { id: "C", text: "Neutral" },
-      { id: "D", text: "Not Relevant" },
+      { id: "D", text: "Ineffective" },
+      { id: "E", text: "Very Ineffective" },
     ],
   },
   {
     id: 103,
     question:
-      "How confident do you feel explaining Galaxy S26 features to a customer after this training?",
+      "How effective was the activity to use Galaxy AI features to create Team Name, Anthem & Logo?",
     question_type: "multiple_choice",
     sort_order: 3,
     options: [
-      { id: "A", text: "Very Confident" },
-      { id: "B", text: "Confident" },
-      { id: "C", text: "Somewhat Confident" },
-      { id: "D", text: "Not Confident" },
+      { id: "A", text: "Very Effective" },
+      { id: "B", text: "Effective" },
+      { id: "C", text: "Neutral" },
+      { id: "D", text: "Ineffective" },
+      { id: "E", text: "Very Ineffective" },
     ],
   },
   {
     id: 104,
-    question: "What did you find most valuable about today's training?",
-    question_type: "short_answer",
+    question:
+      "How effective was the 'Samsung Dangal' activity to practice countering competition?",
+    question_type: "multiple_choice",
     sort_order: 4,
-    options: [] as { id: string; text: string }[],
+    options: [
+      { id: "A", text: "Very Effective" },
+      { id: "B", text: "Effective" },
+      { id: "C", text: "Neutral" },
+      { id: "D", text: "Ineffective" },
+      { id: "E", text: "Very Ineffective" },
+    ],
   },
   {
     id: 105,
-    question: "Any suggestions to improve future training sessions?",
-    question_type: "short_answer",
+    question:
+      "How effective is Activity-led training sessions vs. regular training session?",
+    question_type: "multiple_choice",
     sort_order: 5,
+    options: [
+      { id: "A", text: "Very Effective" },
+      { id: "B", text: "Effective" },
+      { id: "C", text: "Neutral" },
+      { id: "D", text: "Ineffective" },
+      { id: "E", text: "Very Ineffective" },
+    ],
+  },
+  {
+    id: 106,
+    question:
+      "How clear and engaging was the trainer's explanation of new features?",
+    question_type: "multiple_choice",
+    sort_order: 6,
+    options: [
+      { id: "A", text: "Very Effective" },
+      { id: "B", text: "Effective" },
+      { id: "C", text: "Neutral" },
+      { id: "D", text: "Ineffective" },
+      { id: "E", text: "Very Ineffective" },
+    ],
+  },
+  {
+    id: 107,
+    question:
+      "How confident do you feel applying these learnings on the sales floor?",
+    question_type: "multiple_choice",
+    sort_order: 7,
+    options: [
+      { id: "A", text: "Very Effective" },
+      { id: "B", text: "Effective" },
+      { id: "C", text: "Neutral" },
+      { id: "D", text: "Ineffective" },
+      { id: "E", text: "Very Ineffective" },
+    ],
+  },
+  {
+    id: 108,
+    question:
+      "How satisfied are you with the interactive demo units and learning materials provided?",
+    question_type: "multiple_choice",
+    sort_order: 8,
+    options: [
+      { id: "A", text: "Very Effective" },
+      { id: "B", text: "Effective" },
+      { id: "C", text: "Neutral" },
+      { id: "D", text: "Ineffective" },
+      { id: "E", text: "Very Ineffective" },
+    ],
+  },
+  {
+    id: 109,
+    question: "What do you like most about the trainer?",
+    question_type: "short_answer",
+    sort_order: 9,
+    options: [] as { id: string; text: string }[],
+  },
+  {
+    id: 110,
+    question: "Additional Comments",
+    question_type: "short_answer",
+    sort_order: 10,
     options: [] as { id: string; text: string }[],
   },
 ];
+
 
 // ─── Assessment Suite Detail (used by assessment_builder) ─────────────────────
 export const DEMO_SUITE_DETAIL_BASE = {
