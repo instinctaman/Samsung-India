@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
-import { Pressable, StyleSheet, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import {
   SafeAreaView,
   useSafeAreaInsets,
@@ -10,7 +10,6 @@ import Sparkle from "@/assets/images/svg/sparkle.svg";
 import AppText from "@/components/ui/AppText";
 import { Colors } from "@/theme/colors";
 import { FontWeight } from "@/theme/fontWeight";
-import { Fonts } from "@/theme/fonts";
 import { createShadow } from "@/theme/shadows";
 
 export type AccessGrantedDetail = {
@@ -36,58 +35,77 @@ export default function AccessGrantedView({
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <View style={[styles.statusBarBackground, { height: insets.top }]} />
       <StatusBar style="light" animated />
-      <View style={styles.successArea}>
-        <View style={styles.successHalo}>
-          <Sparkle width={219} height={101} style={styles.sparkle} />
-          <View style={styles.successRing}>
-            <View style={styles.successCircle}>
-              <Ionicons
-                name="checkmark"
-                size={Fonts.iconSize}
-                color={Colors.success}
-              />
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        bounces={false}
+      >
+        {/* Top Green Section */}
+        <View style={styles.successArea}>
+          <View style={styles.successHalo}>
+            <Sparkle width={213} height={101} style={styles.sparkle} />
+            <View style={styles.successRing}>
+              <View style={styles.successCircle}>
+                <Ionicons name="checkmark" size={60} color={Colors.success} />
+              </View>
             </View>
           </View>
-        </View>
-        <AppText
-          style={styles.title}
-          color={Colors.white}
-          weight={FontWeight.semiBold}
-        >
-          Access Granted!
-        </AppText>
-        <AppText style={styles.subtitle} color={Colors.white}>
-          Your attendance is permanently recorded.
-        </AppText>
-      </View>
 
-      <View style={styles.content}>
-        <View style={styles.detailsCard}>
-          {details.map((detail, index) => (
-            <DetailRow
-              key={detail.label}
-              {...detail}
-              isLast={index === details.length - 1}
-            />
-          ))}
-        </View>
-        <Pressable style={styles.continueButton} onPress={onContinue}>
           <AppText
-            style={styles.continueText}
+            style={styles.title}
             color={Colors.white}
-            weight={FontWeight.medium}
+            weight={FontWeight.semiBold}
           >
-            Great, Continue
+            Access Granted!
           </AppText>
-          <Ionicons name="arrow-forward" size={20} color={Colors.white} />
-        </Pressable>
-        <Pressable style={styles.homeLink} onPress={onHome}>
-          <Ionicons name="home-outline" size={13} color={Colors.success} />
-          <AppText style={styles.homeText} color={Colors.success}>
-            Back to Home
+          <AppText style={styles.subtitle} color={Colors.white}>
+            Your attendance is permanently recorded.
           </AppText>
-        </Pressable>
-      </View>
+        </View>
+
+        {/* Content Section: Full Height Card + Actions directly underneath */}
+        <View style={styles.content}>
+          <View style={styles.detailsCard}>
+            {details.map((detail, index) => (
+              <DetailRow
+                key={detail.label}
+                {...detail}
+                isLast={index === details.length - 1}
+              />
+            ))}
+          </View>
+
+          {/* Bottom Actions directly under card */}
+          <View style={styles.bottomActions}>
+            <Pressable
+              style={styles.continueButton}
+              onPress={onContinue}
+              accessibilityRole="button"
+              accessibilityLabel="Great, Continue"
+            >
+              <AppText
+                style={styles.continueText}
+                color={Colors.white}
+                weight={FontWeight.bold}
+              >
+                Great, Continue
+              </AppText>
+            </Pressable>
+
+            <Pressable
+              style={styles.homeLink}
+              onPress={onHome}
+              accessibilityRole="button"
+              accessibilityLabel="Back to Home"
+            >
+              <Ionicons name="home-outline" size={16} color={Colors.success} />
+              <AppText style={styles.homeText} color={Colors.success}>
+                Back to Home
+              </AppText>
+            </Pressable>
+          </View>
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -101,9 +119,9 @@ function DetailRow({
   return (
     <View style={[styles.detailRow, !isLast && styles.detailBorder]}>
       <View style={styles.detailIcon}>
-        <Ionicons name={icon} size={20} color={Colors.success} />
+        <Ionicons name={icon} size={27} color={Colors.success} />
       </View>
-      <View>
+      <View style={styles.detailTextColumn}>
         <AppText style={styles.detailLabel}>{label}</AppText>
         <AppText style={styles.detailValue} weight={FontWeight.medium}>
           {value}
@@ -114,7 +132,10 @@ function DetailRow({
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F2FFF9" },
+  container: {
+    flex: 1,
+    backgroundColor: "#F2FFF9",
+  },
   statusBarBackground: {
     position: "absolute",
     top: 0,
@@ -122,32 +143,36 @@ const styles = StyleSheet.create({
     right: 0,
     backgroundColor: Colors.success,
   },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 32,
+  },
   successArea: {
-    height: "80%",
-    minHeight: 350,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: Colors.success,
-    borderBottomLeftRadius: 34,
-    borderBottomRightRadius: 34,
-    paddingBottom: 72,
+    borderBottomLeftRadius: 40,
+    borderBottomRightRadius: 40,
+    paddingTop: 30,
+    paddingBottom: 270,
+    paddingHorizontal: 20,
   },
   successHalo: {
-    width: 144,
-    height: 144,
-    borderRadius: 72,
+    width: 213,
+    height: 213,
+    borderRadius: 106.5,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "rgba(255, 255, 255, 0.035)",
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.06)",
   },
-  sparkle: { position: "absolute", top: -65, zIndex: 0 },
+  sparkle: { position: "absolute", top: -35, zIndex: 0 },
   successRing: {
-    width: 116,
-    height: 116,
+    width: 168,
+    height: 168,
     zIndex: 1,
-    borderRadius: 58,
+    borderRadius: 84,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "rgba(255, 255, 255, 0.07)",
@@ -155,64 +180,89 @@ const styles = StyleSheet.create({
     borderColor: "rgba(255, 255, 255, 0.08)",
   },
   successCircle: {
-    width: 84,
-    height: 84,
-    borderRadius: 42,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
     backgroundColor: Colors.white,
     alignItems: "center",
     justifyContent: "center",
     ...createShadow({ x: 0, y: 3, blur: 6, opacity: 0.08, elevation: 2 }),
   },
-  title: { marginTop: 23, fontSize: Fonts.h1 },
-  subtitle: { marginTop: 4, fontSize: Fonts.body },
+  title: {
+    marginTop: 20,
+    fontSize: 29,
+    textAlign: "center",
+  },
+  subtitle: {
+    marginTop: 4,
+    fontSize: 15,
+    textAlign: "center",
+    opacity: 0.95,
+  },
+
+  // Overlapping Content
   content: {
-    flex: 1,
-    alignItems: "center",
-    paddingHorizontal: 21,
-    marginTop: -165,
+    width: "100%",
+    maxWidth: 480,
+    alignSelf: "center",
+    paddingHorizontal: 20,
+    marginTop: -245,
   },
   detailsCard: {
     width: "100%",
+    height: 295,
     backgroundColor: Colors.white,
-    borderRadius: 17,
-    paddingHorizontal: 12,
-    paddingVertical: 3,
-    ...createShadow({ x: 0, y: 3, blur: 10, opacity: 0.12, elevation: 4 }),
+    borderRadius: 24,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    justifyContent: "space-around",
+    ...createShadow({ x: 0, y: 8, blur: 20, opacity: 0.09, elevation: 5 }),
   },
   detailRow: {
-    minHeight: 46,
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: 14,
+    paddingVertical: 4,
   },
   detailBorder: { borderBottomWidth: 1, borderBottomColor: Colors.gray200 },
   detailIcon: {
-    width: 25,
-    height: 25,
-    borderRadius: 5,
+    width: 40,
+    height: 40,
+    borderRadius: 10,
     backgroundColor: "#D8F8EB",
     alignItems: "center",
     justifyContent: "center",
   },
-  detailLabel: { fontSize: Fonts.overline, color: Colors.gray600 },
-  detailValue: { fontSize: Fonts.bodySm, marginTop: 1 },
+  detailTextColumn: {
+    flex: 1,
+    gap: 1,
+  },
+  detailLabel: { fontSize: 12, color: Colors.gray600 },
+  detailValue: { fontSize: 14, color: "#111827" },
+
+  // Bottom Actions directly under card
+  bottomActions: {
+    width: "100%",
+    alignItems: "center",
+    gap: 14,
+    marginTop: 22,
+  },
   continueButton: {
     width: "100%",
-    height: 48,
-    marginTop: 18,
-    borderRadius: 10,
+    height: 52,
+    borderRadius: 12,
     backgroundColor: "#00A86B",
-    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
+    ...createShadow({ x: 0, y: 4, blur: 10, opacity: 0.12, elevation: 3 }),
   },
-  continueText: { fontSize: Fonts.body, fontWeight: "600" },
+  continueText: { fontSize: 18, fontWeight: "700" },
   homeLink: {
-    marginTop: 16,
     flexDirection: "row",
     alignItems: "center",
-    gap: 5,
+    gap: 6,
+    paddingVertical: 2,
   },
-  homeText: { fontSize: Fonts.caption },
+  homeText: { fontSize: 12, fontWeight: "600" },
 });

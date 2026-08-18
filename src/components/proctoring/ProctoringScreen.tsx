@@ -45,45 +45,52 @@ export default function ProctoringScreen({
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        bounces={false}
       >
         <View style={styles.mainCard}>
-          {/* Header with Camera Graphic */}
-          <ProctoringHeader />
+          {/* Top Section: Header + Checklist */}
+          <View style={styles.topSection}>
+            {/* Header with Camera Graphic */}
+            <ProctoringHeader />
 
-          {/* Checklist of Proctoring Features */}
-          <ProctoringCheckList checks={DEFAULT_PROCTORING_CHECKS} />
+            {/* Checklist of Proctoring Features */}
+            <ProctoringCheckList checks={DEFAULT_PROCTORING_CHECKS} />
+          </View>
 
-          {/* Privacy & Policy Agreement Checkbox */}
-          <ProctoringPolicyCheckbox
-            checked={agreed}
-            onToggle={() => setAgreed(!agreed)}
-            onPolicyPress={onPolicyPress}
-          />
+          {/* Bottom Section: Agreement + Warning + CTA Button */}
+          <View style={styles.bottomSection}>
+            {/* Privacy & Policy Agreement Checkbox */}
+            <ProctoringPolicyCheckbox
+              checked={agreed}
+              onToggle={() => setAgreed(!agreed)}
+              onPolicyPress={onPolicyPress}
+            />
 
-          {/* Critical Warning Box */}
-          <ProctoringWarning />
+            {/* Critical Warning Box */}
+            <ProctoringWarning />
 
-          {/* Error Message if camera failed */}
-          {error && (
-            <View style={styles.errorBox}>
-              <Ionicons name="alert-circle" size={16} color={Colors.danger} />
-              <AppText
-                style={styles.errorText}
-                color={Colors.danger}
-                weight={FontWeight.medium}
-              >
-                {error}
-              </AppText>
-            </View>
-          )}
+            {/* Error Message if camera failed */}
+            {error && (
+              <View style={styles.errorBox}>
+                <Ionicons name="alert-circle" size={16} color={Colors.danger} />
+                <AppText
+                  style={styles.errorText}
+                  color={Colors.danger}
+                  weight={FontWeight.medium}
+                >
+                  {error}
+                </AppText>
+              </View>
+            )}
 
-          {/* Start Test CTA Button */}
-          <StartTestButton
-            title="I'm ready, Start Test"
-            onPress={handleStartPress}
-            disabled={!agreed}
-            loading={loading}
-          />
+            {/* Start Test CTA Button */}
+            <StartTestButton
+              title="I'm ready, Start Test"
+              onPress={handleStartPress}
+              disabled={!agreed}
+              loading={loading}
+            />
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -98,15 +105,27 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 16,
-    paddingTop: 10,
-    paddingBottom: 24,
+    paddingTop: 8,
+    paddingBottom: 12,
   },
   mainCard: {
+    flex: 1,
+    width: "100%",
     backgroundColor: Colors.white,
     borderRadius: 24,
     paddingHorizontal: 18,
-    paddingVertical: 22,
-    ...createShadow({ x: 0, y: 4, blur: 10, opacity: 0.06, elevation: 3 }),
+    paddingTop: 14,
+    paddingBottom: 16,
+    justifyContent: "space-between",
+    ...createShadow({ x: 0, y: 4, blur: 12, opacity: 0.06, elevation: 3 }),
+  },
+  topSection: {
+    width: "100%",
+  },
+  bottomSection: {
+    width: "100%",
+    gap: 12,
+    marginTop: 12,
   },
   errorBox: {
     flexDirection: "row",
@@ -115,7 +134,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#FEE2E2",
     borderRadius: 8,
     padding: 10,
-    marginTop: 10,
   },
   errorText: {
     fontSize: 12,

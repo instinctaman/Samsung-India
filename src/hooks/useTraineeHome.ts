@@ -13,6 +13,7 @@ import {
   setAttendanceState,
   setSessionFlowState,
 } from "@/api/session";
+import { isSessionLocked } from "@/components/proctoring/violations";
 import { useAuth } from "@/hooks/useAuth";
 
 export type TraineeTab = "rank" | "home" | "profile";
@@ -49,6 +50,8 @@ export function useTraineeHome() {
     survey?: string;
     score?: string;
     duration?: string;
+    violation?: string;
+    violationType?: string;
   }>();
   const { trainee, token, logout } = useAuth();
 
@@ -57,6 +60,9 @@ export function useTraineeHome() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [historyVisible, setHistoryVisible] = useState(false);
+  const [violationLockedVisible, setViolationLockedVisible] = useState(
+    () => params.violation === "locked" || params.postTest === "security_locked",
+  );
   const [notAssigned, setNotAssigned] = useState(false);
   const [activeTab, setActiveTab] = useState<TraineeTab>("home");
 
@@ -277,8 +283,11 @@ export function useTraineeHome() {
   useFocusEffect(
     useCallback(() => {
       setActiveTab("home");
+      if (params.violation === "locked" || params.postTest === "security_locked") {
+        setViolationLockedVisible(true);
+      }
       loadSession();
-    }, [loadSession]),
+    }, [loadSession, params.violation, params.postTest]),
   );
 
   const allModulesDone =
@@ -421,6 +430,17 @@ export function useTraineeHome() {
       (module) => module.key === "STANDARD_TEST",
     );
     if (!session || !standardTest?.assessmentSuiteUid) return;
+
+    const sessionKey = `${session.conferenceUid}_${standardTest.assessmentSuiteUid}`;
+    if (
+      isSessionLocked(sessionKey) ||
+      isSessionLocked(session.conferenceUid) ||
+      params.postTest === "security_locked"
+    ) {
+      setViolationLockedVisible(true);
+      return;
+    }
+
     router.push({
       pathname: "/post_test_proctoring",
       params: {
@@ -471,6 +491,8 @@ export function useTraineeHome() {
     activeTab,
     historyVisible,
     setHistoryVisible,
+    violationLockedVisible,
+    setViolationLockedVisible,
     loadSession,
     handleMarkAttendance,
     handleEnterLiveQuiz,

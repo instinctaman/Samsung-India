@@ -33,3 +33,6 @@ export * from "./TraineeBottomNavigation";
 export { default as SessionTypeIcon } from "./SessionTypeIcon";
 
 export { default as RecentSessionsModal } from "./RecentSessionsModal";
+
+export { default as SecurityLockedModal } from "./SecurityLockedModal";
+export * from "./SecurityLockedModal";

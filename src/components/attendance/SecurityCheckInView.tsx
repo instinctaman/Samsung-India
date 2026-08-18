@@ -1,4 +1,7 @@
-import React, { useEffect, useRef, useState } from "react";
+import { Ionicons } from "@expo/vector-icons";
+import { CameraView, useCameraPermissions } from "expo-camera";
+import { StatusBar } from "expo-status-bar";
+import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Image,
@@ -8,16 +11,14 @@ import {
   StyleSheet,
   View,
 } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { StatusBar } from "expo-status-bar";
-import { Ionicons } from "@expo/vector-icons";
-import { CameraView, useCameraPermissions } from "expo-camera";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 
 import AppText from "@/components/ui/AppText";
 import { Colors } from "@/theme/colors";
 import { FontWeight } from "@/theme/fontWeight";
-import { Fonts } from "@/theme/fonts";
-import { Radius } from "@/theme/radius";
 import { createShadow } from "@/theme/shadows";
 
 const DEFAULT_SAMPLE_PHOTO: ImageSourcePropType = require("@/assets/images/user_img/default_male.png");
@@ -38,7 +39,7 @@ export default function SecurityCheckInView({
   const [cameraReady, setCameraReady] = useState(false);
   const [capturing, setCapturing] = useState(false);
   const [photoSource, setPhotoSource] = useState<ImageSourcePropType | null>(
-    null
+    null,
   );
 
   // Request camera permission on mount
@@ -103,11 +104,12 @@ export default function SecurityCheckInView({
         {/* Main White Card Container */}
         <View style={styles.card}>
           {/* Header Title & Subtitle */}
-          <AppText style={styles.title} weight={FontWeight.bold}>
+          <AppText style={styles.title} weight={FontWeight.semiBold}>
             Security Check-In
           </AppText>
           <AppText style={styles.subtitle}>
-            Please capture a clear photo of your face{"\n"}to verify your identity.
+            Please capture a clear photo of your face{"\n"}to verify your
+            identity.
           </AppText>
 
           {/* Camera Viewfinder / Captured Photo Area */}
@@ -140,7 +142,11 @@ export default function SecurityCheckInView({
                     style={styles.enablePermButton}
                     onPress={requestPermission}
                   >
-                    <AppText color={Colors.white} weight={FontWeight.medium} style={styles.enablePermText}>
+                    <AppText
+                      color={Colors.white}
+                      weight={FontWeight.medium}
+                      style={styles.enablePermText}
+                    >
                       Enable Camera
                     </AppText>
                   </Pressable>
@@ -184,13 +190,21 @@ export default function SecurityCheckInView({
               <View style={styles.actionsRow}>
                 <View style={styles.disabledRetakeButton}>
                   <Ionicons name="refresh" size={18} color="#9CA3AF" />
-                  <AppText color="#9CA3AF" weight={FontWeight.medium}>
+                  <AppText
+                    color="#9CA3AF"
+                    weight={FontWeight.medium}
+                    style={styles.buttonText16}
+                  >
                     Retake
                   </AppText>
                 </View>
 
                 <View style={styles.disabledProceedButton}>
-                  <AppText color={Colors.white} weight={FontWeight.medium}>
+                  <AppText
+                    color={Colors.white}
+                    weight={FontWeight.medium}
+                    style={styles.buttonText16}
+                  >
                     Proceed
                   </AppText>
                   <Ionicons
@@ -208,22 +222,15 @@ export default function SecurityCheckInView({
               <View style={styles.greenTipsBanner}>
                 <View style={styles.greenDot} />
                 <View style={styles.tipsTextColumn}>
-                  <AppText
-                    style={styles.tipsTitle}
-                    weight={FontWeight.bold}
-                  >
+                  <AppText style={styles.tipsTitle} weight={FontWeight.bold}>
                     Tips for best results
                   </AppText>
                   <AppText style={styles.tipsSubtitle}>
-                    Ensure good lighting, look straight at the camera and
-                    remove anything that covers your face.
+                    Ensure good lighting, look straight at the camera and remove
+                    anything that covers your face.
                   </AppText>
                 </View>
-                <Ionicons
-                  name="chevron-forward"
-                  size={16}
-                  color="#374151"
-                />
+                <Ionicons name="chevron-forward" size={16} color="#374151" />
               </View>
 
               {/* Enabled Retake & Proceed Row */}
@@ -238,6 +245,7 @@ export default function SecurityCheckInView({
                   <AppText
                     color="#374151"
                     weight={FontWeight.semiBold}
+                    style={styles.buttonText16}
                   >
                     Retake
                   </AppText>
@@ -252,7 +260,7 @@ export default function SecurityCheckInView({
                   <AppText
                     color={Colors.white}
                     weight={FontWeight.bold}
-                    style={styles.proceedButtonText}
+                    style={styles.buttonText16}
                   >
                     Proceed
                   </AppText>
@@ -271,11 +279,7 @@ export default function SecurityCheckInView({
         {!hasPhoto ? (
           <View style={styles.blueAlertBanner}>
             <View style={styles.blueShieldIconWrap}>
-              <Ionicons
-                name="shield-checkmark"
-                size={18}
-                color="#0066FF"
-              />
+              <Ionicons name="shield-checkmark" size={18} color="#0066FF" />
             </View>
             <View style={styles.alertTextColumn}>
               <AppText style={styles.alertTitle} weight={FontWeight.semiBold}>
@@ -330,13 +334,13 @@ const styles = StyleSheet.create({
     ...createShadow({ x: 0, y: 4, blur: 12, opacity: 0.08, elevation: 3 }),
   },
   title: {
-    fontSize: 22,
+    fontSize: 24,
     color: "#111827",
     textAlign: "center",
     letterSpacing: 0.2,
   },
   subtitle: {
-    fontSize: 12.5,
+    fontSize: 12,
     color: "#6B7280",
     textAlign: "center",
     marginTop: 6,
@@ -346,8 +350,10 @@ const styles = StyleSheet.create({
 
   // Viewfinder
   viewfinderBox: {
-    width: "100%",
-    height: 330,
+    width: 313,
+    height: 346,
+    maxWidth: "100%",
+    alignSelf: "center",
     borderRadius: 20,
     overflow: "hidden",
     backgroundColor: "#BDBDBD",
@@ -403,7 +409,10 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   captureButtonText: {
-    fontSize: 15,
+    fontSize: 18,
+  },
+  buttonText16: {
+    fontSize: 16,
   },
   actionsRow: {
     flexDirection: "row",

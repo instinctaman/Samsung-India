@@ -29,7 +29,10 @@ import {
   MAX_PROCTORING_WARNINGS,
   SECURITY_VIOLATIONS,
   SecurityViolationType,
+  getLastViolation,
   getSessionViolationCount,
+  isSessionLocked,
+  lockSession,
   recordSessionViolation,
 } from "@/components/proctoring/violations";
 import AppText from "@/components/ui/AppText";
@@ -61,27 +64,29 @@ export default function PostTestScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Session key for persistent violation tracking
+  const sessionKey = conferenceUid || suiteUid || "default-post-test";
+
   // Unified post-test status (replaces separate submitting/submittedAt)
-  const [testStatus, setTestStatus] = useState<PostTestStatus>("active");
+  const [testStatus, setTestStatus] = useState<PostTestStatus>(() =>
+    isSessionLocked(sessionKey) ? "security-locked" : "active",
+  );
   const [assessmentResult, setAssessmentResult] =
     useState<AssessmentResult | null>(null);
   const [submittedAt, setSubmittedAt] = useState<Date | null>(null);
-
-  // Session key for persistent violation tracking
-  const sessionKey = conferenceUid || suiteUid || "default-post-test";
 
   // Violation-specific state (persisted across re-renders for this test session)
   const [violationCount, setViolationCount] = useState(() =>
     getSessionViolationCount(sessionKey),
   );
   const [currentViolation, setCurrentViolation] =
-    useState<SecurityViolationType | null>(null);
+    useState<SecurityViolationType | null>(() => getLastViolation(sessionKey));
   const [violationModalVisible, setViolationModalVisible] = useState(false);
   const [lockedViolationType, setLockedViolationType] =
-    useState<SecurityViolationType | null>(null);
+    useState<SecurityViolationType | null>(() => getLastViolation(sessionKey));
 
   // Guards: deduplicate multiple simultaneous violation triggers and double termination
-  const terminatingRef = useRef(false);
+  const terminatingRef = useRef(isSessionLocked(sessionKey));
   const lastViolationTimeRef = useRef(0);
 
   const [questionIndex, setQuestionIndex] = useState(0);
@@ -158,10 +163,10 @@ export default function PostTestScreen() {
   // ── Security violation termination ─────────────────────────────────────────
   const handleViolationTermination = useCallback(
     async (violationType: SecurityViolationType) => {
-      if (terminatingRef.current) return; // already terminating
       terminatingRef.current = true;
-      setTestStatus("submitting");
+      setTestStatus("security-locked");
       setLockedViolationType(violationType);
+      lockSession(sessionKey, violationType);
 
       const answersPayload = questions.map((question, index) => ({
         questionId: question.id,
@@ -177,23 +182,37 @@ export default function PostTestScreen() {
           answersPayload,
         );
       } catch {
-        // Even if API call fails, lock the test — don't leave trainee in limbo
-      } finally {
-        setTestStatus("security-locked");
+        // Even if API call fails, lock the test permanently for this session
       }
+
+      // Redirect trainee immediately to Session Details with Locked security modal
+      router.replace({
+        pathname: "/session_detail",
+        params: {
+          flow: "ATTENDANCE_RECORDED",
+          postTest: "security_locked",
+          violation: "locked",
+          violationType,
+        },
+      });
     },
-    [token, suiteUid, conferenceUid, questions, answers],
+    [token, suiteUid, conferenceUid, sessionKey, questions, answers, router],
   );
 
   // ── Central Violation Trigger (0 → 1 → 2 → 3) ───────────────────────────
   const triggerViolation = useCallback(
     (violationType: SecurityViolationType) => {
-      // Prevent handling if test is already submitting/locked
-      if (testStatus !== "active" || terminatingRef.current) return;
+      // Prevent handling if test is already submitting/locked or modal is visible
+      if (
+        testStatus !== "active" ||
+        terminatingRef.current ||
+        violationModalVisible
+      )
+        return;
 
-      // Prevent duplicate counts when multiple detection events fire simultaneously (1200ms debounce)
+      // 4-second cooldown between distinct violation events to prevent rapid fire
       const now = Date.now();
-      if (now - lastViolationTimeRef.current < 1200) return;
+      if (now - lastViolationTimeRef.current < 4000) return;
       lastViolationTimeRef.current = now;
 
       const newCount = recordSessionViolation(sessionKey, violationType);
@@ -201,26 +220,21 @@ export default function PostTestScreen() {
       setCurrentViolation(violationType);
 
       if (newCount < MAX_PROCTORING_WARNINGS) {
-        // Violation #1 or #2: Open error/violation modal, trainee can close and continue
+        // Violation #1 or #2: Open warning modal, trainee can close and continue
         setViolationModalVisible(true);
       } else {
-        // Violation #3: Stop test immediately, auto submit and lock
-        setViolationModalVisible(true);
+        // Violation #3: Stop test immediately, lock session and transform screen into SecurityLockedView
+        setViolationModalVisible(false);
         handleViolationTermination(violationType);
       }
     },
-    [testStatus, sessionKey, handleViolationTermination],
+    [testStatus, violationModalVisible, sessionKey, handleViolationTermination],
   );
 
   const handleCloseViolationModal = () => {
-    if (violationCount >= MAX_PROCTORING_WARNINGS) {
-      router.replace({
-        pathname: "/session_detail",
-        params: { postTest: "security_locked" },
-      });
-      return;
-    }
     setViolationModalVisible(false);
+    // Provide a fresh grace period after closing warning modal
+    lastViolationTimeRef.current = Date.now();
   };
 
   // ── Tab-switch detection (Web) ──────────────────────────────────────────────
@@ -228,7 +242,11 @@ export default function PostTestScreen() {
     if (Platform.OS !== "web" || !readyToStart) return;
 
     const handleVisibilityChange = () => {
-      if (document.hidden && testStatus === "active" && !terminatingRef.current) {
+      if (
+        document.hidden &&
+        testStatus === "active" &&
+        !terminatingRef.current
+      ) {
         triggerViolation(SECURITY_VIOLATIONS.TAB_SWITCH);
       }
     };
@@ -378,14 +396,18 @@ export default function PostTestScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
-      {/* Security Violation Modal (Violations #1, #2, and #3) */}
+      {/* Security Violation Modal (Strikes 1 & 2 only) */}
       <SecurityViolationModal
-        visible={violationModalVisible && testStatus !== "security-locked"}
+        visible={
+          violationModalVisible &&
+          testStatus === "active" &&
+          violationCount < MAX_PROCTORING_WARNINGS
+        }
         violationType={currentViolation}
         strikesRemaining={Math.max(MAX_PROCTORING_WARNINGS - violationCount, 0)}
         maxStrikes={MAX_PROCTORING_WARNINGS}
         onClose={handleCloseViolationModal}
-        isTerminal={violationCount >= MAX_PROCTORING_WARNINGS}
+        isTerminal={false}
       />
 
       {/* Security Locked Overlay (Post test auto-terminated / locked state) */}
@@ -435,7 +457,10 @@ export default function PostTestScreen() {
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.timerProctorRow}>
           <View style={styles.timerColumn}>
             <TimeProgress
@@ -449,6 +474,7 @@ export default function PostTestScreen() {
             <ProctoringPanel
               token={token}
               active={isActive}
+              paused={violationModalVisible || testStatus !== "active"}
               warningsCount={violationCount}
               latestViolation={currentViolation}
               onViolation={triggerViolation}
@@ -463,60 +489,64 @@ export default function PostTestScreen() {
         </View>
 
         <View style={styles.questionCard}>
-          <View style={styles.tags}>
-            <AppText style={styles.questionTag} weight={FontWeight.medium}>
-              Question {questionIndex + 1} of {questions.length}
-            </AppText>
-            <AppText style={styles.multiTag} weight={FontWeight.medium}>
-              {current.question_type === "multi" ? "Multi - Select" : "Single Select"}
-            </AppText>
-            <View style={styles.unlimitedTag}>
-              <Ionicons name="infinite" size={13} color="#00A859" />
-              <AppText style={styles.unlimitedText} weight={FontWeight.medium}>
-                Unlimited
+          <View style={styles.questionBody}>
+            <View style={styles.tags}>
+              <AppText style={styles.questionTag} weight={FontWeight.medium}>
+                Question {questionIndex + 1} of {questions.length}
               </AppText>
+              <AppText style={styles.multiTag} weight={FontWeight.medium}>
+                {current.question_type === "multi"
+                  ? "Multi - Select"
+                  : "Single Select"}
+              </AppText>
+              <View style={styles.unlimitedTag}>
+                <Ionicons name="infinite" size={13} color="#00A859" />
+                <AppText style={styles.unlimitedText} weight={FontWeight.medium}>
+                  Unlimited
+                </AppText>
+              </View>
             </View>
-          </View>
 
-          <AppText style={styles.question} weight={FontWeight.semiBold}>
-            {current.question}
-          </AppText>
+            <AppText style={styles.question} weight={FontWeight.semiBold}>
+              {current.question}
+            </AppText>
 
-          <View style={styles.options}>
-            {current.options.map((option) => {
-              const checked = selectedOption === option.id;
-              return (
-                <Pressable
-                  key={option.id}
-                  style={[
-                    styles.option,
-                    checked && styles.optionSelected,
-                    !isActive && styles.optionDisabled,
-                  ]}
-                  onPress={() => selectOption(option.id)}
-                  disabled={!isActive}
-                >
-                  <View
+            <View style={styles.options}>
+              {current.options.map((option) => {
+                const checked = selectedOption === option.id;
+                return (
+                  <Pressable
+                    key={option.id}
                     style={[
-                      styles.checkbox,
-                      checked && styles.checkboxSelected,
+                      styles.option,
+                      checked && styles.optionSelected,
+                      !isActive && styles.optionDisabled,
                     ]}
+                    onPress={() => selectOption(option.id)}
+                    disabled={!isActive}
                   >
-                    {checked && (
-                      <Ionicons
-                        name="checkmark"
-                        size={14}
-                        color={Colors.white}
-                      />
-                    )}
-                  </View>
-                  <AppText style={styles.optionText}>{option.text}</AppText>
-                </Pressable>
-              );
-            })}
-          </View>
+                    <View
+                      style={[
+                        styles.checkbox,
+                        checked && styles.checkboxSelected,
+                      ]}
+                    >
+                      {checked && (
+                        <Ionicons
+                          name="checkmark"
+                          size={14}
+                          color={Colors.white}
+                        />
+                      )}
+                    </View>
+                    <AppText style={styles.optionText}>{option.text}</AppText>
+                  </Pressable>
+                );
+              })}
+            </View>
 
-          {error && <AppText style={styles.inlineError}>{error}</AppText>}
+            {error && <AppText style={styles.inlineError}>{error}</AppText>}
+          </View>
 
           <View style={styles.actions}>
             <Pressable
@@ -634,7 +664,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: Colors.success,
   },
-  content: { padding: 10, gap: 10 },
+  content: {
+    flexGrow: 1,
+    padding: 10,
+    paddingBottom: 12,
+    gap: 10,
+  },
   timerProctorRow: {
     width: "100%",
     minHeight: 158,
@@ -666,16 +701,31 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     ...createShadow({ x: 0, y: 2, blur: 6, opacity: 0.04, elevation: 2 }),
   },
-  title: { fontSize: 23, textAlign: "center", lineHeight: 30, color: "#1E293B" },
+  title: {
+    fontSize: 23,
+    textAlign: "center",
+    lineHeight: 30,
+    color: "#1E293B",
+  },
   questionCard: {
+    flex: 1,
     borderRadius: 16,
     borderWidth: 1.5,
     borderColor: "#60A5FA",
     padding: 16,
     backgroundColor: Colors.white,
+    justifyContent: "space-between",
     ...createShadow({ x: 0, y: 2, blur: 6, opacity: 0.04, elevation: 2 }),
   },
-  tags: { flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" },
+  questionBody: {
+    width: "100%",
+  },
+  tags: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    flexWrap: "wrap",
+  },
   questionTag: {
     fontSize: 10.5,
     backgroundColor: "#DDEEFF",

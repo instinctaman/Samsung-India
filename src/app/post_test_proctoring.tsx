@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Alert } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCameraPermissions } from "expo-camera";
 
 import { ProctoringScreen } from "@/components/proctoring";
+import { isSessionLocked } from "@/components/proctoring/violations";
 
 export default function PostTestProctoringScreen() {
   const router = useRouter();
@@ -11,6 +12,23 @@ export default function PostTestProctoringScreen() {
     conferenceUid: string;
     suiteUid: string;
   }>();
+
+  useEffect(() => {
+    const sessionKey = `${conferenceUid}_${suiteUid}`;
+    if (
+      isSessionLocked(sessionKey) ||
+      isSessionLocked(conferenceUid ?? "")
+    ) {
+      router.replace({
+        pathname: "/session_detail",
+        params: {
+          flow: "ATTENDANCE_RECORDED",
+          postTest: "security_locked",
+          violation: "locked",
+        },
+      });
+    }
+  }, [conferenceUid, suiteUid, router]);
 
   const [permission, requestPermission] = useCameraPermissions();
   const [loading, setLoading] = useState(false);

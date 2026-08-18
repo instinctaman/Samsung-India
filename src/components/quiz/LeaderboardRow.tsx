@@ -21,7 +21,7 @@ export default function LeaderboardRow({ user }: LeaderboardRowProps) {
 
   return (
     <View style={[styles.row, isYou && styles.youRow]}>
-      {/* Avatar */}
+      {/* Avatar Placeholder */}
       <View style={[styles.avatar, isYou && styles.youAvatar]} />
 
       {/* Trainee Name */}
@@ -33,7 +33,7 @@ export default function LeaderboardRow({ user }: LeaderboardRowProps) {
         {user.name}
       </AppText>
 
-      {/* Score and Accuracy */}
+      {/* Score & Accuracy */}
       <View style={styles.scoreContainer}>
         <AppText
           style={styles.scoreText}
@@ -50,49 +50,49 @@ export default function LeaderboardRow({ user }: LeaderboardRowProps) {
 
 const styles = StyleSheet.create({
   row: {
-    minHeight: 40,
+    height: 48,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: "#E2E8F0",
     borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
+    paddingHorizontal: 12,
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 8,
     backgroundColor: Colors.white,
   },
   youRow: {
-    backgroundColor: "#EAF2FF",
+    backgroundColor: "#DCEBFE",
     borderColor: "#BFDBFE",
   },
   avatar: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: "#DBEAFE",
-    marginRight: 10,
+    marginRight: 12,
   },
   youAvatar: {
-    backgroundColor: "#93C5FD",
+    backgroundColor: "#C2DCFF",
   },
   name: {
     flex: 1,
-    fontSize: 12,
-    color: "#1F2937",
+    fontSize: 13,
+    color: "#1E293B",
     letterSpacing: 0.2,
   },
   youName: {
-    color: "#1E3A8A",
+    color: "#0F172A",
+    fontSize: 13.5,
   },
   scoreContainer: {
     flexDirection: "row",
     alignItems: "center",
   },
   scoreText: {
-    fontSize: 12,
+    fontSize: 13,
   },
   accuracyText: {
-    fontSize: 11,
-    color: Colors.gray600,
+    fontSize: 12,
+    color: "#64748B",
   },
 });

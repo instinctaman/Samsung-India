@@ -59,6 +59,7 @@ const styles = StyleSheet.create({
     maxWidth: "100%",
     paddingHorizontal: 16,
     paddingTop: 4,
-    paddingBottom: 28,
+    paddingBottom: 8,
+    justifyContent: "space-between",
   },
 });

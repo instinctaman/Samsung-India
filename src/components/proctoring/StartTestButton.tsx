@@ -75,7 +75,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    marginTop: 14,
     ...createShadow({
       x: 0,
       y: 3,

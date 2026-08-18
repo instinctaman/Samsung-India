@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Animated,
   Dimensions,
@@ -9,9 +9,9 @@ import {
   View,
 } from "react-native";
 
-import { styles } from "./styles"
-import { AppModalProps } from "./types";
 import ModalHeader from "./ModalHeader";
+import { styles } from "./styles";
+import { AppModalProps } from "./types";
 
 const { width, height } = Dimensions.get("window");
 
@@ -140,11 +140,7 @@ export default function AppModal({
   }
 
   return (
-    <Modal
-      transparent
-      visible={isMounted}
-      onRequestClose={onClose}
-    >
+    <Modal transparent visible={isMounted} onRequestClose={onClose}>
       <View style={[styles.container, containerStyle]}>
         <Pressable
           style={[

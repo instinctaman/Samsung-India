@@ -3,7 +3,6 @@ import { StyleSheet, View, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { Ionicons } from "@expo/vector-icons";
 import AppCard from "@/components/ui/AppCard";
 import AuthHeader from "@/components/common/AppHeader";
 import AppText from "@/components/ui/AppText";
@@ -11,7 +10,6 @@ import AppInput from "@/components/ui/AppInput";
 import AppButton from "@/components/ui/AppButton";
 import RegisterSheet from "@/components/common/RegisterSheet";
 import SecurityFooter from "@/components/common/SecurityFooter";
-import AppFooter from "@/components/ui/AppFooter";
 // import RegisterBottomSheet from "@/components/bottom-sheet/RegisterSheet";
 import { Colors } from "@/theme/colors";
 import { Fonts } from "@/theme/fonts";
@@ -106,23 +104,6 @@ export default function Starter1() {
           ref={bottomSheetRef}
         /> */}
         </View>
-        <AppFooter
-          items={[
-            {
-              key: "trainer-login",
-              label: "Trainer Login",
-              center: true,
-              icon: ({ size, color }) => (
-                <Ionicons
-                  name="school-outline"
-                  size={size}
-                  color={color}
-                />
-              ),
-              onPress: () => router.push("/trainer_login"),
-            },
-          ]}
-        />
       </SafeAreaView>
     </>
   );

@@ -23,6 +23,7 @@ import {
   DEMO_SURVEY_QUESTIONS,
   DEMO_TRAINEE,
 } from "@/data/mockData";
+import { SECURITY_VIOLATIONS } from "@/components/proctoring/violations";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const delay = (ms = 650) => new Promise<void>((r) => setTimeout(r, ms));
@@ -299,8 +300,14 @@ export async function secureCheckIn(
 }
 
 // ─── Proctoring ───────────────────────────────────────────────────────────────
-/** Always returns faceCount: 1 so no proctoring warnings fire in demo mode. */
-export async function checkFrameForFaces(_token: string, _imageBase64: string) {
+export async function checkFrameForFaces(
+  _token: string,
+  imageBase64: string,
+): Promise<{ faceCount: number; violation?: any }> {
+  // If frame data is completely empty/invalid, report NO_FACE
+  if (!imageBase64 || imageBase64.length < 50) {
+    return { faceCount: 0, violation: SECURITY_VIOLATIONS.NO_FACE };
+  }
   return { faceCount: 1 };
 }
 

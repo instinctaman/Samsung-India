@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 
+import HomeIcon from "@/assets/images/svg/home.svg";
 import AppText from "@/components/ui/AppText";
 import { TraineeTab } from "@/hooks/useTraineeHome";
 import { Colors } from "@/theme/colors";
@@ -60,7 +61,7 @@ export default function TraineeBottomNavigation({
             accessibilityRole="button"
             accessibilityLabel="Home"
           >
-            <Ionicons name="home" size={28} color={Colors.white} />
+            <HomeIcon width={28} height={28} stroke={Colors.white} />
           </Pressable>
         </View>
 

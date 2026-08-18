@@ -31,6 +31,7 @@ const DEMO_VIOLATION_CYCLE: SecurityViolationType[] = [
 type Props = {
   token: string | null;
   active: boolean;
+  paused?: boolean;
   warningsCount?: number;
   latestViolation?: SecurityViolationType | null;
   /** Called with the violation type when any violation fires */
@@ -42,6 +43,7 @@ type Props = {
 export default function ProctoringPanel({
   token,
   active,
+  paused = false,
   warningsCount = 0,
   latestViolation = null,
   onViolation,
@@ -50,7 +52,6 @@ export default function ProctoringPanel({
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
   const isChecking = useRef(false);
-  const violationCycleIdx = useRef(0);
 
   const maxedOut = warningsCount >= MAX_PROCTORING_WARNINGS;
 
@@ -59,10 +60,10 @@ export default function ProctoringPanel({
   }, [permission, requestPermission]);
 
   useEffect(() => {
-    if (!active || !permission?.granted || !token || maxedOut) return;
+    if (!active || paused || !permission?.granted || !token || maxedOut) return;
 
     const interval = setInterval(async () => {
-      if (isChecking.current || !cameraRef.current) return;
+      if (isChecking.current || !cameraRef.current || paused || maxedOut) return;
       isChecking.current = true;
       try {
         const photo = await cameraRef.current.takePictureAsync({
@@ -73,21 +74,17 @@ export default function ProctoringPanel({
         if (photo?.base64) {
           const result = await checkFrameForFaces(token, photo.base64);
 
-          // In demo mode faceCount is always 1, so we simulate by cycling violation types.
-          // In production replace this with actual AI analysis result mapping.
-          const hasViolation =
-            result.faceCount > 1 ||
-            result.faceCount === 0 ||
-            (result as { violation?: string }).violation;
+          let detectedViolation: SecurityViolationType | null = null;
+          if (result.violation) {
+            detectedViolation = result.violation;
+          } else if (result.faceCount === 0) {
+            detectedViolation = SECURITY_VIOLATIONS.NO_FACE;
+          } else if (result.faceCount > 1) {
+            detectedViolation = SECURITY_VIOLATIONS.MULTIPLE_PEOPLE;
+          }
 
-          if (hasViolation) {
-            const vType =
-              DEMO_VIOLATION_CYCLE[
-                violationCycleIdx.current % DEMO_VIOLATION_CYCLE.length
-              ];
-            violationCycleIdx.current += 1;
-
-            onViolation?.(vType);
+          if (detectedViolation) {
+            onViolation?.(detectedViolation);
             if (warningsCount + 1 >= MAX_PROCTORING_WARNINGS) {
               onMaxWarnings?.();
             }
@@ -101,7 +98,7 @@ export default function ProctoringPanel({
     }, CHECK_INTERVAL_MS);
 
     return () => clearInterval(interval);
-  }, [active, permission, token, maxedOut, warningsCount, onViolation, onMaxWarnings]);
+  }, [active, paused, permission, token, maxedOut, warningsCount, onViolation, onMaxWarnings]);
 
   const footerLabel = !permission?.granted
     ? "Camera Off"

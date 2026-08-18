@@ -27,10 +27,46 @@ export const MAX_PROCTORING_WARNINGS = 3;
 // ─── Global session violation tracker ───────────────────────────────────────
 // Persists the violation count per session key so that re-renders or navigations
 // do not reset the count accidentally.
-const sessionViolations: Record<string, { count: number; history: SecurityViolationType[] }> = {};
+const sessionViolations: Record<
+  string,
+  { count: number; history: SecurityViolationType[]; locked: boolean; lastViolation?: SecurityViolationType }
+> = {};
 
 export function getSessionViolationCount(sessionId: string): number {
   return sessionViolations[sessionId]?.count ?? 0;
+}
+
+export function isSessionLocked(sessionId: string): boolean {
+  return (
+    sessionViolations[sessionId]?.locked === true ||
+    (sessionViolations[sessionId]?.count ?? 0) >= MAX_PROCTORING_WARNINGS
+  );
+}
+
+export function getLastViolation(
+  sessionId: string,
+): SecurityViolationType | null {
+  return (
+    sessionViolations[sessionId]?.lastViolation ??
+    sessionViolations[sessionId]?.history[
+      sessionViolations[sessionId].history.length - 1
+    ] ??
+    null
+  );
+}
+
+export function lockSession(
+  sessionId: string,
+  violationType: SecurityViolationType,
+): void {
+  if (!sessionViolations[sessionId]) {
+    sessionViolations[sessionId] = { count: MAX_PROCTORING_WARNINGS, history: [violationType], locked: true, lastViolation: violationType };
+  } else {
+    sessionViolations[sessionId].count = MAX_PROCTORING_WARNINGS;
+    sessionViolations[sessionId].locked = true;
+    sessionViolations[sessionId].lastViolation = violationType;
+    sessionViolations[sessionId].history.push(violationType);
+  }
 }
 
 export function recordSessionViolation(
@@ -38,13 +74,17 @@ export function recordSessionViolation(
   violationType: SecurityViolationType,
 ): number {
   if (!sessionViolations[sessionId]) {
-    sessionViolations[sessionId] = { count: 0, history: [] };
+    sessionViolations[sessionId] = { count: 0, history: [], locked: false };
   }
   sessionViolations[sessionId].count = Math.min(
     sessionViolations[sessionId].count + 1,
     MAX_PROCTORING_WARNINGS,
   );
+  sessionViolations[sessionId].lastViolation = violationType;
   sessionViolations[sessionId].history.push(violationType);
+  if (sessionViolations[sessionId].count >= MAX_PROCTORING_WARNINGS) {
+    sessionViolations[sessionId].locked = true;
+  }
   return sessionViolations[sessionId].count;
 }
 

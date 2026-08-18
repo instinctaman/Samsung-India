@@ -222,24 +222,23 @@ const styles = StyleSheet.create({
   },
   content: {
     flexGrow: 1,
-    minHeight: "100%",
     width: "100%",
     maxWidth: "100%",
     paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 28,
+    paddingTop: 4,
+    paddingBottom: 8,
   },
   activeTopSection: {
     flex: 1,
     width: "100%",
     maxWidth: "100%",
-    gap: 12,
+    justifyContent: "space-between",
   },
   timerContainer: {
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingTop: 16,
-    paddingBottom: 20,
+    paddingVertical: 8,
   },
 });
 

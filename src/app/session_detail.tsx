@@ -13,6 +13,7 @@ import {
 
 import {
   RecentSessionsModal,
+  SecurityLockedModal,
   SessionNotification,
   SessionTimeline,
   TraineeBottomNavigation,
@@ -38,6 +39,8 @@ export default function SessionDetailScreen() {
     activeTab,
     historyVisible,
     setHistoryVisible,
+    violationLockedVisible,
+    setViolationLockedVisible,
     loadSession,
     handleMarkAttendance,
     handleEnterLiveQuiz,
@@ -134,6 +137,12 @@ export default function SessionDetailScreen() {
         visible={historyVisible}
         onClose={() => setHistoryVisible(false)}
         token={token}
+      />
+
+      {/* Locked Security Violation Modal */}
+      <SecurityLockedModal
+        visible={violationLockedVisible}
+        onClose={() => setViolationLockedVisible(false)}
       />
     </>
   );

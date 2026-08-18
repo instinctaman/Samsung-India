@@ -1,8 +1,10 @@
+import { SecurityViolationType } from "@/components/proctoring/violations";
+
 export type FaceCheckResult = {
   faceCount: number;
+  violation?: SecurityViolationType | null;
+  confidence?: number;
 };
 
-// Demo implementation — always returns faceCount: 1 (no warnings in demo mode).
 export { checkFrameForFaces } from "@/api/mockService";
 export { ApiError } from "@/api/client";
-

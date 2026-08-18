@@ -57,110 +57,118 @@ export default function QuizWaiting({
 
   return (
     <View style={styles.content}>
-      <View style={styles.trainerIcon}>
-        <Ionicons
-          name="people"
-          size={Fonts.profileIconSize}
-          color={Colors.headerBlue}
-        />
-      </View>
-
-      <AppText style={styles.title} weight={FontWeight.semiBold}>
-        Waiting for
-      </AppText>
-      <AppText
-        style={styles.title}
-        color={Colors.headerBlue}
-        weight={FontWeight.semiBold}
-      >
-        Trainer...
-      </AppText>
-
-      <View
-        style={styles.progress}
-        accessibilityRole="progressbar"
-        accessibilityLabel="Waiting for trainer"
-      >
-        <Animated.View
-          style={[
-            styles.progressFill,
-            { transform: [{ translateX: progressTranslateX }] },
-          ]}
-        />
-      </View>
-
-      <AppText style={styles.message} weight={FontWeight.medium}>
-        {message}
-      </AppText>
-
-      <View style={styles.infoCard}>
-        <InfoItem
-          icon={
-            <Clock
-              width={QUIZ_WAITING_ICON_SIZE}
-              height={QUIZ_WAITING_ICON_SIZE}
-              style={styles.statusSvgIcon}
-            />
-          }
-          title="Stay Ready"
-          text={
-            nextQuestionNumber
-              ? `Question ${nextQuestionNumber} starting soon`
-              : "The quiz will start automatically"
-          }
-          color="#DDEEFF"
-        />
-        <InfoItem
-          icon={
-            <Eye
-              width={QUIZ_WAITING_ICON_SIZE}
-              height={QUIZ_WAITING_ICON_SIZE}
-              style={styles.statusSvgIcon}
-            />
-          }
-          title="Stay Focused"
-          text="Keep your eyes on the main screen"
-          color="#D8F8EB"
-        />
-        <InfoItem
-          icon={
-            <Bell
-              width={QUIZ_WAITING_ICON_SIZE}
-              height={QUIZ_WAITING_ICON_SIZE}
-              style={styles.statusSvgIcon}
-            />
-          }
-          title="Stay Connected"
-          text="Do not refresh or leave the page"
-          color="#FFF2C7"
-        />
-      </View>
-
-      {onSyncNow && (
-        <Pressable
-          style={styles.syncNotice}
-          onPress={onSyncNow}
-          accessibilityRole="button"
-          accessibilityLabel="Sync Live Now"
-        >
-          <View style={styles.syncIcon}>
-            <Refresh width={17} height={17} />
-          </View>
-          <View style={styles.syncCopy}>
-            <AppText style={styles.syncTitle} weight={FontWeight.bold}>
-              Sync Live Now
-            </AppText>
-            <AppText style={styles.syncText}>
-              Click to re-sync with the live session
-            </AppText>
-          </View>
+      {/* Upper/Center Hero Section */}
+      <View style={styles.heroSection}>
+        <View style={styles.trainerIcon}>
           <Ionicons
-            name="chevron-forward"
-            size={18}
+            name="people"
+            size={Fonts.profileIconSize}
             color={Colors.headerBlue}
           />
-        </Pressable>
-      )}
+        </View>
+
+        <View style={styles.titleWrapper}>
+          <AppText style={styles.title} weight={FontWeight.semiBold}>
+            Waiting for
+          </AppText>
+          <AppText
+            style={styles.title}
+            color={Colors.headerBlue}
+            weight={FontWeight.semiBold}
+          >
+            Trainer...
+          </AppText>
+        </View>
+
+        <View
+          style={styles.progress}
+          accessibilityRole="progressbar"
+          accessibilityLabel="Waiting for trainer"
+        >
+          <Animated.View
+            style={[
+              styles.progressFill,
+              { transform: [{ translateX: progressTranslateX }] },
+            ]}
+          />
+        </View>
+
+        <AppText style={styles.message} weight={FontWeight.medium}>
+          {message}
+        </AppText>
+      </View>
+
+      {/* Bottom Cards Section */}
+      <View style={styles.bottomSection}>
+        <View style={styles.infoCard}>
+          <InfoItem
+            icon={
+              <Clock
+                width={QUIZ_WAITING_ICON_SIZE}
+                height={QUIZ_WAITING_ICON_SIZE}
+                style={styles.statusSvgIcon}
+              />
+            }
+            title="Stay Ready"
+            text={
+              nextQuestionNumber
+                ? `Question ${nextQuestionNumber} starting soon`
+                : "The quiz will start automatically"
+            }
+            color="#DDEEFF"
+          />
+          <InfoItem
+            icon={
+              <Eye
+                width={QUIZ_WAITING_ICON_SIZE}
+                height={QUIZ_WAITING_ICON_SIZE}
+                style={styles.statusSvgIcon}
+              />
+            }
+            title="Stay Focused"
+            text="Keep your eyes on the main screen"
+            color="#D8F8EB"
+          />
+          <InfoItem
+            icon={
+              <Bell
+                width={QUIZ_WAITING_ICON_SIZE}
+                height={QUIZ_WAITING_ICON_SIZE}
+                style={styles.statusSvgIcon}
+              />
+            }
+            title="Stay Connected"
+            text="Do not refresh or leave the page"
+            color="#FFF2C7"
+          />
+        </View>
+
+        {onSyncNow && (
+          <Pressable
+            style={styles.syncNotice}
+            onPress={onSyncNow}
+            accessibilityRole="button"
+            accessibilityLabel="Sync Live Now"
+          >
+            <View style={styles.syncIcon}>
+              <Refresh width={17} height={17} />
+            </View>
+            <View style={styles.syncCopy}>
+              <AppText style={styles.syncTitle} weight={FontWeight.bold}>
+                Sync Live Now
+              </AppText>
+              <AppText style={styles.syncText}>
+                Click to re-sync with the live session
+              </AppText>
+            </View>
+            <Ionicons
+              name="chevron-forward"
+              size={18}
+              color={Colors.headerBlue}
+            />
+          </Pressable>
+        )}
+      </View>
     </View>
   );
 }
@@ -194,10 +202,19 @@ export function InfoItem({
 const styles = StyleSheet.create({
   content: {
     flex: 1,
+    width: "100%",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 16,
+  },
+  heroSection: {
+    flex: 1,
+    width: "100%",
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 8,
   },
   trainerIcon: {
     width: 172,
@@ -208,11 +225,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: Colors.white,
+    ...createShadow({ x: 0, y: 4, blur: 12, opacity: 0.08, elevation: 3 }),
+  },
+  titleWrapper: {
+    alignItems: "center",
+    marginTop: 16,
   },
   title: {
-    fontSize: 31,
+    fontSize: 30,
     lineHeight: 36,
-    marginTop: 20,
   },
   progress: {
     width: 44,
@@ -229,21 +250,27 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.headerBlue,
   },
   message: {
-    fontSize: 12,
+    fontSize: 13,
     textAlign: "center",
-    lineHeight: 18,
+    lineHeight: 19,
     color: Colors.gray600,
     marginTop: 10,
+    paddingHorizontal: 16,
+  },
+  bottomSection: {
+    width: "100%",
+    gap: 12,
+    paddingTop: 8,
   },
   infoCard: {
     width: "100%",
-    marginTop: 22,
     backgroundColor: Colors.white,
-    borderRadius: 14,
-    padding: 12,
+    borderRadius: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 12,
     flexDirection: "row",
     justifyContent: "space-between",
-    ...createShadow({ x: 0, y: 2, blur: 6, opacity: 0.06, elevation: 2 }),
+    ...createShadow({ x: 0, y: 2, blur: 8, opacity: 0.06, elevation: 2 }),
   },
   infoItem: {
     width: "31%",
@@ -269,21 +296,21 @@ const styles = StyleSheet.create({
   },
   infoTitle: {
     fontSize: 12,
-    marginTop: 7,
+    marginTop: 8,
   },
   infoText: {
-    fontSize: 8.5,
+    fontSize: 9.5,
     color: Colors.gray600,
     textAlign: "center",
-    lineHeight: 12,
-    marginTop: 5,
+    lineHeight: 13,
+    marginTop: 4,
   },
   syncNotice: {
     width: "100%",
-    marginTop: 15,
-    padding: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
     backgroundColor: "#DDEEFF",
-    borderRadius: 12,
+    borderRadius: 14,
     flexDirection: "row",
     alignItems: "center",
     gap: 10,

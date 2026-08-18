@@ -38,7 +38,7 @@ const fontFamilyForWeight: Record<TextWeight, keyof typeof FontFamily> = {
 };
 
 interface AppTextProps extends TextProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   size?: number;
   color?: string;
   weight?: TextWeight;
@@ -50,6 +50,7 @@ export default function AppText({
   color = Colors.black,
   weight = "400",
   style,
+  allowFontScaling = false,
   ...props
 }: AppTextProps) {
   const selectedFamily =
@@ -57,6 +58,7 @@ export default function AppText({
 
   return (
     <Text
+      allowFontScaling={allowFontScaling}
       style={[
         styles.text,
         {
@@ -76,5 +78,6 @@ export default function AppText({
 const styles = StyleSheet.create({
   text: {
     fontFamily: FontFamily.regular,
+    includeFontPadding: false,
   },
 });

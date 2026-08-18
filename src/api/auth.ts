@@ -14,6 +14,10 @@ export type Trainee = {
   district: string | null;
   profilePhoto: string | null;
   status: string;
+  workZone?: string | null;
+  departmentSupport?: string | null;
+  department?: string | null;
+  sessionCode?: string | null;
 };
 
 export type AuthSession = {

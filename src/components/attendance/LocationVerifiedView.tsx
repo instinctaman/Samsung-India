@@ -1,19 +1,14 @@
-import React from "react";
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  View,
-} from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { StatusBar } from "expo-status-bar";
 import { Ionicons } from "@expo/vector-icons";
+import { StatusBar } from "expo-status-bar";
+import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 
 import AppText from "@/components/ui/AppText";
 import { Colors } from "@/theme/colors";
 import { FontWeight } from "@/theme/fontWeight";
-import { Fonts } from "@/theme/fonts";
-import { Radius } from "@/theme/radius";
 import { createShadow } from "@/theme/shadows";
 
 export type LocationVerifiedInfo = {
@@ -45,6 +40,29 @@ export default function LocationVerifiedView({ info, onContinue }: Props) {
   const venueName = info.venueLabel || info.location || "Gurugram Sector 4";
   const subtitleText = `${formattedTime} at 20th from ${venueName}`;
 
+  const rows = [
+    {
+      label: "Session",
+      value: info.sessionTitle,
+      icon: "calendar-outline" as const,
+    },
+    {
+      label: "Session Time",
+      value: info.sessionTime,
+      icon: "time-outline" as const,
+    },
+    {
+      label: "Date",
+      value: info.date,
+      icon: "calendar-outline" as const,
+    },
+    {
+      label: "Location",
+      value: info.location,
+      icon: "location-outline" as const,
+    },
+  ];
+
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <View style={[styles.statusBarBackground, { height: insets.top }]} />
@@ -53,246 +71,234 @@ export default function LocationVerifiedView({ info, onContinue }: Props) {
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        bounces={false}
       >
-        {/* Concentric Radar Rings & Location Pin Graphic */}
-        <View style={styles.radarWrapper}>
-          <View style={styles.radarOuterRing}>
-            <View style={styles.radarMidRing}>
-              <View style={styles.radarInnerRing}>
-                <View style={styles.radarCenterCircle}>
-                  <Ionicons
-                    name="location-sharp"
-                    size={38}
-                    color="#00A66E"
-                  />
+        {/* Top Green Hero Section */}
+        <View style={styles.heroArea}>
+          {/* Concentric Radar Rings & Location Pin Graphic */}
+          <View style={styles.radarWrapper}>
+            <View style={styles.radarOuterRing}>
+              <View style={styles.radarMidRing}>
+                <View style={styles.radarInnerRing}>
+                  <View style={styles.radarCenterCircle}>
+                    <Ionicons name="location-sharp" size={48} color="#00A86B" />
+                  </View>
                 </View>
               </View>
             </View>
           </View>
-        </View>
 
-        {/* Heading & Verification Meta */}
-        <AppText style={styles.title} weight={FontWeight.bold}>
-          LOCATION VERIFIED
-        </AppText>
-        <AppText style={styles.subtitle}>
-          {subtitleText}
-        </AppText>
-
-        {/* Center Pill Divider */}
-        <View style={styles.pillDivider} />
-
-        {/* White Rounded Information Card */}
-        <View style={styles.infoCard}>
-          <InfoRow
-            icon="calendar-outline"
-            label="Session"
-            value={info.sessionTitle}
-          />
-          <View style={styles.rowDivider} />
-
-          <InfoRow
-            icon="time-outline"
-            label="Session Time"
-            value={info.sessionTime}
-          />
-          <View style={styles.rowDivider} />
-
-          <InfoRow
-            icon="calendar-outline"
-            label="Date"
-            value={info.date}
-          />
-          <View style={styles.rowDivider} />
-
-          <InfoRow
-            icon="location-outline"
-            label="Location"
-            value={info.location}
-          />
-        </View>
-
-        {/* Green "Great, Continue" Primary Button */}
-        <Pressable
-          style={styles.continueButton}
-          onPress={onContinue}
-          accessibilityRole="button"
-          accessibilityLabel="Great, Continue"
-        >
-          <AppText
-            color={Colors.white}
-            style={styles.continueText}
-            weight={FontWeight.bold}
-          >
-            Great, Continue
+          {/* Heading & Verification Meta */}
+          <AppText style={styles.title} weight={FontWeight.bold}>
+            LOCATION VERIFIED
           </AppText>
-        </Pressable>
+          <AppText style={styles.subtitle}>{subtitleText}</AppText>
+
+          {/* Center Pill Divider */}
+          <View style={styles.pillDivider} />
+        </View>
+
+        {/* Content Section: Full Height Card + Button directly under card */}
+        <View style={styles.content}>
+          <View style={styles.detailsCard}>
+            {rows.map((row, index) => (
+              <View
+                key={row.label}
+                style={[
+                  styles.detailRow,
+                  index !== rows.length - 1 && styles.detailBorder,
+                ]}
+              >
+                <View style={styles.detailIcon}>
+                  <Ionicons name={row.icon} size={27} color={Colors.success} />
+                </View>
+                <View style={styles.detailTextColumn}>
+                  <AppText style={styles.detailLabel}>{row.label}</AppText>
+                  <AppText
+                    style={styles.detailValue}
+                    weight={FontWeight.medium}
+                  >
+                    {row.value}
+                  </AppText>
+                </View>
+              </View>
+            ))}
+          </View>
+
+          {/* Green "Great, Continue" Primary Button directly under the card */}
+          <Pressable
+            style={styles.continueButton}
+            onPress={onContinue}
+            accessibilityRole="button"
+            accessibilityLabel="Great, Continue"
+          >
+            <AppText
+              color={Colors.white}
+              style={styles.continueText}
+              weight={FontWeight.bold}
+            >
+              Great, Continue
+            </AppText>
+          </Pressable>
+        </View>
       </ScrollView>
     </SafeAreaView>
-  );
-}
-
-function InfoRow({
-  icon,
-  label,
-  value,
-}: {
-  icon: keyof typeof Ionicons.glyphMap;
-  label: string;
-  value: string;
-}) {
-  return (
-    <View style={styles.infoRow}>
-      <View style={styles.iconBox}>
-        <Ionicons name={icon} size={20} color="#00A66E" />
-      </View>
-      <View style={styles.infoTextColumn}>
-        <AppText style={styles.infoLabel}>{label}</AppText>
-        <AppText style={styles.infoValue} weight={FontWeight.bold}>
-          {value}
-        </AppText>
-      </View>
-    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#00A66E",
+    backgroundColor: "#F2FFF9",
   },
   statusBarBackground: {
     position: "absolute",
     top: 0,
     left: 0,
     right: 0,
-    backgroundColor: "#00A66E",
+    backgroundColor: Colors.success,
   },
   scrollContent: {
-    paddingHorizontal: 20,
-    paddingTop: 36,
-    paddingBottom: 36,
-    alignItems: "center",
+    flexGrow: 1,
+    paddingBottom: 32,
   },
 
-  // Concentric Radar Rings
-  radarWrapper: {
+  // Top Green Area
+  heroArea: {
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 20,
+    backgroundColor: Colors.success,
+    borderBottomLeftRadius: 40,
+    borderBottomRightRadius: 40,
+    paddingTop: 30,
+    paddingBottom: 270,
+    paddingHorizontal: 20,
+  },
+  radarWrapper: {
+    width: 213,
+    height: 213,
+    alignItems: "center",
+    justifyContent: "center",
   },
   radarOuterRing: {
-    width: 220,
-    height: 220,
-    borderRadius: 110,
+    width: 213,
+    height: 213,
+    borderRadius: 106.5,
     backgroundColor: "rgba(255, 255, 255, 0.08)",
     alignItems: "center",
     justifyContent: "center",
   },
   radarMidRing: {
-    width: 170,
-    height: 170,
-    borderRadius: 85,
+    width: 168,
+    height: 168,
+    borderRadius: 84,
     backgroundColor: "rgba(255, 255, 255, 0.12)",
     alignItems: "center",
     justifyContent: "center",
   },
   radarInnerRing: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 138,
+    height: 138,
+    borderRadius: 69,
     backgroundColor: "rgba(255, 255, 255, 0.20)",
     alignItems: "center",
     justifyContent: "center",
   },
   radarCenterCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 104,
+    height: 104,
+    borderRadius: 52,
     backgroundColor: Colors.white,
     alignItems: "center",
     justifyContent: "center",
-    ...createShadow({ x: 0, y: 4, blur: 10, opacity: 0.15, elevation: 4 }),
+    ...createShadow({ x: 0, y: 3, blur: 6, opacity: 0.08, elevation: 2 }),
   },
 
   // Typography
   title: {
+    marginTop: 18,
     fontSize: 24,
     color: Colors.white,
-    letterSpacing: 0.8,
+    letterSpacing: 0.5,
     textAlign: "center",
   },
   subtitle: {
-    fontSize: 13,
+    marginTop: 4,
+    fontSize: 14,
     color: "rgba(255, 255, 255, 0.95)",
-    marginTop: 6,
     textAlign: "center",
   },
-
-  // Divider
   pillDivider: {
-    width: 76,
-    height: 4,
+    width: 60,
+    height: 3,
     borderRadius: 2,
     backgroundColor: "rgba(255, 255, 255, 0.85)",
-    marginTop: 18,
-    marginBottom: 18,
+    marginTop: 12,
   },
 
-  // Info Card
-  infoCard: {
+  // Overlapping Content
+  content: {
     width: "100%",
+    maxWidth: 480,
+    alignSelf: "center",
+    paddingHorizontal: 20,
+    marginTop: -245,
+  },
+  detailsCard: {
+    width: "100%",
+    height: 295,
     backgroundColor: Colors.white,
     borderRadius: 24,
-    paddingHorizontal: 18,
-    paddingVertical: 8,
-    ...createShadow({ x: 0, y: 4, blur: 14, opacity: 0.1, elevation: 4 }),
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    justifyContent: "space-around",
+    ...createShadow({ x: 0, y: 8, blur: 20, opacity: 0.09, elevation: 5 }),
   },
-  infoRow: {
+  detailRow: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     gap: 14,
-    paddingVertical: 12,
+    paddingVertical: 4,
   },
-  iconBox: {
+  detailBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.gray200,
+  },
+  detailIcon: {
     width: 40,
     height: 40,
     borderRadius: 10,
-    backgroundColor: "#E8F8F0",
+    backgroundColor: "#D8F8EB",
     alignItems: "center",
     justifyContent: "center",
   },
-  infoTextColumn: {
+  detailTextColumn: {
     flex: 1,
-    gap: 2,
+    gap: 1,
   },
-  infoLabel: {
-    fontSize: 11,
-    color: "#6B7280",
+  detailLabel: {
+    fontSize: 12,
+    color: Colors.gray600,
   },
-  infoValue: {
+  detailValue: {
     fontSize: 14,
     color: "#111827",
   },
-  rowDivider: {
-    height: 1,
-    backgroundColor: "#F3F4F6",
-  },
 
-  // Action Button
+  // Actions directly under card
   continueButton: {
     width: "100%",
     height: 52,
-    backgroundColor: "#009B60",
-    borderRadius: Radius.card,
+    marginTop: 22,
+    borderRadius: 12,
+    backgroundColor: "#00A86B",
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 22,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.15)",
+    ...createShadow({ x: 0, y: 4, blur: 10, opacity: 0.12, elevation: 3 }),
   },
   continueText: {
-    fontSize: 16,
-    letterSpacing: 0.2,
+    fontSize: 18,
+    fontWeight: "700",
   },
 });

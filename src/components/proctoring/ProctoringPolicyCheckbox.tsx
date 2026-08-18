@@ -60,7 +60,7 @@ export default function ProctoringPolicyCheckbox({
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 14,
+    marginTop: 2,
   },
   pressableRow: {
     flexDirection: "row",
