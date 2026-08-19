@@ -1,4 +1,4 @@
-﻿// All types are preserved — they are used extensively across screens.
+// All types are preserved — they are used extensively across screens.
 
 export type ModuleConfig = {
   category?: string;

@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -16,22 +16,18 @@ import {
   AssessmentSuiteDetail,
   QuestionOption,
   addAssessmentQuestion,
-  createAssessmentSuite,
-  deleteAssessmentQuestion,
-  fetchAssessmentSuiteDetail,
 } from "@/api/training";
 import AppButton from "@/components/ui/AppButton";
 import AppInput from "@/components/ui/AppInput";
 import AppModal from "@/components/ui/AppModal";
 import AppSelect from "@/components/ui/AppSelect";
 import AppText from "@/components/ui/AppText";
-import { useAuth } from "@/hooks/useAuth";
 import { Colors } from "@/theme/colors";
 import { Fonts } from "@/theme/fonts";
 import { FontWeight } from "@/theme/fontWeight";
 import { Radius } from "@/theme/radius";
 import { Shadows } from "@/theme/shadows";
-import { Spacing } from "@/theme/spacing";
+import { useAssessmentBuilder } from "@/hooks/useAssessmentBuilder";
 
 const CATEGORY_OPTIONS = ["POST TEST", "SAMSUMG S25", "Survey", "Quiz"];
 const TYPE_OPTIONS = ["Quiz", "Test", "Survey"];
@@ -60,90 +56,32 @@ const QUESTION_TYPE_LABELS: Record<string, string> = {
 
 export default function AssessmentBuilderScreen() {
   const router = useRouter();
-  const { adminToken } = useAuth();
   const { suiteUid: suiteUidParam } = useLocalSearchParams<{
     suiteUid?: string;
   }>();
 
-  const [suiteUid, setSuiteUid] = useState<string | null>(
-    suiteUidParam ?? null,
-  );
-  const [suite, setSuite] = useState<AssessmentSuiteDetail | null>(null);
-  const [loading, setLoading] = useState(!!suiteUidParam);
-  const [error, setError] = useState<string | null>(null);
-
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [category, setCategory] = useState("");
-  const [testTime, setTestTime] = useState("30");
-  const [type, setType] = useState("Quiz");
-  const [creating, setCreating] = useState(false);
-
-  const [addVisible, setAddVisible] = useState(false);
-
-  const loadSuite = useCallback(async () => {
-    if (!adminToken || !suiteUid) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const detail = await fetchAssessmentSuiteDetail(adminToken, suiteUid);
-      setSuite(detail);
-    } catch (err) {
-      setError(
-        err instanceof ApiError
-          ? err.message
-          : "Couldn't load this assessment.",
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, [adminToken, suiteUid]);
-
-  useEffect(() => {
-    loadSuite();
-  }, [loadSuite]);
-
-  const handleCreateSuite = async () => {
-    if (!adminToken || !title.trim() || !category) {
-      setError("Title and Category are required.");
-      return;
-    }
-    setCreating(true);
-    setError(null);
-    try {
-      const created = await createAssessmentSuite(adminToken, {
-        title: title.trim(),
-        description: description.trim() || undefined,
-        category,
-        testTime,
-        type,
-      });
-      setSuiteUid(created.assessmentSuiteUid);
-      setSuite(created);
-    } catch (err) {
-      setError(
-        err instanceof ApiError
-          ? err.message
-          : "Couldn't create this assessment.",
-      );
-    } finally {
-      setCreating(false);
-    }
-  };
-
-  const handleDeleteQuestion = async (questionId: number) => {
-    if (!adminToken || !suiteUid) return;
-    try {
-      const updated = await deleteAssessmentQuestion(
-        adminToken,
-        suiteUid,
-        questionId,
-      );
-      setSuite(updated);
-    } catch {
-      setError("Couldn't remove that question.");
-    }
-  };
+  const {
+    adminToken,
+    suite,
+    loading,
+    error,
+    title,
+    setTitle,
+    description,
+    setDescription,
+    category,
+    setCategory,
+    testTime,
+    setTestTime,
+    type,
+    setType,
+    creating,
+    addVisible,
+    setAddVisible,
+    handleCreateSuite,
+    handleDeleteQuestion,
+    handleQuestionAdded,
+  } = useAssessmentBuilder(suiteUidParam);
 
   if (loading) {
     return (
@@ -352,10 +290,7 @@ export default function AssessmentBuilderScreen() {
         <AddQuestionModal
           visible={addVisible}
           onClose={() => setAddVisible(false)}
-          onAdded={(updated) => {
-            setSuite(updated);
-            setAddVisible(false);
-          }}
+          onAdded={handleQuestionAdded}
           adminToken={adminToken}
           suiteUid={suite.assessmentSuiteUid}
         />
@@ -373,55 +308,62 @@ function AddQuestionModal({
 }: {
   visible: boolean;
   onClose: () => void;
-  onAdded: (suite: AssessmentSuiteDetail) => void;
+  onAdded: (updated: AssessmentSuiteDetail) => void;
   adminToken: string | null;
   suiteUid: string;
 }) {
   const [question, setQuestion] = useState("");
   const [questionType, setQuestionType] = useState("multiple_choice");
-  const [options, setOptions] = useState<QuestionOption[]>([
-    { id: "A", text: "" },
-    { id: "B", text: "" },
-  ]);
-  const [correctAnswer, setCorrectAnswer] = useState("A");
   const [points, setPoints] = useState("1");
-  const [timerSeconds, setTimerSeconds] = useState("");
-  const [explanation, setExplanation] = useState("");
-  const [showAnswerKey, setShowAnswerKey] = useState(false);
+  const [timerSeconds, setTimerSeconds] = useState("30");
+  const [options, setOptions] = useState<QuestionOption[]>([
+    { id: "1", text: "" },
+    { id: "2", text: "" },
+  ]);
+  const [correctAnswer, setCorrectAnswer] = useState<string>("1");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const isMultipleChoice = questionType === "multiple_choice";
-
-  const addOption = () => {
-    const nextId = String.fromCharCode(65 + options.length);
-    setOptions((prev) => [...prev, { id: nextId, text: "" }]);
-  };
-
-  const removeOption = (id: string) => {
-    setOptions((prev) => prev.filter((o) => o.id !== id));
-    if (correctAnswer === id) setCorrectAnswer("");
-  };
 
   const reset = () => {
     setQuestion("");
     setQuestionType("multiple_choice");
-    setOptions([
-      { id: "A", text: "" },
-      { id: "B", text: "" },
-    ]);
-    setCorrectAnswer("A");
     setPoints("1");
-    setTimerSeconds("");
-    setExplanation("");
-    setShowAnswerKey(false);
+    setTimerSeconds("30");
+    setOptions([
+      { id: "1", text: "" },
+      { id: "2", text: "" },
+    ]);
+    setCorrectAnswer("1");
     setError(null);
   };
 
-  const handleSubmit = async () => {
-    if (!adminToken) return;
-    if (!question.trim()) {
-      setError("Enter the question text.");
+  const handleAddOption = () => {
+    const nextId = String(options.length + 1);
+    setOptions((prev) => [...prev, { id: nextId, text: "" }]);
+  };
+
+  const handleUpdateOption = (id: string, text: string) => {
+    setOptions((prev) =>
+      prev.map((opt) => (opt.id === id ? { ...opt, text } : opt)),
+    );
+  };
+
+  const handleRemoveOption = (id: string) => {
+    if (options.length <= 2) return;
+    setOptions((prev) => prev.filter((opt) => opt.id !== id));
+    if (correctAnswer === id) {
+      setCorrectAnswer(options.find((o) => o.id !== id)?.id ?? "1");
+    }
+  };
+
+  const handleSave = async () => {
+    if (!adminToken || !question.trim()) {
+      setError("Question text is required.");
+      return;
+    }
+    const cleanOptions = options.filter((o) => o.text.trim());
+    if (cleanOptions.length < 2) {
+      setError("Please provide at least 2 options.");
       return;
     }
     setSaving(true);
@@ -430,19 +372,16 @@ function AddQuestionModal({
       const updated = await addAssessmentQuestion(adminToken, suiteUid, {
         question: question.trim(),
         questionType,
-        options: isMultipleChoice ? options.filter((o) => o.text.trim()) : [],
-        correctAnswer: isMultipleChoice
-          ? correctAnswer || undefined
-          : undefined,
         points: Number(points) || 1,
-        timerSeconds: timerSeconds ? Number(timerSeconds) : undefined,
-        explanation: explanation.trim() || undefined,
+        timerSeconds: Number(timerSeconds) || 30,
+        options: cleanOptions,
+        correctAnswer,
       });
       reset();
       onAdded(updated);
     } catch (err) {
       setError(
-        err instanceof ApiError ? err.message : "Couldn't add this question.",
+        err instanceof ApiError ? err.message : "Couldn't add that question.",
       );
     } finally {
       setSaving(false);
@@ -452,14 +391,17 @@ function AddQuestionModal({
   return (
     <AppModal
       visible={visible}
-      onClose={onClose}
+      onClose={() => {
+        reset();
+        onClose();
+      }}
       position="bottom"
       title="Add Question"
       showCloseButton
-      contentStyle={styles.modalSheet}
+      contentStyle={styles.sheet}
     >
       <ScrollView
-        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.sheetContent}
         keyboardShouldPersistTaps="handled"
       >
         <AppInput
@@ -468,130 +410,111 @@ function AddQuestionModal({
           onChangeText={setQuestion}
         />
 
-        <AppText style={styles.fieldLabel} weight={FontWeight.medium}>
-          Question Type
-        </AppText>
-        <AppSelect
-          selectedValue={questionType}
-          onValueChange={setQuestionType}
-          items={QUESTION_TYPE_OPTIONS.map((t) => ({
-            label: QUESTION_TYPE_LABELS[t],
-            value: t,
-          }))}
-        />
-
-        {isMultipleChoice && (
-          <View style={styles.optionsBuilder}>
-            {options.map((opt) => (
-              <View key={opt.id} style={styles.optionBuilderRow}>
-                <Pressable onPress={() => setCorrectAnswer(opt.id)} hitSlop={8}>
-                  <Ionicons
-                    name={
-                      correctAnswer === opt.id
-                        ? "radio-button-on"
-                        : "radio-button-off"
-                    }
-                    size={20}
-                    color={
-                      correctAnswer === opt.id ? Colors.success : Colors.gray400
-                    }
-                  />
-                </Pressable>
-                <View style={styles.optionInputWrap}>
-                  <AppInput
-                    placeholder={`Option ${opt.id}`}
-                    value={opt.text}
-                    onChangeText={(text) =>
-                      setOptions((prev) =>
-                        prev.map((o) => (o.id === opt.id ? { ...o, text } : o)),
-                      )
-                    }
-                  />
-                </View>
-                <Pressable onPress={() => removeOption(opt.id)} hitSlop={8}>
-                  <Ionicons name="close" size={18} color={Colors.gray400} />
-                </Pressable>
-              </View>
-            ))}
-            <Pressable style={styles.addOptionRow} onPress={addOption}>
-              <Ionicons name="add" size={16} color={Colors.mainColour1} />
-              <AppText style={styles.addOptionText} color={Colors.mainColour1}>
-                Add option
-              </AppText>
-            </Pressable>
-          </View>
-        )}
-
-        <Pressable
-          style={styles.answerKeyToggle}
-          onPress={() => setShowAnswerKey((v) => !v)}
-        >
-          <Ionicons
-            name="checkbox-outline"
-            size={16}
-            color={Colors.mainColour1}
-          />
-          <AppText
-            style={styles.answerKeyToggleText}
-            color={Colors.mainColour1}
-            weight={FontWeight.medium}
-          >
-            Answer Key
-          </AppText>
-          <Ionicons
-            name={showAnswerKey ? "chevron-up" : "chevron-down"}
-            size={16}
-            color={Colors.mainColour1}
-          />
-        </Pressable>
-
-        {showAnswerKey && (
-          <View style={styles.answerKeyPanel}>
-            <View style={styles.row}>
-              <View style={styles.half}>
-                <AppText
-                  style={styles.fieldLabel}
-                  weight={FontWeight.medium}
-                  color={Colors.success}
-                >
-                  Points
-                </AppText>
-                <AppInput
-                  placeholder="1"
-                  keyboardType="number-pad"
-                  value={points}
-                  onChangeText={setPoints}
-                />
-              </View>
-              <View style={styles.half}>
-                <AppText style={styles.fieldLabel} weight={FontWeight.medium}>
-                  Timer (sec)
-                </AppText>
-                <AppInput
-                  placeholder="0"
-                  keyboardType="number-pad"
-                  value={timerSeconds}
-                  onChangeText={setTimerSeconds}
-                />
-              </View>
-            </View>
+        <View style={styles.sheetRow}>
+          <View style={styles.sheetHalf}>
             <AppText style={styles.fieldLabel} weight={FontWeight.medium}>
-              Answer Explanation
+              Type
             </AppText>
-            <AppInput
-              placeholder="Why is this answer correct?"
-              value={explanation}
-              onChangeText={setExplanation}
+            <AppSelect
+              selectedValue={questionType}
+              onValueChange={setQuestionType}
+              items={QUESTION_TYPE_OPTIONS.map((t) => ({
+                label: QUESTION_TYPE_LABELS[t] ?? t,
+                value: t,
+              }))}
             />
           </View>
-        )}
+          <View style={styles.sheetQuarter}>
+            <AppText style={styles.fieldLabel} weight={FontWeight.medium}>
+              Pts
+            </AppText>
+            <AppInput
+              placeholder="1"
+              keyboardType="number-pad"
+              value={points}
+              onChangeText={setPoints}
+            />
+          </View>
+          <View style={styles.sheetQuarter}>
+            <AppText style={styles.fieldLabel} weight={FontWeight.medium}>
+              Sec
+            </AppText>
+            <AppInput
+              placeholder="30"
+              keyboardType="number-pad"
+              value={timerSeconds}
+              onChangeText={setTimerSeconds}
+            />
+          </View>
+        </View>
+
+        <AppText
+          style={[styles.fieldLabel, { marginTop: 12 }]}
+          weight={FontWeight.medium}
+        >
+          Options (select the correct answer)
+        </AppText>
+        {options.map((opt, idx) => (
+          <View key={opt.id} style={styles.optionInputRow}>
+            <Pressable
+              onPress={() => setCorrectAnswer(opt.id)}
+              hitSlop={8}
+              style={styles.radioHit}
+            >
+              <Ionicons
+                name={
+                  opt.id === correctAnswer
+                    ? "radio-button-on"
+                    : "radio-button-off"
+                }
+                size={20}
+                color={
+                  opt.id === correctAnswer
+                    ? Colors.mainColour1
+                    : Colors.gray400
+                }
+              />
+            </Pressable>
+            <View style={styles.optionInputContainer}>
+              <AppInput
+                placeholder={`Option ${idx + 1}`}
+                value={opt.text}
+                onChangeText={(text) => handleUpdateOption(opt.id, text)}
+              />
+            </View>
+            {options.length > 2 && (
+              <Pressable
+                onPress={() => handleRemoveOption(opt.id)}
+                hitSlop={8}
+              >
+                <Ionicons
+                  name="close-circle-outline"
+                  size={20}
+                  color={Colors.gray400}
+                />
+              </Pressable>
+            )}
+          </View>
+        ))}
+
+        <Pressable style={styles.addOptionButton} onPress={handleAddOption}>
+          <Ionicons name="add" size={16} color={Colors.mainColour1} />
+          <AppText
+            color={Colors.mainColour1}
+            weight={FontWeight.medium}
+            style={styles.addOptionText}
+          >
+            Add Option
+          </AppText>
+        </Pressable>
 
         {error && <AppText style={styles.errorText}>{error}</AppText>}
 
         <AppButton
-          title="Add Question"
-          onPress={handleSubmit}
+          title="Save Question"
+          onPress={handleSave}
           loading={saving}
+          buttonStyle={{ marginTop: 16 }}
         />
       </ScrollView>
     </AppModal>
@@ -599,19 +522,13 @@ function AddQuestionModal({
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
-  loadingContainer: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: Colors.background,
-  },
+  container: { flex: 1, backgroundColor: "#EEF4FF" },
   header: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
+    gap: 12,
   },
   iconButton: {
     width: 36,
@@ -620,64 +537,51 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
     alignItems: "center",
     justifyContent: "center",
-    ...Shadows.card,
   },
   headerTitle: { fontSize: Fonts.h3 },
-  content: { padding: 16, paddingTop: 4, gap: 14, paddingBottom: 100 },
+  content: { padding: 16, gap: 14, paddingBottom: 80 },
+  loadingContainer: { flex: 1, alignItems: "center", justifyContent: "center" },
   card: {
     backgroundColor: Colors.white,
     borderRadius: Radius.xxl,
     padding: 16,
+    gap: 10,
     ...Shadows.card,
-    gap: 4,
   },
   row: { flexDirection: "row", gap: 10 },
-  half: { flex: 1 },
   third: { flex: 1 },
-  fieldLabel: { fontSize: Fonts.bodySm, marginBottom: Spacing.sm },
+  fieldLabel: { fontSize: Fonts.caption, marginBottom: 4, color: Colors.gray600 },
   readonlyValue: {
     fontSize: Fonts.bodySm,
+    paddingVertical: 8,
     color: Colors.gray600,
-    paddingVertical: 12,
   },
   createButton: { marginTop: 8 },
   errorText: {
     color: Colors.danger,
     fontSize: Fonts.bodySm,
     textAlign: "center",
-    marginVertical: 8,
   },
-  emptyState: { alignItems: "center", gap: 6, paddingVertical: 32 },
-  emptyText: { fontSize: Fonts.bodySm, textAlign: "center" },
+  emptyState: { alignItems: "center", gap: 6, paddingVertical: 40 },
+  emptyText: { fontSize: Fonts.bodySm },
   questionCard: {
     backgroundColor: Colors.white,
     borderRadius: Radius.xxl,
-    borderLeftWidth: 3,
-    borderLeftColor: Colors.mainColour1,
-    padding: 14,
+    padding: 16,
     gap: 8,
     ...Shadows.card,
   },
-  questionHeaderRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  questionIndex: { fontSize: Fonts.bodySm },
-  questionTypeTag: {
-    fontSize: Fonts.overline,
-    flex: 1,
-    backgroundColor: Colors.gray100,
-    alignSelf: "flex-start",
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  questionText: { fontSize: Fonts.body },
-  optionRow: {
+  questionHeaderRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    paddingLeft: 4,
+    justifyContent: "space-between",
   },
+  questionIndex: { fontSize: Fonts.bodySm },
+  questionTypeTag: { fontSize: Fonts.overline },
+  questionText: { fontSize: Fonts.body, marginVertical: 4 },
+  optionRow: { flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 2 },
   optionText: { fontSize: Fonts.bodySm },
-  questionMetaRow: { flexDirection: "row", gap: 12, marginTop: 4 },
+  questionMetaRow: { flexDirection: "row", gap: 12, marginTop: 6 },
   questionMeta: { fontSize: Fonts.overline },
   fab: {
     position: "absolute",
@@ -691,34 +595,23 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     ...Shadows.raised,
   },
-  modalSheet: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 32,
+  sheet: {
     maxHeight: "85%",
+    borderTopLeftRadius: Radius.xxxl,
+    borderTopRightRadius: Radius.xxxl,
   },
-  optionsBuilder: { marginTop: 4, gap: 8 },
-  optionBuilderRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  optionInputWrap: { flex: 1 },
-  addOptionRow: {
+  sheetContent: { padding: 16, gap: 10 },
+  sheetRow: { flexDirection: "row", gap: 8 },
+  sheetHalf: { flex: 2 },
+  sheetQuarter: { flex: 1 },
+  optionInputRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  radioHit: { padding: 2 },
+  optionInputContainer: { flex: 1, marginBottom: 0 },
+  addOptionButton: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    paddingVertical: 4,
+    paddingVertical: 6,
   },
   addOptionText: { fontSize: Fonts.bodySm },
-  answerKeyToggle: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingVertical: 10,
-  },
-  answerKeyToggleText: { fontSize: Fonts.bodySm, flex: 1 },
-  answerKeyPanel: {
-    backgroundColor: Colors.gray100,
-    borderRadius: Radius.xl,
-    padding: 12,
-    gap: 4,
-    marginBottom: 10,
-  },
 });

@@ -1,140 +1,48 @@
-import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useMemo, useState } from "react";
 import { RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 
-import { TrainingAgendaItem, fetchTrainerAgenda } from "@/api/training";
 import Calendar from "@/components/calendar/Calendar";
 import AccountPanel from "@/components/trainer/AccountPanel";
 import DashboardBottomNav from "@/components/trainer/dashboard/DashboardBottomNav";
 import DashboardHeader from "@/components/trainer/dashboard/DashboardHeader";
-import { calculateDashboardStats } from "@/components/trainer/dashboard/dashboardUtils";
 import QuickActionsCard from "@/components/trainer/dashboard/QuickActionsCard";
 import RecentSessionsCard from "@/components/trainer/dashboard/RecentSessionsCard";
 import SummaryStatsRow from "@/components/trainer/dashboard/SummaryStatsRow";
 import TrainingEfficiencyCard from "@/components/trainer/dashboard/TrainingEfficiencyCard";
-import DateDrop, {
-  DatePreset,
-  DateRange,
-  rangeForPreset,
-} from "@/components/trainer/DateDrop";
+import DateDrop from "@/components/trainer/DateDrop";
 import SidebarMenu from "@/components/trainer/SidebarMenu";
 import TrainingsQuickPanel from "@/components/trainer/TrainingsQuickPanel";
 import AppModal from "@/components/ui/AppModal";
-import { useAuth } from "@/hooks/useAuth";
 import { Colors } from "@/theme/colors";
-
-const pad2 = (n: number) => String(n).padStart(2, "0");
-const toApiDate = (d: Date) =>
-  `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+import { useTrainerDashboard } from "@/hooks/useTrainerDashboard";
 
 export default function TrainerDashboardScreen() {
   const router = useRouter();
-  const { admin, adminToken, adminLogout } = useAuth();
 
-  const [activeTab, setActiveTab] = useState<
-    "home" | "plan" | "profile" | "more"
-  >("home");
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [quickActionsOpen, setQuickActionsOpen] = useState(false);
-  const [accountOpen, setAccountOpen] = useState(false);
-  const [dateDropOpen, setDateDropOpen] = useState(false);
-  const [datePreset, setDatePreset] = useState<DatePreset>("today");
-  const [dateRange, setDateRange] = useState<DateRange>(() =>
-    rangeForPreset("today", { start: new Date(), end: new Date() }),
-  );
-  const [agenda, setAgenda] = useState<TrainingAgendaItem[]>([]);
-  const [loadingAgenda, setLoadingAgenda] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-
-  const stats = useMemo(() => calculateDashboardStats(agenda), [agenda]);
-
-  const loadAgenda = useCallback(
-    async (mode: "load" | "refresh" | "silent" = "load") => {
-      if (!adminToken) return;
-      if (mode === "refresh") setRefreshing(true);
-      else if (mode === "load") setLoadingAgenda(true);
-      try {
-        const data = await fetchTrainerAgenda(adminToken, {
-          start: toApiDate(dateRange.start),
-          end: toApiDate(dateRange.end),
-        });
-        setAgenda(data);
-      } catch {
-        if (mode !== "silent") setAgenda([]);
-      } finally {
-        if (mode === "refresh") setRefreshing(false);
-        else if (mode === "load") setLoadingAgenda(false);
-      }
-    },
-    [adminToken, dateRange],
-  );
-
-  useFocusEffect(
-    useCallback(() => {
-      loadAgenda();
-      const interval = setInterval(() => loadAgenda("silent"), 10000);
-      return () => clearInterval(interval);
-    }, [loadAgenda]),
-  );
-
-  const applyDateRange = (range: DateRange, preset: DatePreset) => {
-    setDateRange(range);
-    setDatePreset(preset);
-    setDateDropOpen(false);
-    router.push({
-      pathname: "/sessions",
-      params: {
-        start: toApiDate(range.start),
-        end: toApiDate(range.end),
-      },
-    });
-  };
-
-  const handleLogout = () => {
-    setAccountOpen(false);
-    adminLogout();
-    router.replace("/trainer_login");
-  };
-
-  const handleLaunch = (conferenceUid: string) => {
-    router.push({ pathname: "/session_dashboard", params: { conferenceUid } });
-  };
-
-  const closePanels = () => {
-    setMenuOpen(false);
-    setQuickActionsOpen(false);
-  };
-
-  const handleNavigate = (label: string) => {
-    closePanels();
-    if (label === "Add New Trainings") {
-      router.push("/add_training");
-    } else if (label === "Pending Trainings") {
-      router.push("/pending_trainings");
-    } else if (label === "Training List") {
-      router.push("/training_list");
-    }
-  };
-
-  const handleBottomNavSelect = (tab: "home" | "plan" | "profile" | "more") => {
-    setActiveTab(tab);
-    if (tab === "home") {
-      // Return to home view
-    } else if (tab === "plan") {
-      router.push({
-        pathname: "/sessions",
-        params: {
-          start: toApiDate(dateRange.start),
-          end: toApiDate(dateRange.end),
-        },
-      });
-    } else if (tab === "profile") {
-      setAccountOpen(true);
-    } else if (tab === "more") {
-      setMenuOpen(true);
-    }
-  };
+  const {
+    admin,
+    activeTab,
+    menuOpen,
+    quickActionsOpen,
+    accountOpen,
+    dateDropOpen,
+    datePreset,
+    dateRange,
+    agenda,
+    stats,
+    refreshing,
+    loadAgenda,
+    applyDateRange,
+    handleLogout,
+    handleLaunch,
+    handleNavigate,
+    handleBottomNavSelect,
+    closePanels,
+    setAccountOpen,
+    setDateDropOpen,
+    setQuickActionsOpen,
+  } = useTrainerDashboard();
 
   return (
     <>

@@ -5,7 +5,6 @@ import { Ionicons } from "@expo/vector-icons";
 import CalendarIcon from "@/assets/images/svg/calender2.svg";
 import AppText from "@/components/ui/AppText";
 import { Colors } from "@/theme/colors";
-import { Fonts } from "@/theme/fonts";
 import { FontWeight } from "@/theme/fontWeight";
 import { Radius } from "@/theme/radius";
 

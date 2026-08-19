@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Animated,
   Dimensions,
@@ -39,11 +39,15 @@ export default function AppModal({
 }: AppModalProps) {
   const [isMounted, setIsMounted] = useState(visible);
 
-  const translate = useRef(new Animated.Value(0)).current;
-  const opacity = useRef(new Animated.Value(0)).current;
-  const scale = useRef(new Animated.Value(0.9)).current;
+  if (visible && !isMounted) {
+    setIsMounted(true);
+  }
 
-  const getInitialValue = () => {
+  const translate = useMemo(() => new Animated.Value(0), []);
+  const opacity = useMemo(() => new Animated.Value(0), []);
+  const scale = useMemo(() => new Animated.Value(0.9), []);
+
+  const getInitialValue = useCallback(() => {
     switch (position) {
       case "bottom":
         return height;
@@ -60,17 +64,15 @@ export default function AppModal({
       default:
         return 0;
     }
-  };
+  }, [position]);
 
   useEffect(() => {
-    if (visible) {
-      setIsMounted(true);
+    const useNativeDriver = Platform.OS !== "web";
 
+    if (visible) {
       translate.setValue(getInitialValue());
       opacity.setValue(0);
       scale.setValue(0.9);
-
-      const useNativeDriver = Platform.OS !== "web";
 
       Animated.parallel([
         Animated.timing(translate, {
@@ -91,8 +93,6 @@ export default function AppModal({
         }),
       ]).start();
     } else if (isMounted) {
-      const useNativeDriver = Platform.OS !== "web";
-
       Animated.parallel([
         Animated.timing(translate, {
           toValue: getInitialValue(),
@@ -115,7 +115,7 @@ export default function AppModal({
         setIsMounted(false);
       });
     }
-  }, [visible]);
+  }, [visible, isMounted, animationDuration, getInitialValue, opacity, scale, translate]);
 
   if (!isMounted) return null;
 

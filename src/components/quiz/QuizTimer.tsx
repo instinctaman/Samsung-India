@@ -28,15 +28,17 @@ export default function QuizTimer({
   borderColor = "#3B82F6",
 }: QuizTimerProps) {
   const [internalSeconds, setInternalSeconds] = useState(duration);
+  const [prevDuration, setPrevDuration] = useState(duration);
 
   // If controlled from parent via remainingSeconds, use that; otherwise use internal countdown
   const isControlled = typeof remainingSeconds === "number";
-  const seconds = isControlled ? remainingSeconds : internalSeconds;
 
-  useEffect(() => {
-    if (isControlled) return;
+  if (!isControlled && prevDuration !== duration) {
+    setPrevDuration(duration);
     setInternalSeconds(duration);
-  }, [duration, isControlled]);
+  }
+
+  const seconds = isControlled ? remainingSeconds : internalSeconds;
 
   useEffect(() => {
     if (isControlled) return;

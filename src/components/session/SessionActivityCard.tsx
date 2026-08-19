@@ -31,7 +31,6 @@ export default function SessionActivityCard({
   const isAttendance = key === "ATTENDANCE";
   const isQuiz = key === "LIVE_QUIZ";
   const isPostTest = key === "STANDARD_TEST";
-  const isSurvey = key === "SURVEY";
 
   const statusLabel = isLocked
     ? "Locked"
@@ -234,7 +233,9 @@ export default function SessionActivityCard({
 function MissedBanner() {
   return (
     <View style={styles.missedBanner}>
-      <Ionicons name="close-circle" size={20} color={Colors.danger} />
+      <View style={styles.missedIconWrap}>
+        <Ionicons name="close-circle" size={18} color={Colors.danger} />
+      </View>
       <View style={styles.missedTextColumn}>
         <AppText
           style={styles.missedTitle}
@@ -254,8 +255,10 @@ function MissedBanner() {
 function LockedViolationCard() {
   return (
     <View style={styles.lockedBanner}>
-      <Ionicons name="lock-closed" size={20} color="#EF4444" />
-      <View style={styles.missedTextColumn}>
+      <View style={styles.lockedIconWrap}>
+        <Ionicons name="lock-closed" size={16} color="#EF4444" />
+      </View>
+      <View style={styles.lockedTextColumn}>
         <AppText
           style={styles.lockedTitle}
           color="#EF4444"
@@ -369,17 +372,31 @@ const styles = StyleSheet.create({
     backgroundColor: "#FEE2E2",
     borderRadius: 8,
     paddingHorizontal: 12,
-    paddingVertical: 9,
+    paddingVertical: 10,
     marginTop: 10,
+    width: "100%",
+  },
+  missedIconWrap: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: "#FCD8D8",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
   },
   missedTextColumn: {
-    gap: 1,
+    flex: 1,
+    flexShrink: 1,
+    gap: 2,
   },
   missedTitle: {
-    fontSize: 13,
+    fontSize: 12.5,
+    lineHeight: 16,
   },
   missedSubtitle: {
     fontSize: 11,
+    lineHeight: 15,
   },
   lockedBanner: {
     flexDirection: "row",
@@ -388,15 +405,32 @@ const styles = StyleSheet.create({
     backgroundColor: "#FEE2E2",
     borderRadius: 8,
     paddingHorizontal: 12,
-    paddingVertical: 9,
+    paddingVertical: 10,
     marginTop: 10,
     borderWidth: 1,
     borderColor: "#FECACA",
+    width: "100%",
+  },
+  lockedIconWrap: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: "#FCD8D8",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  lockedTextColumn: {
+    flex: 1,
+    flexShrink: 1,
+    gap: 2,
   },
   lockedTitle: {
-    fontSize: 13,
+    fontSize: 12.5,
+    lineHeight: 16,
   },
   lockedSubtitle: {
     fontSize: 11,
+    lineHeight: 15,
   },
 });

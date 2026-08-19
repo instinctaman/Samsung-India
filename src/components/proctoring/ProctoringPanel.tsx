@@ -1,7 +1,14 @@
 import { Ionicons } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
+import * as FileSystem from "expo-file-system";
 import { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
+import {
+  ActivityIndicator,
+  Platform,
+  Pressable,
+  StyleSheet,
+  View,
+} from "react-native";
 
 import { checkFrameForFaces } from "@/api/proctoring";
 import AppText from "@/components/ui/AppText";
@@ -9,7 +16,6 @@ import { Colors } from "@/theme/colors";
 import { FontWeight } from "@/theme/fontWeight";
 import { Fonts } from "@/theme/fonts";
 
-import SecurityViolationModal from "./SecurityViolationModal";
 import {
   MAX_PROCTORING_WARNINGS,
   SECURITY_VIOLATIONS,
@@ -17,16 +23,9 @@ import {
   VIOLATION_FOOTER_LABELS,
 } from "./violations";
 
-const CHECK_INTERVAL_MS = 6000;
-
-// Cycles through all violation types in demo mode so every type is demonstrable.
-const DEMO_VIOLATION_CYCLE: SecurityViolationType[] = [
-  SECURITY_VIOLATIONS.MULTIPLE_PEOPLE,
-  SECURITY_VIOLATIONS.NO_FACE,
-  SECURITY_VIOLATIONS.HEAD_TILT,
-  SECURITY_VIOLATIONS.SIDE_LOOK,
-  SECURITY_VIOLATIONS.MULTIPLE_PEOPLE,
-];
+// 700ms interval reliably takes 3 samples within the 2-second continuous window
+const CHECK_INTERVAL_MS = 700;
+const CONTINUOUS_VIOLATION_THRESHOLD_MS = 2000;
 
 type Props = {
   token: string | null;
@@ -53,6 +52,16 @@ export default function ProctoringPanel({
   const cameraRef = useRef<CameraView>(null);
   const isChecking = useRef(false);
 
+  // Tracks candidate violation currently observed in camera
+  const candidateViolationRef = useRef<SecurityViolationType | null>(null);
+  // Timestamp when candidate violation started continuously
+  const candidateStartTimeRef = useRef<number | null>(null);
+  // Guard flag: triggers exactly ONE violation per continuous event until problem clears
+  const hasTriggeredCurrentRef = useRef<boolean>(false);
+
+  const [activeCandidateBadge, setActiveCandidateBadge] =
+    useState<SecurityViolationType | null>(null);
+
   const maxedOut = warningsCount >= MAX_PROCTORING_WARNINGS;
 
   useEffect(() => {
@@ -60,60 +69,132 @@ export default function ProctoringPanel({
   }, [permission, requestPermission]);
 
   useEffect(() => {
-    if (!active || paused || !permission?.granted || !token || maxedOut) return;
+    if (!active || paused || !permission?.granted || !token || maxedOut) {
+      candidateViolationRef.current = null;
+      candidateStartTimeRef.current = null;
+      hasTriggeredCurrentRef.current = false;
+      return;
+    }
 
     const interval = setInterval(async () => {
-      if (isChecking.current || !cameraRef.current || paused || maxedOut) return;
+      if (isChecking.current || !cameraRef.current || paused || maxedOut) {
+        return;
+      }
       isChecking.current = true;
+
       try {
         const photo = await cameraRef.current.takePictureAsync({
           quality: 0.3,
           base64: true,
-          skipProcessing: true,
+          // skipProcessing MUST be false on Android — when true, the hardware
+          // encoder may not finish writing the base64 payload, causing silent
+          // failures where photo.base64 is undefined or empty.
+          skipProcessing: false,
         });
-        if (photo?.base64) {
-          const result = await checkFrameForFaces(token, photo.base64);
 
-          let detectedViolation: SecurityViolationType | null = null;
-          if (result.violation) {
-            detectedViolation = result.violation;
-          } else if (result.faceCount === 0) {
-            detectedViolation = SECURITY_VIOLATIONS.NO_FACE;
-          } else if (result.faceCount > 1) {
-            detectedViolation = SECURITY_VIOLATIONS.MULTIPLE_PEOPLE;
+        // On some Android builds (Samsung, Pixel), photo.base64 is undefined
+        // even with base64:true. Fall back to reading the file directly.
+        let frameBase64: string | undefined = photo?.base64;
+        if (!frameBase64 && photo?.uri && Platform.OS !== "web") {
+          try {
+            frameBase64 = await FileSystem.readAsStringAsync(photo.uri, {
+              encoding: FileSystem.EncodingType.Base64,
+            });
+          } catch {
+            // File unreadable — skip this frame
+          }
+        }
+
+        if (frameBase64) {
+          const result = await checkFrameForFaces(token, frameBase64);
+          const faceCount = result.faceCount ?? 1;
+
+          // Determine current frame violation (if any)
+          let currentFrameViolation: SecurityViolationType | null = null;
+          if (faceCount > 1) {
+            currentFrameViolation = SECURITY_VIOLATIONS.MULTIPLE_PEOPLE;
+          } else if (faceCount === 0) {
+            currentFrameViolation = SECURITY_VIOLATIONS.NO_FACE;
+          } else if (result.violation) {
+            currentFrameViolation = result.violation;
           }
 
-          if (detectedViolation) {
-            onViolation?.(detectedViolation);
-            if (warningsCount + 1 >= MAX_PROCTORING_WARNINGS) {
-              onMaxWarnings?.();
+          // ── Continuous 2-Second Verification Logic ─────────────────────────
+          if (currentFrameViolation) {
+            setActiveCandidateBadge(currentFrameViolation);
+            const now = Date.now();
+
+            if (!candidateStartTimeRef.current) {
+              // Violation candidate started
+              candidateViolationRef.current = currentFrameViolation;
+              candidateStartTimeRef.current = now;
+              hasTriggeredCurrentRef.current = false;
+            } else {
+              // Update to most recent violation type
+              candidateViolationRef.current = currentFrameViolation;
+              if (
+                !hasTriggeredCurrentRef.current &&
+                now - candidateStartTimeRef.current >=
+                  CONTINUOUS_VIOLATION_THRESHOLD_MS
+              ) {
+                // Violation persisted continuously for ≥ 2000ms:
+                hasTriggeredCurrentRef.current = true;
+                onViolation?.(currentFrameViolation);
+                if (warningsCount + 1 >= MAX_PROCTORING_WARNINGS) {
+                  onMaxWarnings?.();
+                }
+              }
             }
+          } else {
+            // Problem cleared: reset candidate tracking
+            candidateViolationRef.current = null;
+            candidateStartTimeRef.current = null;
+            hasTriggeredCurrentRef.current = false;
+            setActiveCandidateBadge(null);
           }
         }
       } catch {
-        // Network hiccups or a busy camera shouldn't penalize the trainee.
+        // Camera busy or frame error ignored
       } finally {
         isChecking.current = false;
       }
     }, CHECK_INTERVAL_MS);
 
-    return () => clearInterval(interval);
-  }, [active, paused, permission, token, maxedOut, warningsCount, onViolation, onMaxWarnings]);
+    return () => {
+      clearInterval(interval);
+      candidateViolationRef.current = null;
+      candidateStartTimeRef.current = null;
+      hasTriggeredCurrentRef.current = false;
+      setActiveCandidateBadge(null);
+    };
+  }, [
+    active,
+    paused,
+    permission,
+    token,
+    maxedOut,
+    warningsCount,
+    onViolation,
+    onMaxWarnings,
+  ]);
+
+  const isInactive = !active || paused || !permission?.granted || !token || maxedOut;
+  const currentBadge = isInactive ? null : activeCandidateBadge;
 
   const footerLabel = !permission?.granted
     ? "Camera Off"
     : maxedOut
       ? "Submitting…"
-      : latestViolation
-        ? VIOLATION_FOOTER_LABELS[latestViolation] || `Warning ${warningsCount}/${MAX_PROCTORING_WARNINGS}`
-        : warningsCount > 0
-          ? `Warning ${warningsCount}/${MAX_PROCTORING_WARNINGS}`
-          : "AI Active";
+      : currentBadge
+        ? VIOLATION_FOOTER_LABELS[currentBadge] || "VIOLATION\nDETECTED"
+        : "AI Active";
+
+  const isDangerBadge = !!currentBadge || maxedOut;
 
   const footerIcon = !permission?.granted
     ? "videocam-off-outline"
-    : warningsCount > 0
-      ? "warning-outline"
+    : isDangerBadge
+      ? "alert-circle"
       : "shield-checkmark-outline";
 
   return (
@@ -163,14 +244,14 @@ export default function ProctoringPanel({
       <View
         style={[
           styles.footer,
-          warningsCount > 0 && !maxedOut && styles.footerWarning,
-          maxedOut && styles.footerDanger,
+          isDangerBadge && styles.footerDanger,
+          !isDangerBadge && warningsCount > 0 && styles.footerWarning,
         ]}
       >
         <Ionicons name={footerIcon} size={12} color={Colors.white} />
         <AppText
           style={styles.footerText}
-          weight={FontWeight.medium}
+          weight={FontWeight.bold}
           numberOfLines={2}
         >
           {footerLabel}
@@ -243,6 +324,11 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
   },
   footerWarning: { backgroundColor: "#F59E0B" },
-  footerDanger: { backgroundColor: Colors.danger },
-  footerText: { color: Colors.white, fontSize: 10, textAlign: "center" },
+  footerDanger: { backgroundColor: "#DC2626" },
+  footerText: {
+    color: Colors.white,
+    fontSize: 9.5,
+    textAlign: "center",
+    lineHeight: 12,
+  },
 });

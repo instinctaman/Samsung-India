@@ -1,9 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useLocalSearchParams } from "expo-router";
 import {
   ActivityIndicator,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -11,290 +9,62 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import {
-  ApiError,
-  AssessmentQuestion,
-  AssessmentResult,
-  getAssessmentQuestions,
-  submitAssessment,
-  terminateAssessmentWithViolation,
-} from "@/api/assessment";
-
 import SecurityLockedView from "@/components/assessment/SecurityLockedView";
 import TestSubmittedView from "@/components/assessment/TestSubmittedView";
 import ProctoringPanel from "@/components/proctoring/ProctoringPanel";
 import ProctoringScreen from "@/components/proctoring/ProctoringScreen";
 import SecurityViolationModal from "@/components/proctoring/SecurityViolationModal";
-import {
-  MAX_PROCTORING_WARNINGS,
-  SECURITY_VIOLATIONS,
-  SecurityViolationType,
-  getLastViolation,
-  getSessionViolationCount,
-  isSessionLocked,
-  lockSession,
-  recordSessionViolation,
-} from "@/components/proctoring/violations";
+import { MAX_PROCTORING_WARNINGS } from "@/components/proctoring/violations";
 import AppText from "@/components/ui/AppText";
 import TimeProgress from "@/components/ui/TimeProgress";
-import { useAuth } from "@/hooks/useAuth";
 import { Colors } from "@/theme/colors";
 import { FontWeight } from "@/theme/fontWeight";
 import { Fonts } from "@/theme/fonts";
 import { createShadow } from "@/theme/shadows";
-
-const DEFAULT_TEST_MINUTES = 30;
-
-/** Single controlled status enum — prevents conflicting state transitions */
-type PostTestStatus = "active" | "submitting" | "completed" | "security-locked";
+import { usePostTest } from "@/hooks/usePostTest";
 
 export default function PostTestScreen() {
-  const router = useRouter();
-  const { token } = useAuth();
   const { conferenceUid, suiteUid, proctored } = useLocalSearchParams<{
     conferenceUid: string;
     suiteUid: string;
     proctored?: string;
   }>();
 
-  const [readyToStart, setReadyToStart] = useState(proctored === "true");
-
-  const [questions, setQuestions] = useState<AssessmentQuestion[]>([]);
-  const [suiteTitle, setSuiteTitle] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // Session key for persistent violation tracking
-  const sessionKey = conferenceUid || suiteUid || "default-post-test";
-
-  // Unified post-test status (replaces separate submitting/submittedAt)
-  const [testStatus, setTestStatus] = useState<PostTestStatus>(() =>
-    isSessionLocked(sessionKey) ? "security-locked" : "active",
-  );
-  const [assessmentResult, setAssessmentResult] =
-    useState<AssessmentResult | null>(null);
-  const [submittedAt, setSubmittedAt] = useState<Date | null>(null);
-
-  // Violation-specific state (persisted across re-renders for this test session)
-  const [violationCount, setViolationCount] = useState(() =>
-    getSessionViolationCount(sessionKey),
-  );
-  const [currentViolation, setCurrentViolation] =
-    useState<SecurityViolationType | null>(() => getLastViolation(sessionKey));
-  const [violationModalVisible, setViolationModalVisible] = useState(false);
-  const [lockedViolationType, setLockedViolationType] =
-    useState<SecurityViolationType | null>(() => getLastViolation(sessionKey));
-
-  // Guards: deduplicate multiple simultaneous violation triggers and double termination
-  const terminatingRef = useRef(isSessionLocked(sessionKey));
-  const lastViolationTimeRef = useRef(0);
-
-  const [questionIndex, setQuestionIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<number, string | null>>({});
-
-  const [totalSeconds, setTotalSeconds] = useState(DEFAULT_TEST_MINUTES * 60);
-  const [remainingSeconds, setRemainingSeconds] = useState(
-    DEFAULT_TEST_MINUTES * 60,
-  );
-
-  const loadQuestions = useCallback(async () => {
-    if (!token || !suiteUid) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await getAssessmentQuestions(token, suiteUid);
-      setQuestions(data.questions);
-      setSuiteTitle(data.title ?? null);
-      if (data.testTime) {
-        const mins = parseInt(data.testTime, 10);
-        if (!isNaN(mins) && mins > 0) {
-          setTotalSeconds(mins * 60);
-          setRemainingSeconds(mins * 60);
-        }
-      }
-      setLoading(false);
-    } catch (err) {
-      setError(
-        err instanceof ApiError ? err.message : "Couldn't load test questions.",
-      );
-      setLoading(false);
-    }
-  }, [token, suiteUid]);
-
-  useEffect(() => {
-    loadQuestions();
-  }, [loadQuestions]);
-
-  const current = questions[questionIndex];
-  const selectedOption = answers[questionIndex] ?? null;
-  const isLastQuestion = questionIndex === questions.length - 1;
-  const isActive = testStatus === "active";
-
-  // ── Normal submit (timer expiry or manual submit) ───────────────────────────
-  const handleSubmit = useCallback(async () => {
-    if (!token || !suiteUid || !conferenceUid) return;
-    if (terminatingRef.current) return;
-    terminatingRef.current = true;
-    setTestStatus("submitting");
-    setError(null);
-    try {
-      const res = await submitAssessment(
-        token,
-        suiteUid,
-        conferenceUid,
-        questions.map((question, index) => ({
-          questionId: question.id,
-          selectedOption: answers[index] ?? null,
-        })),
-      );
-      setAssessmentResult(res);
-      setSubmittedAt(new Date());
-      setTestStatus("completed");
-    } catch (err) {
-      setError(
-        err instanceof ApiError ? err.message : "Couldn't submit the test.",
-      );
-      // Release lock so user can retry
-      terminatingRef.current = false;
-      setTestStatus("active");
-    }
-  }, [token, suiteUid, conferenceUid, questions, answers]);
-
-  // ── Security violation termination ─────────────────────────────────────────
-  const handleViolationTermination = useCallback(
-    async (violationType: SecurityViolationType) => {
-      terminatingRef.current = true;
-      setTestStatus("security-locked");
-      setLockedViolationType(violationType);
-      lockSession(sessionKey, violationType);
-
-      const answersPayload = questions.map((question, index) => ({
-        questionId: question.id,
-        selectedOption: answers[index] ?? null,
-      }));
-
-      try {
-        await terminateAssessmentWithViolation(
-          token ?? "",
-          suiteUid ?? "",
-          conferenceUid ?? "",
-          violationType,
-          answersPayload,
-        );
-      } catch {
-        // Even if API call fails, lock the test permanently for this session
-      }
-
-      // Redirect trainee immediately to Session Details with Locked security modal
-      router.replace({
-        pathname: "/session_detail",
-        params: {
-          flow: "ATTENDANCE_RECORDED",
-          postTest: "security_locked",
-          violation: "locked",
-          violationType,
-        },
-      });
-    },
-    [token, suiteUid, conferenceUid, sessionKey, questions, answers, router],
-  );
-
-  // ── Central Violation Trigger (0 → 1 → 2 → 3) ───────────────────────────
-  const triggerViolation = useCallback(
-    (violationType: SecurityViolationType) => {
-      // Prevent handling if test is already submitting/locked or modal is visible
-      if (
-        testStatus !== "active" ||
-        terminatingRef.current ||
-        violationModalVisible
-      )
-        return;
-
-      // 4-second cooldown between distinct violation events to prevent rapid fire
-      const now = Date.now();
-      if (now - lastViolationTimeRef.current < 4000) return;
-      lastViolationTimeRef.current = now;
-
-      const newCount = recordSessionViolation(sessionKey, violationType);
-      setViolationCount(newCount);
-      setCurrentViolation(violationType);
-
-      if (newCount < MAX_PROCTORING_WARNINGS) {
-        // Violation #1 or #2: Open warning modal, trainee can close and continue
-        setViolationModalVisible(true);
-      } else {
-        // Violation #3: Stop test immediately, lock session and transform screen into SecurityLockedView
-        setViolationModalVisible(false);
-        handleViolationTermination(violationType);
-      }
-    },
-    [testStatus, violationModalVisible, sessionKey, handleViolationTermination],
-  );
-
-  const handleCloseViolationModal = () => {
-    setViolationModalVisible(false);
-    // Provide a fresh grace period after closing warning modal
-    lastViolationTimeRef.current = Date.now();
-  };
-
-  // ── Tab-switch detection (Web) ──────────────────────────────────────────────
-  useEffect(() => {
-    if (Platform.OS !== "web" || !readyToStart) return;
-
-    const handleVisibilityChange = () => {
-      if (
-        document.hidden &&
-        testStatus === "active" &&
-        !terminatingRef.current
-      ) {
-        triggerViolation(SECURITY_VIOLATIONS.TAB_SWITCH);
-      }
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () =>
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-  }, [readyToStart, testStatus, triggerViolation]);
-
-  // ── Timer countdown ─────────────────────────────────────────────────────────
-  useEffect(() => {
-    if (!readyToStart || questions.length === 0 || testStatus !== "active")
-      return;
-    const timer = setInterval(() => {
-      setRemainingSeconds((seconds) => (seconds <= 1 ? 0 : seconds - 1));
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [readyToStart, questions.length, testStatus]);
-
-  // ── Auto-submit when timer expires ─────────────────────────────────────────
-  useEffect(() => {
-    if (
-      readyToStart &&
-      questions.length > 0 &&
-      remainingSeconds === 0 &&
-      testStatus === "active"
-    ) {
-      handleSubmit();
-    }
-  }, [remainingSeconds]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const remainingMinutes = Math.floor(remainingSeconds / 60);
-  const remainingSecondsPart = remainingSeconds % 60;
-  const totalMinutes = Math.max(Math.ceil(totalSeconds / 60), 1);
-
-  const selectOption = (optionId: string) => {
-    if (!isActive) return; // Block selection during/after termination
-    setAnswers((items) => ({ ...items, [questionIndex]: optionId }));
-  };
-
-  const move = (direction: number) => {
-    if (!isActive) return;
-    setQuestionIndex((index) =>
-      Math.min(Math.max(index + direction, 0), questions.length - 1),
-    );
-  };
-
-  // ── Screen routing ──────────────────────────────────────────────────────────
+  const {
+    token,
+    readyToStart,
+    setReadyToStart,
+    questions,
+    current,
+    questionIndex,
+    selectedOption,
+    isLastQuestion,
+    suiteTitle,
+    loading,
+    error,
+    testStatus,
+    isActive,
+    isSubmitting,
+    submittedAt,
+    violationCount,
+    currentViolation,
+    violationModalVisible,
+    lockedViolationType,
+    totalSeconds,
+    remainingSeconds,
+    remainingMinutes,
+    remainingSecondsPart,
+    totalMinutes,
+    answers,
+    selectOption,
+    move,
+    handleSubmit,
+    triggerViolation,
+    handleCloseViolationModal,
+    retry,
+    handleGoToDashboard,
+    handleSecurityLockedClose,
+  } = usePostTest(conferenceUid, suiteUid, proctored);
 
   if (!readyToStart) {
     return <ProctoringScreen onStartTest={() => setReadyToStart(true)} />;
@@ -314,7 +84,7 @@ export default function PostTestScreen() {
       <SafeAreaView style={styles.loadingContainer}>
         <Ionicons name="alert-circle-outline" size={48} color={Colors.danger} />
         <AppText style={styles.loadingText}>{error}</AppText>
-        <Pressable style={styles.retryButton} onPress={loadQuestions}>
+        <Pressable style={styles.retryButton} onPress={retry}>
           <AppText color={Colors.white} weight={FontWeight.medium}>
             Try Again
           </AppText>
@@ -372,27 +142,12 @@ export default function PostTestScreen() {
             iconBg: "#D8F8EB",
           },
         ]}
-        onGoToDashboard={() => {
-          const scoreStr = assessmentResult
-            ? `${assessmentResult.correctCount}/${assessmentResult.totalQuestions}`
-            : `${attempted}/${questions.length || 15}`;
-          const durationStr = `Ran : ${hh !== "00" ? `${parseInt(hh)}h ` : ""}${parseInt(mm) || 1}m`;
-          router.replace({
-            pathname: "/session_detail",
-            params: {
-              postTest: "completed",
-              score: scoreStr,
-              duration: durationStr,
-            },
-          });
-        }}
+        onGoToDashboard={handleGoToDashboard}
       />
     );
   }
 
   if (!current) return null;
-
-  const isSubmitting = testStatus === "submitting";
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
@@ -414,12 +169,7 @@ export default function PostTestScreen() {
       {testStatus === "security-locked" && (
         <SecurityLockedView
           violationType={lockedViolationType || currentViolation}
-          onClose={() => {
-            router.replace({
-              pathname: "/session_detail",
-              params: { postTest: "security_locked" },
-            });
-          }}
+          onClose={handleSecurityLockedClose}
         />
       )}
 
@@ -501,7 +251,10 @@ export default function PostTestScreen() {
               </AppText>
               <View style={styles.unlimitedTag}>
                 <Ionicons name="infinite" size={13} color="#00A859" />
-                <AppText style={styles.unlimitedText} weight={FontWeight.medium}>
+                <AppText
+                  style={styles.unlimitedText}
+                  weight={FontWeight.medium}
+                >
                   Unlimited
                 </AppText>
               </View>
@@ -614,7 +367,12 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   header: { backgroundColor: Colors.mainColour1, padding: 9 },
-  headerRow: { height: 30, flexDirection: "row", alignItems: "center", gap: 6 },
+  headerRow: {
+    height: 30,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
   timer: {
     height: 22,
     paddingHorizontal: 6,
@@ -633,183 +391,161 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 5,
-    gap: 4,
+    gap: 5,
   },
-  progressText: { fontSize: 8, color: Colors.primary },
+  progressText: { fontSize: Fonts.overline, color: Colors.black },
   progressTrack: {
     flex: 1,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: "#DDEAFF",
+    height: 6,
+    backgroundColor: Colors.gray100,
+    borderRadius: 3,
+    overflow: "hidden",
   },
   progressFill: {
     height: "100%",
-    borderRadius: 2,
     backgroundColor: Colors.primary,
+    borderRadius: 3,
   },
-  progressPercent: { fontSize: 8, color: Colors.primary },
+  progressPercent: {
+    fontSize: Fonts.overline,
+    color: Colors.black,
+    minWidth: 26,
+    textAlign: "right",
+  },
   headerIcon: {
     width: 22,
     height: 22,
-    borderRadius: 4,
+    borderRadius: 3,
+    backgroundColor: Colors.white,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: Colors.white,
   },
   wifi: {
     width: 22,
     height: 22,
-    borderRadius: 4,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: Colors.success,
-  },
-  content: {
-    flexGrow: 1,
-    padding: 10,
-    paddingBottom: 12,
-    gap: 10,
-  },
-  timerProctorRow: {
-    width: "100%",
-    minHeight: 158,
-    backgroundColor: Colors.white,
-    borderRadius: 18,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 4,
-    paddingVertical: 12,
-    ...createShadow({ x: 0, y: 2, blur: 8, opacity: 0.05, elevation: 2 }),
-  },
-  timerColumn: {
-    width: "50%",
+    borderRadius: 3,
+    backgroundColor: "#16A34A",
     alignItems: "center",
     justifyContent: "center",
   },
-  proctorColumn: {
-    width: "50%",
-    alignItems: "center",
-    justifyContent: "center",
-  },
+  content: { padding: 13, gap: 11, paddingBottom: 28 },
+  timerProctorRow: { flexDirection: "row", alignItems: "center", gap: 11 },
+  timerColumn: { flex: 1, alignItems: "center" },
+  proctorColumn: { flex: 1, alignItems: "center" },
   testTitle: {
-    borderRadius: 16,
-    backgroundColor: Colors.white,
-    paddingVertical: 14,
+    paddingVertical: 12,
     paddingHorizontal: 16,
-    alignItems: "center",
-    justifyContent: "center",
-    ...createShadow({ x: 0, y: 2, blur: 6, opacity: 0.04, elevation: 2 }),
+    borderRadius: 24,
+    borderWidth: 2,
+    borderColor: "#006AFF",
+    backgroundColor: "#EBF4FE",
+    ...createShadow({
+      x: 0,
+      y: -6,
+      blur: 14,
+      opacity: 0.12,
+      elevation: 4,
+      color: "#000000",
+    }),
   },
   title: {
-    fontSize: 23,
+    fontSize: Fonts.body,
+    lineHeight: 22,
     textAlign: "center",
-    lineHeight: 30,
-    color: "#1E293B",
+    color: Colors.black,
   },
   questionCard: {
-    flex: 1,
-    borderRadius: 16,
-    borderWidth: 1.5,
-    borderColor: "#60A5FA",
-    padding: 16,
-    backgroundColor: Colors.white,
-    justifyContent: "space-between",
-    ...createShadow({ x: 0, y: 2, blur: 6, opacity: 0.04, elevation: 2 }),
+    borderRadius: 24,
+    borderWidth: 2,
+    borderColor: "#006AFF",
+    overflow: "hidden",
+    backgroundColor: "#EBF4FE",
+    ...createShadow({
+      x: 0,
+      y: -8,
+      blur: 16,
+      opacity: 0.14,
+      elevation: 6,
+      color: "#000000",
+    }),
   },
-  questionBody: {
-    width: "100%",
-  },
+  questionBody: { padding: 14 },
   tags: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    flexWrap: "wrap",
+    justifyContent: "space-between",
+    marginBottom: 8,
   },
-  questionTag: {
-    fontSize: 10.5,
-    backgroundColor: "#DDEEFF",
-    color: "#006AFF",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
+  questionTag: { fontSize: Fonts.caption, color: Colors.black },
+  multiTag: { fontSize: Fonts.caption, color: Colors.primary },
+  unlimitedTag: { flexDirection: "row", alignItems: "center", gap: 3 },
+  unlimitedText: { fontSize: Fonts.caption, color: "#00A859" },
+  question: {
+    fontSize: Fonts.body,
+    lineHeight: 22,
+    color: Colors.black,
+    marginBottom: 12,
   },
-  multiTag: {
-    fontSize: 10.5,
-    backgroundColor: "#F3F4F6",
-    color: "#6B7280",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  unlimitedTag: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    backgroundColor: "#E6F9F0",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  unlimitedText: {
-    fontSize: 10.5,
-    color: "#00A859",
-  },
-  question: { marginTop: 14, fontSize: 16, lineHeight: 22, color: "#111827" },
-  options: { gap: 10, marginTop: 14 },
+  options: { gap: 8 },
   option: {
-    minHeight: 56,
-    borderWidth: 1.5,
-    borderColor: "#E5E7EB",
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    backgroundColor: Colors.white,
+    padding: 10,
+    borderRadius: 14,
+    backgroundColor: "#EFF4FF",
+    borderWidth: 1,
+    borderColor: "#DBEAFE",
+    gap: 9,
   },
-  optionSelected: { borderColor: "#006AFF", backgroundColor: "#F0F6FF" },
+  optionSelected: {
+    backgroundColor: "#DCE8FE",
+    borderColor: Colors.primary,
+  },
   optionDisabled: { opacity: 0.6 },
   checkbox: {
     width: 20,
     height: 20,
+    borderRadius: 10,
     borderWidth: 1.5,
-    borderColor: "#D1D5DB",
-    borderRadius: 6,
+    borderColor: Colors.gray400,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: Colors.white,
   },
   checkboxSelected: {
-    borderColor: "#006AFF",
-    backgroundColor: "#006AFF",
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
   },
-  optionText: { flex: 1, fontSize: 13, lineHeight: 18, color: "#1F2937" },
-  actions: { flexDirection: "row", gap: 10, marginTop: 16 },
+  optionText: { fontSize: Fonts.bodySm, color: Colors.black, flex: 1 },
+  actions: {
+    flexDirection: "row",
+    gap: 10,
+    padding: 14,
+    borderTopWidth: 1,
+    borderTopColor: Colors.gray200,
+    backgroundColor: Colors.white,
+  },
   previousButton: {
     flex: 1,
     height: 44,
-    borderWidth: 1.5,
-    borderColor: "#006AFF",
-    borderRadius: 10,
-    justifyContent: "center",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.gray400,
     alignItems: "center",
-    backgroundColor: Colors.white,
+    justifyContent: "center",
   },
   previousText: {
-    color: "#006AFF",
-    fontSize: 14.5,
-    fontWeight: FontWeight.semiBold,
+    fontSize: Fonts.bodySm,
+    fontWeight: "600",
+    color: Colors.gray600,
   },
-  disabledButton: { opacity: 0.45 },
   nextButton: {
     flex: 1,
     height: 44,
-    borderRadius: 10,
-    backgroundColor: "#006AFF",
-    justifyContent: "center",
+    borderRadius: 12,
+    backgroundColor: Colors.primary,
     alignItems: "center",
+    justifyContent: "center",
   },
-  nextText: { color: Colors.white, fontSize: 14.5 },
+  nextText: { fontSize: Fonts.bodySm },
+  disabledButton: { opacity: 0.5 },
 });

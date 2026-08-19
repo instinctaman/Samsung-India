@@ -1,118 +1,37 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 
-import {
-  ApiError,
-  AssessmentQuestion,
-  getAssessmentQuestions,
-  submitAssessment,
-} from "@/api/assessment";
 import TestSubmittedView from "@/components/assessment/TestSubmittedView";
-import { SurveyAnswers, SurveyModule, SurveyQuestion } from "@/components/survey";
+import { SurveyModule } from "@/components/survey";
 import AppText from "@/components/ui/AppText";
-import { useAuth } from "@/hooks/useAuth";
 import { Colors } from "@/theme/colors";
 import { FontWeight } from "@/theme/fontWeight";
-
-const FREE_TEXT_TYPES = new Set(["short_answer", "paragraph", "text"]);
+import { useSurvey } from "@/hooks/useSurvey";
 
 export default function SurveyScreen() {
   const router = useRouter();
-  const { token } = useAuth();
   const { conferenceUid, suiteUid } = useLocalSearchParams<{
     conferenceUid: string;
     suiteUid: string;
   }>();
 
-  const [questions, setQuestions] = useState<AssessmentQuestion[]>([]);
-  const [surveyTitle, setSurveyTitle] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [submittedAt, setSubmittedAt] = useState<Date | null>(null);
-  const [startedAt] = useState(() => new Date());
-
-  const [answers, setAnswers] = useState<SurveyAnswers>({});
-
-  const loadQuestions = useCallback(async () => {
-    if (!token || !suiteUid) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await getAssessmentQuestions(token, suiteUid);
-      setQuestions(data.questions);
-      setSurveyTitle(data.title);
-    } catch (err) {
-      setError(
-        err instanceof ApiError ? err.message : "Couldn't load the survey.",
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, [token, suiteUid]);
-
-  useEffect(() => {
-    loadQuestions();
-  }, [loadQuestions]);
-
-  const handleAnswerChange = (questionId: string | number, value: string) => {
-    setAnswers((current) => ({ ...current, [questionId]: value }));
-  };
-
-  const handleSubmit = async () => {
-    if (!token || !suiteUid || !conferenceUid || submitting) return;
-    setSubmitting(true);
-    setError(null);
-    try {
-      await submitAssessment(
-        token,
-        suiteUid,
-        conferenceUid,
-        questions.map((question) => ({
-          questionId: question.id,
-          selectedOption: answers[question.id] ?? null,
-        })),
-      );
-      setSubmittedAt(new Date());
-    } catch (err) {
-      setError(
-        err instanceof ApiError ? err.message : "Couldn't submit the survey.",
-      );
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const surveyQuestions: SurveyQuestion[] = useMemo(() => {
-    return questions.map((q) => ({
-      id: q.id,
-      question: q.question,
-      type: FREE_TEXT_TYPES.has(q.question_type) ? "text" : "single-select",
-      options: q.options?.map((opt) => ({ id: opt.id, text: opt.text })) ?? [],
-      required: true,
-    }));
-  }, [questions]);
-
-  // Split title if it contains newline or formatted pipe
-  const { headerTitle, headerSubtitle } = useMemo(() => {
-    if (!surveyTitle) {
-      return {
-        headerTitle: "SECs Feedback | June",
-        headerSubtitle: "Classroom Training Sessions",
-      };
-    }
-    if (surveyTitle.includes("\n")) {
-      const [t, sub] = surveyTitle.split("\n");
-      return { headerTitle: t, headerSubtitle: sub };
-    }
-    return {
-      headerTitle: surveyTitle,
-      headerSubtitle: "Classroom Training Sessions",
-    };
-  }, [surveyTitle]);
+  const {
+    questions,
+    surveyQuestions,
+    headerTitle,
+    headerSubtitle,
+    answers,
+    loading,
+    error,
+    submitting,
+    submittedAt,
+    startedAt,
+    handleAnswerChange,
+    handleSubmit,
+    retry,
+  } = useSurvey(suiteUid, conferenceUid);
 
   if (loading) {
     return (
@@ -128,7 +47,7 @@ export default function SurveyScreen() {
       <SafeAreaView style={styles.loadingContainer}>
         <Ionicons name="alert-circle-outline" size={48} color={Colors.danger} />
         <AppText style={styles.loadingText}>{error}</AppText>
-        <Pressable style={styles.retryButton} onPress={loadQuestions}>
+        <Pressable style={styles.retryButton} onPress={retry}>
           <AppText color={Colors.white} weight={FontWeight.medium}>
             Try Again
           </AppText>

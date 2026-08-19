@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   ImageSourcePropType,
@@ -9,7 +9,6 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import * as Location from "expo-location";
 
 import AppText from "@/components/ui/AppText";
 import {
@@ -22,6 +21,7 @@ import { FontWeight } from "@/theme/fontWeight";
 import { Fonts } from "@/theme/fonts";
 
 import { useAuth } from "@/hooks/useAuth";
+import { useLocationPermission } from "@/hooks/useLocationPermission";
 import {
   ApiError,
   VerifyLocationResult,
@@ -30,7 +30,6 @@ import {
 } from "@/api/attendance";
 import {
   setAttendanceState,
-  setSecurityCheckInCompleted,
   setSessionFlowState,
 } from "@/api/session";
 
@@ -57,9 +56,18 @@ export default function SecureCheckInScreen() {
 
   const isEntryMode = params.mode !== "attendance";
 
+  const {
+    permissionState,
+    coords: locationCoords,
+    loading: locationLoading,
+    error: locationError,
+    requestLocationWithRationale,
+    openSettings,
+  } = useLocationPermission();
+
   const [step, setStep] = useState<Step>("locating");
   const [error, setError] = useState<string | null>(null);
-  const [coords, setCoords] = useState<{
+  const [activeCoords, setActiveCoords] = useState<{
     latitude: number;
     longitude: number;
   } | null>(null);
@@ -67,55 +75,59 @@ export default function SecureCheckInScreen() {
     useState<VerifyLocationResult | null>(null);
   const [verifiedAt, setVerifiedAt] = useState<Date | null>(null);
 
-  const runLocationCheck = useCallback(async () => {
+  const startLocationVerification = useCallback(async () => {
     if (!token || !params.conferenceUid) return;
     setStep("locating");
     setError(null);
-    try {
-      let point = { latitude: 28.4595, longitude: 77.0266 };
-      try {
-        const permissionResult =
-          await Location.requestForegroundPermissionsAsync();
-        if (permissionResult.granted) {
-          const position = await Location.getCurrentPositionAsync({
-            accuracy: Location.Accuracy.Balanced,
-          });
-          point = {
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-          };
-        }
-      } catch {
-        // Fallback to simulated location for dev/testing
-      }
 
-      setCoords(point);
-      const result = await verifyLocation(
-        token,
-        params.conferenceUid,
-        point.latitude,
-        point.longitude
-      );
-      setLocationResult(result);
-      setVerifiedAt(new Date());
-      setStep("location-verified");
-    } catch (err) {
+    const { coords, status, error: permError } =
+      await requestLocationWithRationale();
+
+    if (status === "granted" && coords) {
+      setActiveCoords(coords);
+      try {
+        const result = await verifyLocation(
+          token,
+          params.conferenceUid,
+          coords.latitude,
+          coords.longitude,
+        );
+        setLocationResult(result);
+        setVerifiedAt(new Date());
+        setStep("location-verified");
+      } catch (err) {
+        setError(
+          err instanceof ApiError
+            ? err.message
+            : "Couldn't verify your location with the venue.",
+        );
+        setStep("error");
+      }
+    } else {
       setError(
-        err instanceof ApiError ? err.message : "Couldn't verify your location."
+        permError ||
+          (status === "blocked"
+            ? "Location permission is permanently blocked. Please enable it in Settings."
+            : status === "unavailable"
+              ? "Device GPS is disabled. Please turn on Location in Settings."
+              : "Location access was denied. Location verification is required for check-in."),
       );
       setStep("error");
     }
-  }, [token, params.conferenceUid]);
+  }, [token, params.conferenceUid, requestLocationWithRationale]);
+
+  const hasInitiatedRef = useRef(false);
 
   useEffect(() => {
-    runLocationCheck();
-  }, [runLocationCheck]);
+    if (!hasInitiatedRef.current) {
+      hasInitiatedRef.current = true;
+      startLocationVerification();
+    }
+  }, [startLocationVerification]);
 
   const handleProceedFromCheckIn = async (photoSource: ImageSourcePropType) => {
-    // If this is the entry flow (Join Session -> Secure Check-in Home -> Location -> Camera -> Secure Check-in Home)
     if (isEntryMode) {
       setSessionFlowState("CAMERA_VERIFIED");
-      // Attendance is NOT marked on entry verification. Navigate back to Secure Check-in Home!
       router.replace({
         pathname: "/session_detail",
         params: { flow: "CAMERA_VERIFIED" },
@@ -123,8 +135,8 @@ export default function SecureCheckInScreen() {
       return;
     }
 
-    // If this is the attendance check-in flow from Home
-    if (!token || !params.conferenceUid || !coords) return;
+    const currentCoords = activeCoords || locationCoords;
+    if (!token || !params.conferenceUid || !currentCoords) return;
     setStep("submitting");
     setError(null);
     try {
@@ -134,8 +146,8 @@ export default function SecureCheckInScreen() {
           : "checkin.jpg";
       await secureCheckIn(token, {
         conferenceUid: params.conferenceUid,
-        latitude: coords.latitude,
-        longitude: coords.longitude,
+        latitude: currentCoords.latitude,
+        longitude: currentCoords.longitude,
         photo: { uri: uriStr, name: "checkin.jpg", type: "image/jpeg" },
       });
       setAttendanceState("ATTENDANCE_RECORDED");
@@ -144,14 +156,14 @@ export default function SecureCheckInScreen() {
       setError(
         err instanceof ApiError
           ? err.message
-          : "Couldn't submit your check-in."
+          : "Couldn't submit your check-in.",
       );
       setStep("error");
     }
   };
 
   // ─── Loading / Submitting State ─────────────────────────────────────────────
-  if (step === "locating" || step === "submitting") {
+  if (step === "locating" || step === "submitting" || locationLoading) {
     return (
       <SafeAreaView style={styles.loadingContainer}>
         <ActivityIndicator color={Colors.recordedGreen} size="large" />
@@ -164,27 +176,53 @@ export default function SecureCheckInScreen() {
     );
   }
 
-  // ─── Error State ────────────────────────────────────────────────────────────
+  // ─── Error State (Denied, Blocked, Unavailable, Network Error) ─────────────
   if (step === "error") {
+    const isBlocked =
+      permissionState === "blocked" || permissionState === "unavailable";
+    const errorMessage =
+      error || locationError || "Couldn't verify your location.";
+
     return (
       <SafeAreaView style={styles.loadingContainer}>
         <Ionicons name="alert-circle-outline" size={48} color={Colors.danger} />
-        <AppText style={styles.loadingText}>{error}</AppText>
-        <Pressable style={styles.retryButton} onPress={runLocationCheck}>
-          <AppText color={Colors.white} weight={FontWeight.medium}>
-            Try Again
-          </AppText>
-        </Pressable>
-        <Pressable onPress={() => router.back()} hitSlop={8}>
-          <AppText style={styles.homeText} color={Colors.gray600}>
-            Go Back
-          </AppText>
-        </Pressable>
+        <AppText style={styles.loadingText}>{errorMessage}</AppText>
+
+        <View style={styles.errorActions}>
+          {isBlocked ? (
+            <Pressable style={styles.primaryButton} onPress={openSettings}>
+              <Ionicons name="settings-outline" size={16} color={Colors.white} />
+              <AppText color={Colors.white} weight={FontWeight.medium}>
+                Open Device Settings
+              </AppText>
+            </Pressable>
+          ) : (
+            <Pressable
+              style={styles.primaryButton}
+              onPress={startLocationVerification}
+            >
+              <Ionicons name="refresh" size={16} color={Colors.white} />
+              <AppText color={Colors.white} weight={FontWeight.medium}>
+                Allow Location & Try Again
+              </AppText>
+            </Pressable>
+          )}
+
+          <Pressable
+            style={styles.backLink}
+            onPress={() => router.back()}
+            hitSlop={8}
+          >
+            <AppText style={styles.homeText} color={Colors.gray600}>
+              Go Back
+            </AppText>
+          </Pressable>
+        </View>
       </SafeAreaView>
     );
   }
 
-  // ─── Step 1: Location Verified View (Image 2) ───────────────────────────────
+  // ─── Step 1: Location Verified View ─────────────────────────────────────────
   if (step === "location-verified") {
     const formattedTime =
       verifiedAt?.toLocaleTimeString("en-GB", {
@@ -212,7 +250,7 @@ export default function SecureCheckInScreen() {
     );
   }
 
-  // ─── Step 2: Security Check-In & Camera Verification (Images 1, 4, 5) ───────
+  // ─── Step 2: Security Check-In & Camera Verification ───────────────────────
   if (step === "security-checkin") {
     return (
       <SecurityCheckInView
@@ -222,7 +260,7 @@ export default function SecureCheckInScreen() {
     );
   }
 
-  // ─── Attendance Granted (Only when check-in submitted from Home) ────────────
+  // ─── Attendance Granted ────────────────────────────────────────────────────
   return (
     <AccessGrantedView
       details={[
@@ -271,7 +309,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    gap: 12,
+    gap: 14,
     paddingHorizontal: 24,
     backgroundColor: Colors.background,
   },
@@ -279,13 +317,28 @@ const styles = StyleSheet.create({
     fontSize: Fonts.body,
     color: Colors.gray600,
     textAlign: "center",
+    lineHeight: 22,
   },
-  retryButton: {
+  errorActions: {
+    width: "100%",
+    maxWidth: 280,
+    alignItems: "center",
+    gap: 12,
+    marginTop: 8,
+  },
+  primaryButton: {
+    width: "100%",
     backgroundColor: Colors.recordedGreen,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
     paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
-    marginTop: 4,
+    paddingVertical: 12,
+    borderRadius: 10,
+  },
+  backLink: {
+    paddingVertical: 6,
   },
   homeText: {
     fontSize: Fonts.caption,

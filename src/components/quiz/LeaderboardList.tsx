@@ -38,48 +38,48 @@ export default function LeaderboardList({
 
   const defaultUsers: LeaderboardUser[] = users ?? [
     {
-      name: "YOU",
+      name: "You",
       score: `${correctCount}/${totalQuestions}`,
       accuracy: `${accuracy}%`,
       isYou: true,
     },
     {
-      name: "PRIYANSHU BORA",
+      name: "Priyanshu Bora",
       score: `${totalQuestions}/${totalQuestions}`,
       accuracy: "100%",
     },
     {
-      name: "ANKIT KUMAR",
+      name: "Ankit Kumar",
       score: `${totalQuestions}/${totalQuestions}`,
       accuracy: "100%",
     },
     {
-      name: "ANAND SINGH",
+      name: "Anand Singh",
       score: `${Math.max(1, totalQuestions - 1)}/${totalQuestions}`,
       accuracy: `${Math.round(((totalQuestions - 1) / totalQuestions) * 100)}%`,
     },
     {
-      name: "AMEERUL HAQUE",
+      name: "Ameerul Haque",
       score: `${Math.max(1, totalQuestions - 1)}/${totalQuestions}`,
       accuracy: `${Math.round(((totalQuestions - 1) / totalQuestions) * 100)}%`,
     },
     {
-      name: "PRIYANSHU BORA",
+      name: "Priyanshu Bora",
       score: `${totalQuestions}/${totalQuestions}`,
       accuracy: "100%",
     },
     {
-      name: "ANKIT KUMAR",
+      name: "Ankit Kumar",
       score: `${totalQuestions}/${totalQuestions}`,
       accuracy: "100%",
     },
     {
-      name: "ANAND SINGH",
+      name: "Anand Singh",
       score: `${Math.max(1, totalQuestions - 1)}/${totalQuestions}`,
       accuracy: `${Math.round(((totalQuestions - 1) / totalQuestions) * 100)}%`,
     },
     {
-      name: "AMEERUL HAQUE",
+      name: "Ameerul Haque",
       score: `${Math.max(1, totalQuestions - 1)}/${totalQuestions}`,
       accuracy: `${Math.round(((totalQuestions - 1) / totalQuestions) * 100)}%`,
     },

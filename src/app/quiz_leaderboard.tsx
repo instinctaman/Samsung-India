@@ -1,117 +1,36 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useLocalSearchParams, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useMemo, useState } from "react";
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  useWindowDimensions,
-  View,
-} from "react-native";
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
+import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import WinImage from "@/assets/images/svg/win.svg";
-import LeaderboardFilter, {
-  LeaderboardFilterValues,
-} from "@/components/quiz/LeaderboardFilter";
-import LeaderboardRow, {
-  LeaderboardUser,
-} from "@/components/quiz/LeaderboardRow";
+import LeaderboardFilter from "@/components/quiz/LeaderboardFilter";
+import LeaderboardRow from "@/components/quiz/LeaderboardRow";
 import PerformanceSummary from "@/components/quiz/PerformanceSummary";
 import QuizLiveHeader from "@/components/quiz/QuizLiveHeader";
 import AppText from "@/components/ui/AppText";
 import { Colors } from "@/theme/colors";
 import { FontWeight } from "@/theme/fontWeight";
 import { createShadow } from "@/theme/shadows";
-
-const SAMPLE_LEADERBOARD_NAMES = [
-  "PRIYANSHU BORA",
-  "ANKIT KUMAR",
-  "ANAND SINGH",
-  "AMEERUL HAQUE",
-];
-
-function generateLeaderboardUsers(
-  totalQuestions: number,
-  correctCount: number,
-  accuracy: number,
-  zoneFilter?: string,
-): LeaderboardUser[] {
-  const list: LeaderboardUser[] = [
-    {
-      name: "YOU",
-      score: `${correctCount}/${totalQuestions}`,
-      accuracy: `${accuracy}%`,
-      isYou: true,
-    },
-  ];
-
-  for (let i = 0; i < 100; i++) {
-    const name = SAMPLE_LEADERBOARD_NAMES[i % SAMPLE_LEADERBOARD_NAMES.length];
-    const scoreVal =
-      i < 6
-        ? totalQuestions
-        : i < 14
-          ? Math.max(1, totalQuestions - 1)
-          : Math.max(1, totalQuestions - Math.floor(i / 10));
-    const pct = Math.round((scoreVal / totalQuestions) * 100);
-
-    list.push({
-      name,
-      score: `${scoreVal}/${totalQuestions}`,
-      accuracy: `${pct}%`,
-    });
-  }
-
-  return list;
-}
+import { useQuizLeaderboard } from "@/hooks/useQuizLeaderboard";
 
 export default function QuizLeaderboardScreen() {
-  const insets = useSafeAreaInsets();
-  const { width: screenWidth } = useWindowDimensions();
-  const router = useRouter();
-  const params = useLocalSearchParams<{
-    correct?: string;
-    total?: string;
-    accuracy?: string;
-    timeTaken?: string;
-  }>();
-
-  const total = Number(params.total) || 25;
-  const correct = params.correct !== undefined ? Number(params.correct) : 20;
-  const accuracy =
-    params.accuracy !== undefined
-      ? Number(params.accuracy)
-      : Math.round((correct / total) * 100);
-  const incorrect = Math.max(0, total - correct);
-  const timeTakenFormatted = params.timeTaken || "28m 11s";
-
-  const [filterOpen, setFilterOpen] = useState(false);
-  const [filterValues, setFilterValues] = useState<LeaderboardFilterValues>({
-    trainingType: "CLASSROOM TRAINING",
-    state: "DELHI",
-    district: "NEW DELHI",
-    zone: "SOUTH",
-  });
-  const [appliedZone, setAppliedZone] = useState("");
-
-  const leaderboardUsers = useMemo(
-    () => generateLeaderboardUsers(total, correct, accuracy, appliedZone),
-    [total, correct, accuracy, appliedZone],
-  );
-
-  const handleApplyFilter = () => {
-    setAppliedZone(filterValues.zone);
-    setFilterOpen(false);
-  };
-
-  const handleContinue = () => {
-    router.replace("/session_detail");
-  };
+  const {
+    insets,
+    screenWidth,
+    total,
+    correct,
+    accuracy,
+    incorrect,
+    timeTakenFormatted,
+    filterOpen,
+    setFilterOpen,
+    filterValues,
+    setFilterValues,
+    leaderboardUsers,
+    handleApplyFilter,
+    handleContinue,
+  } = useQuizLeaderboard();
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>

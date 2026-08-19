@@ -16,8 +16,19 @@ export type LeaderboardRowProps = {
   user: LeaderboardUser;
 };
 
+function formatName(name: string): string {
+  if (!name) return "";
+  if (name.toUpperCase() === "YOU") return "You";
+  return name
+    .toLowerCase()
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
 export default function LeaderboardRow({ user }: LeaderboardRowProps) {
-  const isYou = user.isYou || user.name.toUpperCase() === "YOU";
+  const isYou = Boolean(user.isYou || user.name.toUpperCase() === "YOU");
+  const displayName = formatName(user.name);
 
   return (
     <View style={[styles.row, isYou && styles.youRow]}>
@@ -30,7 +41,7 @@ export default function LeaderboardRow({ user }: LeaderboardRowProps) {
         weight={isYou ? FontWeight.bold : FontWeight.semiBold}
         numberOfLines={1}
       >
-        {user.name}
+        {displayName}
       </AppText>
 
       {/* Score & Accuracy */}

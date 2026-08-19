@@ -3,7 +3,6 @@ import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 import { Colors } from "@/theme/colors";
-import { Radius } from "@/theme/radius";
 import { SessionTab } from "./sessionsUtils";
 
 type SessionsHeaderProps = {

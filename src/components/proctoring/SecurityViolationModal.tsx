@@ -1,11 +1,4 @@
-import React from "react";
-import {
-  Modal,
-  Platform,
-  Pressable,
-  StyleSheet,
-  View,
-} from "react-native";
+import { Modal, Platform, Pressable, StyleSheet, View } from "react-native";
 
 import AppText from "@/components/ui/AppText";
 import { FontWeight } from "@/theme/fontWeight";
@@ -55,10 +48,7 @@ export default function SecurityViolationModal({
           {/* Header row */}
           <View style={styles.headerRow}>
             <View style={styles.redDot} />
-            <AppText
-              style={styles.headingText}
-              weight={FontWeight.bold}
-            >
+            <AppText style={styles.headingText} weight={FontWeight.bold}>
               SECURITY VIOLATION DETECTED
             </AppText>
           </View>

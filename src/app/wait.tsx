@@ -1,7 +1,7 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect } from "react";
+import React, { useCallback, useEffect } from "react";
 import { StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useLocalSearchParams, useRouter } from "expo-router";
 
 import { QuizLiveHeader, QuizWaiting } from "@/components/quiz";
 import { Colors } from "@/theme/colors";
@@ -13,7 +13,7 @@ export default function WaitScreen() {
     suiteUid: string;
   }>();
 
-  const navigateToQuiz = () => {
+  const navigateToQuiz = useCallback(() => {
     router.replace({
       pathname: "/quiz",
       params: {
@@ -21,12 +21,12 @@ export default function WaitScreen() {
         suiteUid: suiteUid ?? "suite-quiz-001",
       },
     });
-  };
+  }, [conferenceUid, suiteUid, router]);
 
   useEffect(() => {
     const transition = setTimeout(navigateToQuiz, 2200);
     return () => clearTimeout(transition);
-  }, []);
+  }, [navigateToQuiz]);
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>

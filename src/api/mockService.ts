@@ -8,6 +8,17 @@
  */
 
 import {
+  SECURITY_VIOLATIONS,
+  SecurityViolationType,
+} from "@/components/proctoring/violations";
+import {
+  analyzeImagePixels,
+  decodeBase64ToBytes,
+  detectFacesWithShapeDetection,
+  detectFacesWithWebCanvas,
+  parseJpeg,
+} from "@/utils/proctoringEngine";
+import {
   DEMO_ADMIN_SESSION_ADMIN,
   DEMO_ADMIN_SESSION_TRAINER,
   DEMO_ADMIN_TRAINER,
@@ -23,7 +34,6 @@ import {
   DEMO_SURVEY_QUESTIONS,
   DEMO_TRAINEE,
 } from "@/data/mockData";
-import { SECURITY_VIOLATIONS } from "@/components/proctoring/violations";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const delay = (ms = 650) => new Promise<void>((r) => setTimeout(r, ms));
@@ -218,7 +228,12 @@ export function setAttendanceState(state: AttendanceState) {
 }
 
 export async function setSecurityCheckInCompleted(completed: boolean) {
-  if (completed && (_flowState === "JOINED" || _flowState === "SECURE_CHECKIN" || _flowState === "LOCATION_VERIFIED")) {
+  if (
+    completed &&
+    (_flowState === "JOINED" ||
+      _flowState === "SECURE_CHECKIN" ||
+      _flowState === "LOCATION_VERIFIED")
+  ) {
     setSessionFlowState("CAMERA_VERIFIED");
   }
 }
@@ -303,12 +318,54 @@ export async function secureCheckIn(
 export async function checkFrameForFaces(
   _token: string,
   imageBase64: string,
-): Promise<{ faceCount: number; violation?: any }> {
+): Promise<{ faceCount: number; violation?: SecurityViolationType | null }> {
   // If frame data is completely empty/invalid, report NO_FACE
   if (!imageBase64 || imageBase64.length < 50) {
     return { faceCount: 0, violation: SECURITY_VIOLATIONS.NO_FACE };
   }
-  return { faceCount: 1 };
+
+  // 1. Web environment: Native ShapeDetection or Canvas Analysis
+  if (typeof window !== "undefined" && typeof document !== "undefined") {
+    try {
+      const videoEl = document.querySelector("video");
+      if (videoEl && videoEl.readyState >= 2) {
+        const shapeResult = await detectFacesWithShapeDetection(videoEl);
+        if (shapeResult) {
+          return shapeResult;
+        }
+      }
+    } catch {
+      // Fall through to Canvas analysis
+    }
+
+    try {
+      const canvasResult = await detectFacesWithWebCanvas(imageBase64);
+      return canvasResult;
+    } catch {
+      return { faceCount: 1, violation: null };
+    }
+  }
+
+  // 2. Native environment (React Native / iOS / Android)
+  try {
+    const bytes = decodeBase64ToBytes(imageBase64);
+    if (bytes.length > 50) {
+      const parsed = parseJpeg(bytes);
+      if (parsed && parsed.data.length > 0) {
+        const result = analyzeImagePixels(
+          parsed.data,
+          parsed.width,
+          parsed.height,
+          3,
+        );
+        return result;
+      }
+    }
+  } catch {
+    // Fallback if parsing fails
+  }
+
+  return { faceCount: 1, violation: null };
 }
 
 // ─── Assessment Questions & Submit ────────────────────────────────────────────
@@ -350,12 +407,13 @@ export async function submitAssessment(
     : isQuiz
       ? DEMO_ASSESSMENT_QUESTIONS.slice(0, 4)
       : DEMO_ASSESSMENT_QUESTIONS;
-  const totalQuestions = answers.length || (isQuiz ? 4 : (isSurvey ? 4 : 15));
+  const totalQuestions = answers.length || (isQuiz ? 4 : isSurvey ? 4 : 15);
   let correctCount = 0;
   answers.forEach((ans, idx) => {
     const q =
       questions.find((item) => item.id === ans.questionId) ?? questions[idx];
-    const correctAnswer = (q as { correctAnswer?: string | null })?.correctAnswer;
+    const correctAnswer = (q as { correctAnswer?: string | null })
+      ?.correctAnswer;
     if (q && ans.selectedOption && ans.selectedOption === correctAnswer) {
       correctCount++;
     }
@@ -454,6 +512,25 @@ export async function terminateAssessmentWithViolation(
   _currentSession = {
     ..._currentSession,
     modules: _currentSession.modules.map((m) => {
+      if (m.key === "ATTENDANCE") {
+        return {
+          ...m,
+          isCompleted: true,
+          isLive: false,
+          completedAt: m.completedAt ?? "10:25",
+          ranDuration: m.ranDuration ?? "Ran : 45m 3s",
+        };
+      }
+      if (m.key === "LIVE_QUIZ") {
+        return {
+          ...m,
+          isCompleted: true,
+          isLive: false,
+          score: m.score ?? "9/15",
+          completedAt: "Completed successfully",
+          ranDuration: m.ranDuration ?? "Ran : 1h 55m",
+        };
+      }
       if (m.key === "STANDARD_TEST") {
         return {
           ...m,
@@ -472,7 +549,6 @@ export async function terminateAssessmentWithViolation(
 
   return { locked: true, violationType, attemptedCount: answers.length };
 }
-
 
 // ─── Trainer Agenda ───────────────────────────────────────────────────────────
 export async function fetchTrainerAgenda(

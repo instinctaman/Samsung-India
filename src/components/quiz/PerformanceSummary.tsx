@@ -25,7 +25,7 @@ export default function PerformanceSummary({
       <View style={styles.header}>
         <Ionicons name="stats-chart" size={16} color={Colors.headerBlue} />
         <AppText style={styles.headerTitle} weight={FontWeight.bold}>
-          PERFORMANCE SUMMARY
+          Performance Summary
         </AppText>
       </View>
 

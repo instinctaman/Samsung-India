@@ -10,7 +10,6 @@ import {
   getCurrentSession,
   getSessionFlowState,
   isAttendanceRecorded,
-  setAttendanceState,
   setSessionFlowState,
 } from "@/api/session";
 import { isSessionLocked } from "@/components/proctoring/violations";
@@ -151,6 +150,7 @@ export function useTraineeHome() {
           });
         } else if (params.postTest === "security_locked") {
           // Post Test was terminated due to security violation — NOT completed
+          // Quiz session activity remains completed
           // Survey stays Upcoming
           data.modules = data.modules.map((m) => {
             if (m.key === "ATTENDANCE") {
@@ -160,6 +160,16 @@ export function useTraineeHome() {
                 isLive: false,
                 completedAt: m.completedAt ?? "10:25",
                 ranDuration: m.ranDuration ?? "Ran : 45m 3s",
+              };
+            }
+            if (m.key === "LIVE_QUIZ") {
+              return {
+                ...m,
+                isCompleted: true,
+                isLive: false,
+                score: m.score ?? "9/15",
+                completedAt: m.completedAt ?? "Completed successfully",
+                ranDuration: m.ranDuration ?? "Ran : 1h 55m",
               };
             }
             if (m.key === "STANDARD_TEST") {
@@ -277,7 +287,17 @@ export function useTraineeHome() {
         else if (mode === "load") setLoading(false);
       }
     },
-    [token],
+    [
+      token,
+      params.attendance,
+      params.checkIn,
+      params.duration,
+      params.flow,
+      params.postTest,
+      params.quiz,
+      params.score,
+      params.survey,
+    ],
   );
 
   useFocusEffect(

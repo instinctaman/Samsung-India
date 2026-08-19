@@ -1,4 +1,4 @@
-import { Platform, ViewStyle } from "react-native";
+import { ViewStyle } from "react-native";
 import { Colors } from "./colors";
 
 type ShadowOptions = {
@@ -13,7 +13,11 @@ type ShadowOptions = {
 
 function hexToRgb(hex: string): string {
   let c = hex.replace("#", "");
-  if (c.length === 3) c = c.split("").map((x) => x + x).join("");
+  if (c.length === 3)
+    c = c
+      .split("")
+      .map((x) => x + x)
+      .join("");
   const num = parseInt(c, 16);
   if (isNaN(num)) return "0, 0, 0";
   return `${(num >> 16) & 255}, ${(num >> 8) & 255}, ${num & 255}`;
@@ -29,9 +33,7 @@ export function createShadow({
   elevation = 2,
 }: ShadowOptions = {}): ViewStyle {
   const isHex = color.startsWith("#");
-  const colorStr = isHex
-    ? `rgba(${hexToRgb(color)}, ${opacity})`
-    : color;
+  const colorStr = isHex ? `rgba(${hexToRgb(color)}, ${opacity})` : color;
 
   return {
     boxShadow: `${x}px ${y}px ${blur}px ${spread}px ${colorStr}`,
@@ -41,7 +43,13 @@ export function createShadow({
 
 export const Shadows = {
   card: createShadow({ x: 0, y: 2, blur: 6, opacity: 0.08, elevation: 2 }),
-  timelineCard: createShadow({ x: 0, y: 2, blur: 8, opacity: 0.06, elevation: 2 }),
+  timelineCard: createShadow({
+    x: 0,
+    y: 2,
+    blur: 8,
+    opacity: 0.06,
+    elevation: 2,
+  }),
   raised: createShadow({ x: 0, y: 3, blur: 8, opacity: 0.12, elevation: 5 }),
   homeButton: createShadow({
     x: 0,

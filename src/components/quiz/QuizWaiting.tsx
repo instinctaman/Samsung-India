@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useMemo } from "react";
 import {
   Animated,
   Easing,
@@ -34,7 +34,7 @@ export default function QuizWaiting({
   message = "Look at the main screen.\nThe quiz will begin shortly!",
   nextQuestionNumber,
 }: QuizWaitingProps) {
-  const progressPosition = useRef(new Animated.Value(0)).current;
+  const progressPosition = useMemo(() => new Animated.Value(0), []);
 
   useEffect(() => {
     const progressAnimation = Animated.loop(
@@ -50,10 +50,14 @@ export default function QuizWaiting({
     return () => progressAnimation.stop();
   }, [progressPosition]);
 
-  const progressTranslateX = progressPosition.interpolate({
-    inputRange: [0, 1],
-    outputRange: [-28, 28],
-  });
+  const progressTranslateX = useMemo(
+    () =>
+      progressPosition.interpolate({
+        inputRange: [0, 1],
+        outputRange: [-28, 28],
+      }),
+    [progressPosition],
+  );
 
   return (
     <View style={styles.content}>
