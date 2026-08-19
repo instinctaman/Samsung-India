@@ -1,10 +1,10 @@
-import React from "react";
-import { StyleSheet, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { StyleSheet, View } from "react-native";
 
 import AppText from "@/components/ui/AppText";
 import { Colors } from "@/theme/colors";
 import { FontWeight } from "@/theme/fontWeight";
+import { createShadow } from "@/theme/shadows";
 
 export type PerformanceSummaryProps = {
   correctCount: number;
@@ -25,7 +25,7 @@ export default function PerformanceSummary({
       <View style={styles.header}>
         <Ionicons name="stats-chart" size={16} color={Colors.headerBlue} />
         <AppText style={styles.headerTitle} weight={FontWeight.bold}>
-          PERFORMANCE SUMMARY
+          Performance Summary
         </AppText>
       </View>
 
@@ -87,11 +87,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     marginTop: 14,
-    shadowColor: Colors.black,
-    shadowOpacity: 0.05,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 6,
-    elevation: 2,
+    ...createShadow({ x: 0, y: 2, blur: 6, opacity: 0.05, elevation: 2 }),
   },
   header: {
     flexDirection: "row",

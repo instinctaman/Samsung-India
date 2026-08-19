@@ -8,20 +8,30 @@ import { FontWeight } from "@/theme/fontWeight";
 
 export type ProctoringPolicyCheckboxProps = {
   checked: boolean;
-  onChange: (checked: boolean) => void;
+  onChange?: (checked: boolean) => void;
+  onToggle?: () => void;
   onPolicyPress?: () => void;
 };
 
 export default function ProctoringPolicyCheckbox({
   checked,
   onChange,
+  onToggle,
   onPolicyPress,
 }: ProctoringPolicyCheckboxProps) {
+  const handleToggle = () => {
+    if (onChange) {
+      onChange(!checked);
+    } else if (onToggle) {
+      onToggle();
+    }
+  };
+
   return (
     <View style={styles.container}>
       <Pressable
         style={styles.pressableRow}
-        onPress={() => onChange(!checked)}
+        onPress={handleToggle}
         hitSlop={8}
         accessibilityRole="checkbox"
         accessibilityState={{ checked }}
@@ -38,7 +48,7 @@ export default function ProctoringPolicyCheckbox({
           <AppText
             style={styles.policyLink}
             weight={FontWeight.semiBold}
-            onPress={onPolicyPress ?? (() => onChange(!checked))}
+            onPress={onPolicyPress ?? handleToggle}
           >
             proctoring policy.
           </AppText>
@@ -50,7 +60,7 @@ export default function ProctoringPolicyCheckbox({
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 14,
+    marginTop: 2,
   },
   pressableRow: {
     flexDirection: "row",

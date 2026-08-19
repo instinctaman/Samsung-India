@@ -1,5 +1,5 @@
 import React from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import { ScrollView, StyleSheet } from "react-native";
 
 import QuizQuestionCard, { QuizQuestionData } from "./QuizQuestionCard";
 import QuizResultHero, { QuizResultType } from "./QuizResultHero";
@@ -55,8 +55,11 @@ export default function QuizResult({
 const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
+    width: "100%",
+    maxWidth: "100%",
     paddingHorizontal: 16,
     paddingTop: 4,
-    paddingBottom: 28,
+    paddingBottom: 8,
+    justifyContent: "space-between",
   },
 });

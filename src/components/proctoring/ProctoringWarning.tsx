@@ -39,7 +39,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#EBFBF2",
     borderRadius: 14,
     padding: 12,
-    marginTop: 14,
   },
   iconCircle: {
     width: 36,

@@ -45,5 +45,9 @@ export * from "./LeaderboardRow";
 export { default as LeaderboardList } from "./LeaderboardList";
 export * from "./LeaderboardList";
 
+export { default as LeaderboardFilter } from "./LeaderboardFilter";
+export * from "./LeaderboardFilter";
+
 export { default as QuizLeaderboard } from "./QuizLeaderboard";
 export * from "./QuizLeaderboard";
+

@@ -1,6 +1,7 @@
 import { USE_MOCK_DATA } from "@/config/dataSource";
 import { apiRequest } from "./client";
 import * as mock from "./mockService";
+// All types are preserved — they are used extensively across screens.
 
 export type ModuleConfig = {
   category?: string;

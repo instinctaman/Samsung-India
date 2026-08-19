@@ -1,12 +1,13 @@
 import { Ionicons } from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
 import { useState } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import { Platform, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import AppText from "@/components/ui/AppText";
 import { Colors } from "@/theme/colors";
 import { FontWeight } from "@/theme/fontWeight";
+import { createShadow } from "@/theme/shadows";
 import ProctoringCheckList, {
   DEFAULT_PROCTORING_CHECKS,
 } from "./ProctoringCheckList";
@@ -30,57 +31,65 @@ export default function ProctoringScreen({
 }: ProctoringScreenProps) {
   const [agreed, setAgreed] = useState(false);
 
+  const handleStartPress = () => {
+    if (Platform.OS === "web" && typeof document !== "undefined") {
+      (document.activeElement as HTMLElement)?.blur?.();
+    }
+    onStartTest();
+  };
+
   return (
-    <SafeAreaView style={styles.screen} edges={["top", "bottom"]}>
+    <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <StatusBar style="dark" />
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        bounces={false}
       >
-        {/* Main White Card Container */}
         <View style={styles.mainCard}>
-          {/* Top Graphic + Heading */}
-          <ProctoringHeader />
+          {/* Top Section: Header + Checklist */}
+          <View style={styles.topSection}>
+            {/* Header with Camera Graphic */}
+            <ProctoringHeader />
 
-          {/* 4 Security Checks */}
-          <ProctoringCheckList checks={DEFAULT_PROCTORING_CHECKS} />
+            {/* Checklist of Proctoring Features */}
+            <ProctoringCheckList checks={DEFAULT_PROCTORING_CHECKS} />
+          </View>
 
-          {/* Important Warning Banner */}
-          <ProctoringWarning />
+          {/* Bottom Section: Agreement + Warning + CTA Button */}
+          <View style={styles.bottomSection}>
+            {/* Privacy & Policy Agreement Checkbox */}
+            <ProctoringPolicyCheckbox
+              checked={agreed}
+              onToggle={() => setAgreed(!agreed)}
+              onPolicyPress={onPolicyPress}
+            />
 
-          {/* Policy Checkbox */}
-          <ProctoringPolicyCheckbox
-            checked={agreed}
-            onChange={setAgreed}
-            onPolicyPress={onPolicyPress}
-          />
+            {/* Critical Warning Box */}
+            <ProctoringWarning />
 
-          {error && (
-            <View style={styles.errorBox}>
-              <Ionicons name="alert-circle" size={16} color={Colors.danger} />
-              <AppText style={styles.errorText} color={Colors.danger}>
-                {error}
-              </AppText>
-            </View>
-          )}
+            {/* Error Message if camera failed */}
+            {error && (
+              <View style={styles.errorBox}>
+                <Ionicons name="alert-circle" size={16} color={Colors.danger} />
+                <AppText
+                  style={styles.errorText}
+                  color={Colors.danger}
+                  weight={FontWeight.medium}
+                >
+                  {error}
+                </AppText>
+              </View>
+            )}
 
-          {/* CTA: I'm ready, Start Test */}
-          <StartTestButton
-            title="I'm ready, Start Test"
-            onPress={onStartTest}
-            disabled={!agreed || loading}
-            loading={loading}
-          />
-
-          {/* Footer Security Note */}
-          <View style={styles.footerNote}>
-            <View style={styles.lockBadge}>
-              <Ionicons name="lock-closed" size={13} color="#00A859" />
-            </View>
-            <AppText style={styles.footerText} weight={FontWeight.medium}>
-              Your data is secure and encrypted
-            </AppText>
+            {/* Start Test CTA Button */}
+            <StartTestButton
+              title="I'm ready, Start Test"
+              onPress={handleStartPress}
+              disabled={!agreed}
+              loading={loading}
+            />
           </View>
         </View>
       </ScrollView>
@@ -89,26 +98,34 @@ export default function ProctoringScreen({
 }
 
 const styles = StyleSheet.create({
-  screen: {
+  container: {
     flex: 1,
-    backgroundColor: "#EDF4FC",
+    backgroundColor: "#F4F8FA",
   },
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 16,
-    paddingTop: 10,
-    paddingBottom: 24,
+    paddingTop: 8,
+    paddingBottom: 12,
   },
   mainCard: {
+    flex: 1,
+    width: "100%",
     backgroundColor: Colors.white,
     borderRadius: 24,
     paddingHorizontal: 18,
-    paddingVertical: 22,
-    shadowColor: Colors.black,
-    shadowOpacity: 0.06,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 10,
-    elevation: 3,
+    paddingTop: 14,
+    paddingBottom: 16,
+    justifyContent: "space-between",
+    ...createShadow({ x: 0, y: 4, blur: 12, opacity: 0.06, elevation: 3 }),
+  },
+  topSection: {
+    width: "100%",
+  },
+  bottomSection: {
+    width: "100%",
+    gap: 12,
+    marginTop: 12,
   },
   errorBox: {
     flexDirection: "row",
@@ -117,29 +134,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#FEE2E2",
     borderRadius: 8,
     padding: 10,
-    marginTop: 10,
   },
   errorText: {
     fontSize: 12,
     flex: 1,
-  },
-  footerNote: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    marginTop: 18,
-  },
-  lockBadge: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: "#D4F4E4",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  footerText: {
-    fontSize: 12,
-    color: "#4B5563",
   },
 });

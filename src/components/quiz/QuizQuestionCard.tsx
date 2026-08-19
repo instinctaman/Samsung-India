@@ -3,6 +3,7 @@ import { StyleSheet, View } from "react-native";
 import AppText from "@/components/ui/AppText";
 import { Colors } from "@/theme/colors";
 import { FontWeight } from "@/theme/fontWeight";
+import { createShadow } from "@/theme/shadows";
 import QuizExplanation from "./QuizExplanation";
 import QuizOption from "./QuizOption";
 import QuizProgress from "./QuizProgress";
@@ -95,14 +96,12 @@ export default function QuizQuestionCard({
 
 const styles = StyleSheet.create({
   card: {
+    width: "100%",
+    maxWidth: "100%",
     backgroundColor: Colors.white,
     borderRadius: 18,
     padding: 16,
-    shadowColor: Colors.black,
-    shadowOpacity: 0.06,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 8,
-    elevation: 2,
+    ...createShadow({ x: 0, y: 2, blur: 8, opacity: 0.06, elevation: 2 }),
   },
   badgeContainer: {
     alignSelf: "flex-start",
@@ -122,6 +121,8 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   optionsList: {
+    width: "100%",
+    maxWidth: "100%",
     marginTop: 6,
   },
 });

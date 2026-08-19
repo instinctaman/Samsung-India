@@ -1,12 +1,13 @@
+import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, View, ViewStyle } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
 
 import AppText from "@/components/ui/AppText";
 import { Colors } from "@/theme/colors";
 import { FontWeight } from "@/theme/fontWeight";
 import { Fonts } from "@/theme/fonts";
 import { Radius } from "@/theme/radius";
+import { createShadow } from "@/theme/shadows";
 
 export type SubmissionSummaryRow = {
   label: string;
@@ -42,22 +43,37 @@ export default function TestSubmittedView({
       <View style={styles.content}>
         <View style={styles.badgeWrap}>
           {CONFETTI.map((dot, index) => (
-            <View key={index} style={[styles.confettiDot, { backgroundColor: dot.color }, dot as ViewStyle]} />
+            <View
+              key={index}
+              style={[
+                styles.confettiDot,
+                { backgroundColor: dot.color },
+                dot as ViewStyle,
+              ]}
+            />
           ))}
           <View style={styles.badgeCircle}>
             <Ionicons name="checkmark" size={44} color={Colors.white} />
           </View>
         </View>
 
-        <AppText style={styles.title} weight={FontWeight.semiBold}>{title}</AppText>
+        <AppText style={styles.title} weight={FontWeight.semiBold}>
+          {title}
+        </AppText>
         <AppText style={styles.subtitle} color={Colors.gray600}>
           Your assessment has been submitted and recorded successfully.
         </AppText>
 
         <View style={styles.card}>
-          <AppText style={styles.cardTitle} weight={FontWeight.medium}>Submission Summary</AppText>
+          <AppText style={styles.cardTitle} weight={FontWeight.medium}>
+            Submission Summary
+          </AppText>
           {rows.map((row, index) => (
-            <SummaryRow key={row.label} {...row} isLast={index === rows.length - 1} />
+            <SummaryRow
+              key={row.label}
+              {...row}
+              isLast={index === rows.length - 1}
+            />
           ))}
         </View>
 
@@ -66,79 +82,171 @@ export default function TestSubmittedView({
             <Ionicons name="happy" size={20} color={Colors.success} />
           </View>
           <View style={styles.thankYouTextWrap}>
-            <AppText style={styles.thankYouTitle} color={Colors.success} weight={FontWeight.semiBold}>Thank you!</AppText>
+            <AppText
+              style={styles.thankYouTitle}
+              color={Colors.success}
+              weight={FontWeight.semiBold}
+            >
+              Thank you!
+            </AppText>
             <AppText style={styles.thankYouText} color={Colors.success}>
               {thankYouText}
             </AppText>
           </View>
         </View>
 
-        <Pressable style={styles.dashboardButton} onPress={onGoToDashboard}>
+        <Pressable
+          style={styles.dashboardButton}
+          onPress={() => {
+            if (typeof document !== "undefined") {
+              (document.activeElement as HTMLElement)?.blur?.();
+              setTimeout(onGoToDashboard, 10);
+            } else {
+              onGoToDashboard();
+            }
+          }}
+          accessibilityRole="button"
+          accessibilityLabel="Go To Dashboard"
+        >
           <Ionicons name="home" size={18} color={Colors.white} />
-          <AppText color={Colors.white} weight={FontWeight.medium}>Go To Dashboard</AppText>
+          <AppText color={Colors.white} weight={FontWeight.medium}>
+            Go To Dashboard
+          </AppText>
         </Pressable>
 
         <View style={styles.secureNotice}>
           <Ionicons name="lock-closed" size={12} color={Colors.gray600} />
-          <AppText style={styles.secureNoticeText} color={Colors.gray600}>Your data is secure and encrypted</AppText>
+          <AppText style={styles.secureNoticeText} color={Colors.gray600}>
+            Your data is secure and encrypted
+          </AppText>
         </View>
       </View>
     </SafeAreaView>
   );
 }
 
-function SummaryRow({ label, value, icon, iconColor, iconBg, isLast }: SubmissionSummaryRow & { isLast: boolean }) {
+function SummaryRow({
+  label,
+  value,
+  icon,
+  iconColor,
+  iconBg,
+  isLast,
+}: SubmissionSummaryRow & { isLast: boolean }) {
   return (
     <View style={[styles.summaryRow, !isLast && styles.summaryRowBorder]}>
       <View style={[styles.summaryIcon, { backgroundColor: iconBg }]}>
         <Ionicons name={icon} size={16} color={iconColor} />
       </View>
-      <AppText style={styles.summaryLabel} color={Colors.gray600}>{label}</AppText>
-      <AppText style={styles.summaryValue} weight={FontWeight.medium}>{value}</AppText>
+      <AppText style={styles.summaryLabel} color={Colors.gray600}>
+        {label}
+      </AppText>
+      <AppText style={styles.summaryValue} weight={FontWeight.medium}>
+        {value}
+      </AppText>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
-  content: { flex: 1, alignItems: "center", paddingHorizontal: 22, paddingTop: 36 },
+  content: {
+    flex: 1,
+    alignItems: "center",
+    paddingHorizontal: 22,
+    paddingTop: 36,
+  },
 
-  badgeWrap: { width: 96, height: 96, alignItems: "center", justifyContent: "center" },
+  badgeWrap: {
+    width: 96,
+    height: 96,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   confettiDot: { position: "absolute", width: 8, height: 8, borderRadius: 4 },
   badgeCircle: {
-    width: 84, height: 84, borderRadius: 42, backgroundColor: Colors.success,
-    alignItems: "center", justifyContent: "center",
-    shadowColor: Colors.black, shadowOpacity: 0.15, shadowOffset: { width: 0, height: 4 }, shadowRadius: 8, elevation: 4,
+    width: 84,
+    height: 84,
+    borderRadius: 42,
+    backgroundColor: Colors.success,
+    alignItems: "center",
+    justifyContent: "center",
+    ...createShadow({ x: 0, y: 4, blur: 8, opacity: 0.15, elevation: 4 }),
   },
 
   title: { marginTop: 20, fontSize: Fonts.h2, textAlign: "center" },
-  subtitle: { marginTop: 6, fontSize: Fonts.bodySm, textAlign: "center", lineHeight: 19 },
+  subtitle: {
+    marginTop: 6,
+    fontSize: Fonts.bodySm,
+    textAlign: "center",
+    lineHeight: 19,
+  },
 
   card: {
-    width: "100%", marginTop: 24, backgroundColor: Colors.white, borderRadius: Radius.xxl, padding: 16,
-    shadowColor: Colors.black, shadowOpacity: 0.06, shadowOffset: { width: 0, height: 3 }, shadowRadius: 8, elevation: 2,
+    width: "100%",
+    marginTop: 24,
+    backgroundColor: Colors.white,
+    borderRadius: Radius.xxl,
+    padding: 16,
+    ...createShadow({ x: 0, y: 3, blur: 8, opacity: 0.06, elevation: 2 }),
   },
   cardTitle: { fontSize: Fonts.body, marginBottom: 6 },
-  summaryRow: { minHeight: 44, flexDirection: "row", alignItems: "center", gap: 10 },
+  summaryRow: {
+    minHeight: 44,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
   summaryRowBorder: { borderBottomWidth: 1, borderBottomColor: Colors.gray100 },
-  summaryIcon: { width: 28, height: 28, borderRadius: 8, alignItems: "center", justifyContent: "center" },
+  summaryIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   summaryLabel: { flex: 1, fontSize: Fonts.bodySm },
   summaryValue: { fontSize: Fonts.bodySm },
 
   thankYouBox: {
-    width: "100%", marginTop: 16, flexDirection: "row", gap: 10, alignItems: "flex-start",
-    backgroundColor: "#E8FBF1", borderRadius: Radius.xl, padding: 14,
+    width: "100%",
+    marginTop: 16,
+    flexDirection: "row",
+    gap: 10,
+    alignItems: "flex-start",
+    backgroundColor: "#E8FBF1",
+    borderRadius: Radius.xl,
+    padding: 14,
   },
-  thankYouIcon: { width: 28, height: 28, borderRadius: 14, backgroundColor: Colors.white, alignItems: "center", justifyContent: "center" },
+  thankYouIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: Colors.white,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   thankYouTextWrap: { flex: 1 },
   thankYouTitle: { fontSize: Fonts.bodySm },
   thankYouText: { fontSize: Fonts.overline, marginTop: 2, lineHeight: 16 },
 
   dashboardButton: {
-    width: "100%", height: 50, marginTop: 20, borderRadius: Radius.xl, backgroundColor: Colors.success,
-    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
+    width: "100%",
+    height: 50,
+    marginTop: 20,
+    borderRadius: Radius.xl,
+    backgroundColor: Colors.success,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
   },
 
-  secureNotice: { marginTop: 16, flexDirection: "row", alignItems: "center", gap: 6 },
+  secureNotice: {
+    marginTop: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
   secureNoticeText: { fontSize: Fonts.overline },
 });

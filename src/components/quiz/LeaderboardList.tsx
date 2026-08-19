@@ -1,96 +1,143 @@
-import React from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import React, { useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
+import { Pressable, StyleSheet, View } from "react-native";
 
 import AppText from "@/components/ui/AppText";
-import LeaderboardRow, { LeaderboardUser } from "./LeaderboardRow";
 import { Colors } from "@/theme/colors";
 import { FontWeight } from "@/theme/fontWeight";
+import { createShadow } from "@/theme/shadows";
+import LeaderboardRow, { LeaderboardUser } from "./LeaderboardRow";
+import LeaderboardFilter, { LeaderboardFilterValues } from "./LeaderboardFilter";
 
 export type LeaderboardListProps = {
+  title?: string;
   users?: LeaderboardUser[];
   onViewAll?: () => void;
   correctCount: number;
   totalQuestions: number;
   accuracy: number;
+  onApplyFilter?: (filters: LeaderboardFilterValues) => void;
 };
 
 export default function LeaderboardList({
+  title = "Global Top 100",
   users,
   onViewAll,
   correctCount,
   totalQuestions,
   accuracy,
+  onApplyFilter,
 }: LeaderboardListProps) {
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [filterValues, setFilterValues] = useState<LeaderboardFilterValues>({
+    trainingType: "Classroom Training",
+    state: "Delhi",
+    district: "New Delhi",
+    zone: "South",
+  });
+
   const defaultUsers: LeaderboardUser[] = users ?? [
     {
-      name: "PRIYANSHU BORA",
-      score: `${totalQuestions}/${totalQuestions}`,
-      accuracy: "100%",
-    },
-    {
-      name: "ANKIT KUMAR",
-      score: `${Math.max(1, totalQuestions - 1)}/${totalQuestions}`,
-      accuracy: `${Math.round(((totalQuestions - 1) / totalQuestions) * 100)}%`,
-    },
-    {
-      name: "ANAND SINGH",
-      score: `${Math.max(1, totalQuestions - 1)}/${totalQuestions}`,
-      accuracy: `${Math.round(((totalQuestions - 1) / totalQuestions) * 100)}%`,
-    },
-    {
-      name: "AMEERUL HAQUE",
-      score: `${Math.max(1, Math.floor(totalQuestions * 0.75))}/${totalQuestions}`,
-      accuracy: `${Math.round((Math.floor(totalQuestions * 0.75) / totalQuestions) * 100)}%`,
-    },
-    {
-      name: "YOU",
+      name: "You",
       score: `${correctCount}/${totalQuestions}`,
       accuracy: `${accuracy}%`,
       isYou: true,
     },
+    {
+      name: "Priyanshu Bora",
+      score: `${totalQuestions}/${totalQuestions}`,
+      accuracy: "100%",
+    },
+    {
+      name: "Ankit Kumar",
+      score: `${totalQuestions}/${totalQuestions}`,
+      accuracy: "100%",
+    },
+    {
+      name: "Anand Singh",
+      score: `${Math.max(1, totalQuestions - 1)}/${totalQuestions}`,
+      accuracy: `${Math.round(((totalQuestions - 1) / totalQuestions) * 100)}%`,
+    },
+    {
+      name: "Ameerul Haque",
+      score: `${Math.max(1, totalQuestions - 1)}/${totalQuestions}`,
+      accuracy: `${Math.round(((totalQuestions - 1) / totalQuestions) * 100)}%`,
+    },
+    {
+      name: "Priyanshu Bora",
+      score: `${totalQuestions}/${totalQuestions}`,
+      accuracy: "100%",
+    },
+    {
+      name: "Ankit Kumar",
+      score: `${totalQuestions}/${totalQuestions}`,
+      accuracy: "100%",
+    },
+    {
+      name: "Anand Singh",
+      score: `${Math.max(1, totalQuestions - 1)}/${totalQuestions}`,
+      accuracy: `${Math.round(((totalQuestions - 1) / totalQuestions) * 100)}%`,
+    },
+    {
+      name: "Ameerul Haque",
+      score: `${Math.max(1, totalQuestions - 1)}/${totalQuestions}`,
+      accuracy: `${Math.round(((totalQuestions - 1) / totalQuestions) * 100)}%`,
+    },
   ];
 
+  const handleApply = () => {
+    onApplyFilter?.(filterValues);
+    setFilterOpen(false);
+  };
 
   return (
     <View style={styles.card}>
-      {/* Header */}
+      {/* Card Header */}
       <View style={styles.header}>
         <View style={styles.titleRow}>
           <Ionicons name="trophy" size={16} color="#F59E0B" />
           <AppText style={styles.title} weight={FontWeight.bold}>
-            GLOBAL TOP 5
+            {title}
           </AppText>
         </View>
 
-        {onViewAll && (
-          <Pressable
-            onPress={onViewAll}
-            hitSlop={8}
-            style={styles.viewAllRow}
-            accessibilityRole="button"
-            accessibilityLabel="View All Rankings"
+        <Pressable
+          style={styles.filterBtn}
+          onPress={() => setFilterOpen(!filterOpen)}
+          accessibilityRole="button"
+          accessibilityLabel="Toggle Leaderboard Filter"
+        >
+          <AppText
+            style={styles.filterBtnText}
+            color={Colors.headerBlue}
+            weight={FontWeight.semiBold}
           >
-            <AppText
-              style={styles.viewAllText}
-              color={Colors.headerBlue}
-              weight={FontWeight.semiBold}
-            >
-              View All
-            </AppText>
-            <Ionicons
-              name="chevron-forward"
-              size={14}
-              color={Colors.headerBlue}
-            />
-          </Pressable>
-        )}
+            {filterOpen ? "Close" : "Filter"}
+          </AppText>
+          <Ionicons
+            name={filterOpen ? "chevron-down" : "chevron-forward"}
+            size={13}
+            color={Colors.headerBlue}
+          />
+        </Pressable>
       </View>
 
-      {/* Rows */}
+      {/* Expandable / Collapsible Filter Section */}
+      {filterOpen && (
+        <LeaderboardFilter
+          values={filterValues}
+          onChangeValues={setFilterValues}
+          onApply={handleApply}
+        />
+      )}
+
+      {/* Leaderboard Rows */}
       <View style={styles.list}>
-        {defaultUsers.map((user) => (
-          <LeaderboardRow key={user.name} user={user} />
+        {defaultUsers.map((user, idx) => (
+          <LeaderboardRow
+            key={`${user.name}-${user.score}-${idx}`}
+            user={user}
+          />
         ))}
       </View>
     </View>
@@ -103,11 +150,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     marginTop: 14,
-    shadowColor: Colors.black,
-    shadowOpacity: 0.05,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 6,
-    elevation: 2,
+    ...createShadow({ x: 0, y: 2, blur: 8, opacity: 0.06, elevation: 2 }),
   },
   header: {
     flexDirection: "row",
@@ -121,16 +164,18 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   title: {
-    fontSize: 11,
-    color: "#111827",
-    letterSpacing: 0.5,
+    fontSize: 12,
+    color: "#1E293B",
+    letterSpacing: 0.4,
   },
-  viewAllRow: {
+  filterBtn: {
     flexDirection: "row",
     alignItems: "center",
     gap: 2,
+    paddingVertical: 2,
+    paddingHorizontal: 4,
   },
-  viewAllText: {
+  filterBtnText: {
     fontSize: 12,
   },
   list: {

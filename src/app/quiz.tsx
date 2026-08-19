@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import {
   ActivityIndicator,
@@ -43,6 +44,7 @@ export default function QuizScreen() {
     handleSyncNow,
     openQuestionFromMap,
     finishQuiz,
+    skipQuiz,
     setPhase,
     handleContinueAfterResults,
     handleViewAllRankings,
@@ -165,6 +167,23 @@ export default function QuizScreen() {
                 />
               )}
 
+              {/* === [TEMPORARY DEV SKIP BUTTON - REMOVE LATER] === */}
+              <Pressable
+                style={styles.devSkipButton}
+                onPress={skipQuiz}
+                accessibilityRole="button"
+                accessibilityLabel="Skip Test (Testing Mode)"
+              >
+                <Ionicons name="play-forward" size={13} color="#D97706" />
+                <AppText
+                  style={styles.devSkipButtonText}
+                  weight={FontWeight.bold}
+                >
+                  Skip Test (Testing)
+                </AppText>
+              </Pressable>
+              {/* === [END TEMPORARY DEV SKIP BUTTON] === */}
+
               {submitError && (
                 <AppText style={styles.inlineError}>{submitError}</AppText>
               )}
@@ -222,21 +241,45 @@ const styles = StyleSheet.create({
   },
   content: {
     flexGrow: 1,
-    minHeight: "100%",
+    width: "100%",
+    maxWidth: "100%",
     paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 28,
+    paddingTop: 4,
+    paddingBottom: 16,
   },
   activeTopSection: {
     flex: 1,
-    gap: 12,
+    width: "100%",
+    maxWidth: "100%",
+    justifyContent: "space-between",
   },
   timerContainer: {
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingTop: 16,
-    paddingBottom: 20,
+    paddingVertical: 8,
   },
+
+  /* === [TEMPORARY DEV SKIP BUTTON STYLES - REMOVE LATER] === */
+  devSkipButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    backgroundColor: "#FEF3C7",
+    borderWidth: 1,
+    borderColor: "#FCD34D",
+    borderRadius: 10,
+    marginTop: 12,
+    alignSelf: "center",
+  },
+  devSkipButtonText: {
+    fontSize: 12,
+    color: "#B45309",
+  },
+  /* === [END TEMPORARY DEV SKIP BUTTON STYLES] === */
 });
 
 

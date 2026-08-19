@@ -32,14 +32,14 @@ export type AssessmentQuestionsResponse = {
   questions: AssessmentQuestion[];
 };
 
-export function getAssessmentQuestions(token: string, suiteUid: string) {
+ function getAssessmentQuestions(token: string, suiteUid: string) {
   if (USE_MOCK_DATA) return mock.getAssessmentQuestions(token, suiteUid);
   return apiRequest<AssessmentQuestionsResponse>(`/assessments/${suiteUid}/questions`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 }
 
-export function submitAssessment(
+ function submitAssessment(
   token: string,
   suiteUid: string,
   conferenceUid: string,
@@ -53,4 +53,9 @@ export function submitAssessment(
   });
 }
 
-export { ApiError } from "./client";
+
+// Demo implementations — no network calls.
+export { getAssessmentQuestions, submitAssessment, terminateAssessmentWithViolation } from "@/api/mockService";
+export { ApiError } from "@/api/client";
+
+

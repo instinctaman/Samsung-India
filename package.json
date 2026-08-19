@@ -31,6 +31,7 @@
     "expo-symbols": "~57.0.0",
     "expo-system-ui": "~57.0.0",
     "expo-web-browser": "~57.0.0",
+    "jpeg-js": "^0.4.4",
     "lottie-react-native": "~7.3.8",
     "react": "19.2.3",
     "react-dom": "19.2.3",
@@ -59,7 +60,9 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "check": "npm run typecheck && npm run lint"
   },
   "private": true
 }

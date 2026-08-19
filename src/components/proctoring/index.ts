@@ -7,3 +7,5 @@ export { default as StartTestButton } from "./StartTestButton";
 export { default as ProctoringScreen } from "./ProctoringScreen";
 export { default as PreTestInstructions } from "./PreTestInstructions";
 export { default as ProctoringPanel } from "./ProctoringPanel";
+export { default as SecurityViolationModal } from "./SecurityViolationModal";
+export * from "./violations";

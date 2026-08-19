@@ -4,6 +4,7 @@ import { StyleSheet, View } from "react-native";
 import AppText from "@/components/ui/AppText";
 import { Colors } from "@/theme/colors";
 import { FontWeight } from "@/theme/fontWeight";
+import { createShadow } from "@/theme/shadows";
 
 export type QuizTimerProps = {
   duration?: number;
@@ -27,15 +28,17 @@ export default function QuizTimer({
   borderColor = "#3B82F6",
 }: QuizTimerProps) {
   const [internalSeconds, setInternalSeconds] = useState(duration);
+  const [prevDuration, setPrevDuration] = useState(duration);
 
   // If controlled from parent via remainingSeconds, use that; otherwise use internal countdown
   const isControlled = typeof remainingSeconds === "number";
-  const seconds = isControlled ? remainingSeconds : internalSeconds;
 
-  useEffect(() => {
-    if (isControlled) return;
+  if (!isControlled && prevDuration !== duration) {
+    setPrevDuration(duration);
     setInternalSeconds(duration);
-  }, [duration, isControlled]);
+  }
+
+  const seconds = isControlled ? remainingSeconds : internalSeconds;
 
   useEffect(() => {
     if (isControlled) return;
@@ -93,11 +96,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginVertical: 4,
-    shadowColor: Colors.black,
-    shadowOpacity: 0.04,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 6,
-    elevation: 2,
+    ...createShadow({ x: 0, y: 2, blur: 6, opacity: 0.04, elevation: 2 }),
   },
 
   timerText: {

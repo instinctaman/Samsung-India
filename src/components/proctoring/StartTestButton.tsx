@@ -1,10 +1,11 @@
 import React from "react";
-import { ActivityIndicator, Pressable, StyleSheet } from "react-native";
+import { ActivityIndicator, Platform, Pressable, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 import AppText from "@/components/ui/AppText";
 import { Colors } from "@/theme/colors";
 import { FontWeight } from "@/theme/fontWeight";
+import { createShadow } from "@/theme/shadows";
 
 export type StartTestButtonProps = {
   title?: string;
@@ -19,16 +20,29 @@ export default function StartTestButton({
   disabled = false,
   loading = false,
 }: StartTestButtonProps) {
+  const handlePress = () => {
+    if (Platform.OS === "web" && typeof document !== "undefined") {
+      (document.activeElement as HTMLElement)?.blur?.();
+      // Defer state update by one tick so blur fully executes before
+      // ProctoringScreen unmounts — prevents aria-hidden focus warning.
+      setTimeout(onPress, 10);
+    } else {
+      onPress();
+    }
+  };
+
   return (
     <Pressable
-      style={[
+      style={({ pressed }) => [
         styles.button,
         (disabled || loading) && styles.disabledButton,
+        pressed && !disabled && styles.pressed,
       ]}
       disabled={disabled || loading}
-      onPress={onPress}
+      onPress={handlePress}
       accessibilityRole="button"
       accessibilityLabel={title}
+      accessibilityState={{ disabled: disabled || loading }}
     >
       {loading ? (
         <ActivityIndicator color={Colors.white} size="small" />
@@ -61,17 +75,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    marginTop: 14,
-    shadowColor: "#00A859",
-    shadowOpacity: 0.2,
-    shadowOffset: { width: 0, height: 3 },
-    shadowRadius: 6,
-    elevation: 3,
+    ...createShadow({
+      x: 0,
+      y: 3,
+      blur: 6,
+      color: "#00A859",
+      opacity: 0.2,
+      elevation: 3,
+    }),
   },
   disabledButton: {
     opacity: 0.45,
-    shadowOpacity: 0,
-    elevation: 0,
+  },
+  pressed: {
+    opacity: 0.9,
+    transform: [{ scale: 0.99 }],
   },
   buttonText: {
     fontSize: 15,

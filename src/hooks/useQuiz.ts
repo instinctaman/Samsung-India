@@ -51,55 +51,15 @@ export function useQuiz() {
     selectedOptionIdRef.current = selectedOptionId;
   }, [selectedOptionId]);
 
-  const clearAutoTimeouts = () => {
+  const clearAutoTimeouts = useCallback(() => {
     if (autoNextTimeoutRef.current) {
       clearTimeout(autoNextTimeoutRef.current);
       autoNextTimeoutRef.current = null;
     }
-  };
-
-  const loadQuestions = useCallback(async () => {
-    if (!token || !suiteUid) return;
-    setLoading(true);
-    setLoadError(null);
-    try {
-      const data = await getAssessmentQuestions(token, suiteUid);
-      setQuestions(data.questions);
-    } catch (err) {
-      setLoadError(
-        err instanceof ApiError ? err.message : "Couldn't load the quiz."
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, [token, suiteUid]);
-
-  useEffect(() => {
-    loadQuestions();
-  }, [loadQuestions]);
-
-  // 1. Active Question 30-second Countdown Timer
-  useEffect(() => {
-    if (phase !== "active" || !question) return;
-
-    isProcessingExpiryRef.current = false;
-
-    const timer = setInterval(() => {
-      setSeconds((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          handleTimerExpired();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [phase, questionIndex, question]);
+  }, []);
 
   // Automatic evaluation when 30 seconds reach 0
-  const handleTimerExpired = () => {
+  const handleTimerExpired = useCallback(() => {
     if (isProcessingExpiryRef.current) return;
     isProcessingExpiryRef.current = true;
     clearAutoTimeouts();
@@ -126,7 +86,84 @@ export function useQuiz() {
     }
 
     setPhase("result");
-  };
+  }, [clearAutoTimeouts, questionIndex, questions]);
+
+  const loadQuestions = useCallback(async () => {
+    if (!token || !suiteUid) return;
+    setLoading(true);
+    setLoadError(null);
+    try {
+      const data = await getAssessmentQuestions(token, suiteUid);
+      setQuestions(data.questions);
+    } catch (err) {
+      setLoadError(
+        err instanceof ApiError ? err.message : "Couldn't load the quiz."
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [token, suiteUid]);
+
+  // Advance to Next Question
+  const advanceToNextQuestion = useCallback(() => {
+    clearAutoTimeouts();
+    if (questionIndex + 1 < questions.length) {
+      setQuestionIndex((prev) => prev + 1);
+      setSelectedOptionId(null);
+      selectedOptionIdRef.current = null;
+      setSeconds(QUESTION_SECONDS);
+      setPhase("active");
+    } else {
+      setPhase("map");
+    }
+  }, [clearAutoTimeouts, questionIndex, questions.length]);
+
+  useEffect(() => {
+    let ignore = false;
+    async function load() {
+      if (!token || !suiteUid) return;
+      try {
+        const data = await getAssessmentQuestions(token, suiteUid);
+        if (!ignore) {
+          setQuestions(data.questions);
+        }
+      } catch (err) {
+        if (!ignore) {
+          setLoadError(
+            err instanceof ApiError ? err.message : "Couldn't load the quiz."
+          );
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+        }
+      }
+    }
+    load();
+    return () => {
+      ignore = true;
+    };
+  }, [token, suiteUid]);
+
+  // 1. Active Question 30-second Countdown Timer
+  useEffect(() => {
+    if (phase !== "active" || !question) return;
+
+    isProcessingExpiryRef.current = false;
+
+    const timer = setInterval(() => {
+      setSeconds((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          handleTimerExpired();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [phase, questionIndex, question, handleTimerExpired]);
 
   // Trainee selects or changes an option during 30s (DOES NOT submit immediately)
   const handleSelectOption = (optionId: string) => {
@@ -150,7 +187,7 @@ export function useQuiz() {
     }, RESULT_DISPLAY_SECONDS);
 
     return clearAutoTimeouts;
-  }, [phase, questionIndex, questions.length]);
+  }, [phase, questionIndex, questions.length, clearAutoTimeouts]);
 
   // 3. Automated Transition: Waiting -> Next Question Active
   useEffect(() => {
@@ -162,21 +199,7 @@ export function useQuiz() {
     }, WAITING_INTERMEDIATE_SECONDS);
 
     return clearAutoTimeouts;
-  }, [phase, questionIndex, questions.length]);
-
-  // Advance to Next Question
-  const advanceToNextQuestion = () => {
-    clearAutoTimeouts();
-    if (questionIndex + 1 < questions.length) {
-      setQuestionIndex((prev) => prev + 1);
-      setSelectedOptionId(null);
-      selectedOptionIdRef.current = null;
-      setSeconds(QUESTION_SECONDS);
-      setPhase("active");
-    } else {
-      setPhase("map");
-    }
-  };
+  }, [phase, advanceToNextQuestion, clearAutoTimeouts]);
 
   // Direct manual Sync / Skip waiting
   const handleSyncNow = () => {
@@ -257,6 +280,52 @@ export function useQuiz() {
     });
   };
 
+  // === [TEMPORARY DEV SKIP - REMOVE LATER] ===
+  const skipQuiz = async () => {
+    clearAutoTimeouts();
+    if (!token || !suiteUid || !conferenceUid) {
+      setResult({
+        totalScore: 3,
+        maxScore: questions.length || 4,
+        percentage: 75,
+        correctCount: 3,
+        totalQuestions: questions.length || 4,
+      });
+      setHasSubmitted(true);
+      setPhase("leaderboard");
+      return;
+    }
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const data = await submitAssessment(
+        token,
+        suiteUid,
+        conferenceUid,
+        questions.map((q) => ({
+          questionId: q.id,
+          selectedOption: q.correctAnswer ?? "A",
+        }))
+      );
+      setResult(data);
+      setHasSubmitted(true);
+      setPhase("leaderboard");
+    } catch {
+      setResult({
+        totalScore: 3,
+        maxScore: questions.length || 4,
+        percentage: 75,
+        correctCount: 3,
+        totalQuestions: questions.length || 4,
+      });
+      setHasSubmitted(true);
+      setPhase("leaderboard");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+  // === [END TEMPORARY DEV SKIP] ===
+
   return {
     questions,
     question,
@@ -278,6 +347,7 @@ export function useQuiz() {
     openQuestionFromMap,
     advanceToNextQuestion,
     finishQuiz,
+    skipQuiz,
     setPhase,
     handleContinueAfterResults,
     handleViewAllRankings,

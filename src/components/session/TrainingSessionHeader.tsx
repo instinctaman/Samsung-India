@@ -5,7 +5,6 @@ import { Ionicons } from "@expo/vector-icons";
 import CalendarIcon from "@/assets/images/svg/calender2.svg";
 import AppText from "@/components/ui/AppText";
 import { Colors } from "@/theme/colors";
-import { Fonts } from "@/theme/fonts";
 import { FontWeight } from "@/theme/fontWeight";
 import { Radius } from "@/theme/radius";
 
@@ -84,7 +83,7 @@ export default function TrainingSessionHeader({
             <AppText
               style={styles.userName}
               color={Colors.white}
-              weight={FontWeight.bold}
+              weight={FontWeight.medium}
             >
               {userName}
             </AppText>
@@ -114,7 +113,7 @@ export default function TrainingSessionHeader({
             >
               <Ionicons
                 name="power"
-                size={20}
+                size={25}
                 color={Colors.headerBlue}
               />
             </Pressable>
@@ -199,7 +198,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
   },
   userMeta: {
-    gap: 3,
+    gap: 1,
   },
   userName: {
     fontSize: 16,
@@ -220,8 +219,8 @@ const styles = StyleSheet.create({
     opacity: 0.95,
   },
   actionBtn: {
-    width: 36,
-    height: 36,
+    width: 41,
+    height: 40,
     borderRadius: 8,
     backgroundColor: Colors.white,
     alignItems: "center",
