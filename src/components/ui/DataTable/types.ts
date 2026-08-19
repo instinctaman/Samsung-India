@@ -13,3 +13,5 @@ export type DataTableColumn<T> = {
 export type DataTablePageSize = number | "all";
 
 export type ExportAction = "copy" | "csv" | "excel" | "pdf" | "print";
+
+export type DataTableToolbarVariant = "full" | "download";

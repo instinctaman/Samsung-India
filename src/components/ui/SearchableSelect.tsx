@@ -22,6 +22,8 @@ type SearchableSelectProps = {
   onSelect: (option: SelectOption) => void;
   icon?: keyof typeof Ionicons.glyphMap;
   disabled?: boolean;
+  // Smaller height/padding for tight layouts like the sessions filter panel.
+  compact?: boolean;
 };
 
 export function SearchableSelect({
@@ -34,6 +36,7 @@ export function SearchableSelect({
   onSelect,
   icon,
   disabled,
+  compact = false,
 }: SearchableSelectProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -53,18 +56,18 @@ export function SearchableSelect({
         </AppText>
       )}
       <Pressable
-        style={[styles.trigger, disabled && styles.triggerDisabled]}
+        style={[styles.trigger, compact && styles.triggerCompact, disabled && styles.triggerDisabled]}
         disabled={disabled}
         onPress={() => {
           setQuery("");
           setOpen(true);
         }}
       >
-        {icon && <Ionicons name={icon} size={16} color={Colors.gray600} />}
-        <AppText style={styles.triggerText} color={selected ? Colors.black : Colors.gray400} numberOfLines={1}>
+        {icon && <Ionicons name={icon} size={compact ? 14 : 16} color={Colors.gray600} />}
+        <AppText style={[styles.triggerText, compact && styles.triggerTextCompact]} color={selected ? Colors.black : Colors.gray400} numberOfLines={1}>
           {selected?.label ?? placeholder}
         </AppText>
-        <Ionicons name="chevron-down" size={16} color={Colors.gray600} />
+        <Ionicons name="chevron-down" size={compact ? 14 : 16} color={Colors.gray600} />
       </Pressable>
 
       <AppModal
@@ -234,7 +237,9 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
   },
   triggerDisabled: { backgroundColor: Colors.gray100, opacity: 0.7 },
+  triggerCompact: { height: 38, paddingHorizontal: Spacing.md, gap: 6 },
   triggerText: { fontSize: Fonts.xs, flex: 1 },
+  triggerTextCompact: { fontSize: 12 },
   sheet: { paddingHorizontal: Spacing.lg, paddingBottom: Spacing.xl, paddingTop: Spacing.sm },
   searchRow: {
     flexDirection: "row",

@@ -12,7 +12,7 @@ export default function SummaryStatsRow({ stats }: SummaryStatsRowProps) {
   return (
     <View style={styles.container}>
       <StatCard
-        icon={<Ionicons name="people" size={19} color="#2563EB" />}
+        icon={<Ionicons name="people" size={16} color="#2563EB" />}
         iconBg="#EFF6FF"
         title="Total Trainees"
         value={stats.totalTrainees}
@@ -22,7 +22,7 @@ export default function SummaryStatsRow({ stats }: SummaryStatsRowProps) {
       />
 
       <StatCard
-        icon={<Ionicons name="book-outline" size={19} color="#10B981" />}
+        icon={<Ionicons name="book-outline" size={16} color="#10B981" />}
         iconBg="#ECFDF5"
         title="Total Sessions"
         value={stats.totalSessions}
@@ -32,7 +32,7 @@ export default function SummaryStatsRow({ stats }: SummaryStatsRowProps) {
       />
 
       <StatCard
-        icon={<Ionicons name="calendar-outline" size={19} color="#F59E0B" />}
+        icon={<Ionicons name="calendar-outline" size={16} color="#F59E0B" />}
         iconBg="#FFFBEB"
         title="Completed"
         value={stats.completed}
@@ -42,7 +42,7 @@ export default function SummaryStatsRow({ stats }: SummaryStatsRowProps) {
       />
 
       <StatCard
-        icon={<Ionicons name="time-outline" size={19} color="#EF4444" />}
+        icon={<Ionicons name="time-outline" size={16} color="#EF4444" />}
         iconBg="#FEF2F2"
         title="Pending"
         value={stats.pending}
@@ -57,8 +57,8 @@ export default function SummaryStatsRow({ stats }: SummaryStatsRowProps) {
 const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
-    gap: 8,
-    paddingHorizontal: 16,
-    marginTop: 12,
+    gap: 6,
+    paddingHorizontal: 12,
+    marginTop: 10,
   },
 });

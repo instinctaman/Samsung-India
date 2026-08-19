@@ -1,14 +1,10 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import {
-  DatePreset,
-  PRESETS,
-  formatMonthDay,
-} from "./calendarUtils";
 import { Colors } from "@/theme/colors";
 import { Radius } from "@/theme/radius";
 import { Shadows } from "@/theme/shadows";
+import { DatePreset, PRESETS, formatMonthDay } from "./calendarUtils";
 
 type CalendarFooterProps = {
   startDate: Date;
@@ -34,17 +30,11 @@ export default function CalendarFooter({
           return (
             <Pressable
               key={preset.key}
-              style={[
-                styles.presetPill,
-                isActive && styles.presetPillActive,
-              ]}
+              style={[styles.presetPill, isActive && styles.presetPillActive]}
               onPress={() => onSelectPreset(preset.key)}
             >
               <Text
-                style={[
-                  styles.presetText,
-                  isActive && styles.presetTextActive,
-                ]}
+                style={[styles.presetText, isActive && styles.presetTextActive]}
               >
                 {preset.label}
               </Text>
@@ -61,7 +51,8 @@ export default function CalendarFooter({
         <Text style={styles.infoText}>
           Showing data from{" "}
           <Text style={styles.infoHighlight}>{formatMonthDay(startDate)}</Text>{" "}
-          to <Text style={styles.infoHighlight}>{formatMonthDay(endDate)}</Text>.
+          to <Text style={styles.infoHighlight}>{formatMonthDay(endDate)}</Text>
+          .
         </Text>
       </View>
 

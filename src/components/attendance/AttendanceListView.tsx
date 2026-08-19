@@ -19,6 +19,7 @@ type AttendanceListViewProps = {
   refreshing: boolean;
   onRefresh: () => void;
   onBack: () => void;
+  onViewCandidate: (row: AttendanceListItem) => void;
   exportFileName: string;
   emptyLabel: string;
 };
@@ -31,11 +32,12 @@ export function AttendanceListView({
   refreshing,
   onRefresh,
   onBack,
+  onViewCandidate,
   exportFileName,
   emptyLabel,
 }: AttendanceListViewProps) {
   const insets = useSafeAreaInsets();
-  const columns = useAttendanceListColumns();
+  const columns = useAttendanceListColumns(onViewCandidate);
 
   return (
     <SafeAreaView style={styles.container} edges={["bottom"]}>
@@ -66,7 +68,7 @@ export function AttendanceListView({
               title={title}
               columns={columns}
               data={items}
-              keyExtractor={(row) => row.traineeUid}
+              keyExtractor={(row) => row.attendanceId}
               exportFileName={exportFileName}
               searchPlaceholder="Search..."
               emptyLabel={emptyLabel}

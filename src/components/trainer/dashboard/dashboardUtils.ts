@@ -1,6 +1,8 @@
 import { TrainingAgendaItem } from "@/api/training";
 import { DatePreset } from "@/components/trainer/DateDrop";
 
+export type { DatePreset };
+
 export const PRESET_LABELS: Record<DatePreset, string> = {
   today: "Today",
   this_month: "This Month",
@@ -72,5 +74,3 @@ export function getSessionStatusInfo(status: string): { label: string; type: Ses
   }
   return { label: "Upcoming", type: "upcoming", bg: "#FEF3C7", color: "#D97706" };
 }
-
-export { DatePreset };

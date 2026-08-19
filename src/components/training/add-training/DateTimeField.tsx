@@ -18,8 +18,9 @@ export function DateTimeField({
   onChange,
   plain = false,
   disabled = false,
+  compact = false,
 }: {
-  label: string;
+  label?: string;
   value: string;
   mode: "date" | "time";
   onChange: (formatted: string) => void;
@@ -27,6 +28,8 @@ export function DateTimeField({
   // with no leading icon or chevron, unlike the rest of the form's fields.
   plain?: boolean;
   disabled?: boolean;
+  // Smaller height/padding for tight layouts like the sessions filter panel.
+  compact?: boolean;
 }) {
   const [showPicker, setShowPicker] = useState(false);
 
@@ -48,18 +51,36 @@ export function DateTimeField({
 
   return (
     <View style={styles.field}>
-      <AppText style={styles.fieldLabel} weight={FontWeight.medium}>{label}</AppText>
+      {label && (
+        <AppText style={styles.fieldLabel} weight={FontWeight.medium}>{label}</AppText>
+      )}
       <Pressable
-        style={[styles.pickerField, plain && styles.pickerFieldPlain, disabled && styles.pickerFieldDisabled]}
+        style={[
+          styles.pickerField,
+          compact && styles.pickerFieldCompact,
+          plain && styles.pickerFieldPlain,
+          disabled && styles.pickerFieldDisabled,
+        ]}
         onPress={open}
       >
         {!plain && (
-          <Ionicons name={mode === "date" ? "calendar-outline" : "time-outline"} size={16} color={Colors.gray600} />
+          <Ionicons
+            name={mode === "date" ? "calendar-outline" : "time-outline"}
+            size={compact ? 14 : 16}
+            color={Colors.gray600}
+          />
         )}
-        <AppText style={styles.pickerFieldText} color={value ? Colors.black : Colors.gray400}>
+        <AppText style={[styles.pickerFieldText, compact && styles.pickerFieldTextCompact]} color={value ? Colors.black : Colors.gray400}>
           {value ? (mode === "date" ? displayDate(value) : value) : mode === "date" ? "Select Date" : "Select Time"}
         </AppText>
-        {!plain && <Ionicons name="chevron-down" size={16} color={Colors.gray600} style={styles.pickerFieldChevron} />}
+        {!plain && (
+          <Ionicons
+            name="chevron-down"
+            size={compact ? 14 : 16}
+            color={Colors.gray600}
+            style={styles.pickerFieldChevron}
+          />
+        )}
       </Pressable>
 
       {Platform.OS === "ios" && showPicker && (
@@ -96,7 +117,9 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
   },
   pickerFieldText: { fontSize: Fonts.xs, flex: 1 },
+  pickerFieldTextCompact: { fontSize: 12 },
   pickerFieldChevron: { marginLeft: -4 },
+  pickerFieldCompact: { height: 38, paddingHorizontal: Spacing.md, gap: 6 },
   pickerFieldPlain: { justifyContent: "flex-start" },
   pickerFieldDisabled: { backgroundColor: Colors.gray100 },
   inlinePicker: { alignItems: "flex-end", marginTop: -Spacing.sm, marginBottom: Spacing.sm },

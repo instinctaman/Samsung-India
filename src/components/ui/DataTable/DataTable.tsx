@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 import AppText from "@/components/ui/AppText";
@@ -17,7 +17,7 @@ import {
 } from "@/services/exportService";
 import DataTableToolbar from "./DataTableToolbar";
 import Pagination from "./Pagination";
-import { DataTableColumn, DataTablePageSize, ExportAction } from "./types";
+import { DataTableColumn, DataTablePageSize, DataTableToolbarVariant, ExportAction } from "./types";
 
 const DEFAULT_PAGE_SIZE_OPTIONS: DataTablePageSize[] = [10, 25, 50, 100, "all"];
 
@@ -29,12 +29,15 @@ type DataTableProps<T> = {
   title: string;
   columns: DataTableColumn<T>[];
   data: T[];
-  keyExtractor: (row: T) => string;
+  keyExtractor: (row: T, index: number) => string;
   exportFileName?: string;
   searchPlaceholder?: string;
   pageSizeOptions?: DataTablePageSize[];
   defaultPageSize?: DataTablePageSize;
   emptyLabel?: string;
+  toolbarVariant?: DataTableToolbarVariant;
+  headerBackgroundColor?: string;
+  headerTextColor?: string;
 };
 
 export default function DataTable<T>({
@@ -47,6 +50,9 @@ export default function DataTable<T>({
   pageSizeOptions = DEFAULT_PAGE_SIZE_OPTIONS,
   defaultPageSize = 10,
   emptyLabel = "No data available.",
+  toolbarVariant = "full",
+  headerBackgroundColor,
+  headerTextColor,
 }: DataTableProps<T>) {
   const [search, setSearch] = useState("");
   const [pageSize, setPageSize] = useState<DataTablePageSize>(defaultPageSize);
@@ -138,38 +144,59 @@ export default function DataTable<T>({
     <View style={styles.container}>
       <View style={styles.panelCard}>
         <View style={styles.toolbarWrap}>
-          <DataTableToolbar
-            pageSize={pageSize}
-            pageSizeOptions={pageSizeOptions}
-            onPageSizeChange={(size) => {
-              setPageSize(size);
-              setPage(1);
-            }}
-            search={search}
-            onSearchChange={(value) => {
-              setSearch(value);
-              setPage(1);
-            }}
-            searchPlaceholder={searchPlaceholder}
-            columns={columns.map((column) => ({ key: column.key, header: column.header }))}
-            hiddenColumns={hiddenColumns}
-            onToggleColumn={toggleColumn}
-            onCopy={() => runExport("copy", () => copyTableToClipboard(exportColumns, toExportRows(filteredData)))}
-            onExportCsv={() => runExport("csv", () => exportTableAsCsv(exportColumns, toExportRows(filteredData), exportFileName))}
-            onExportExcel={() => runExport("excel", () => exportTableAsExcel(exportColumns, toExportRows(filteredData), exportFileName))}
-            onExportPdf={() => runExport("pdf", () => exportTableAsPdf(title, exportColumns, toExportRows(filteredData), exportFileName))}
-            onPrint={() => runExport("print", () => printTable(title, exportColumns, toExportRows(filteredData)))}
-            busyAction={busyAction}
-          />
+          {toolbarVariant === "download" ? (
+            <View style={styles.downloadToolbar}>
+              <AppText style={styles.downloadTitle} weight={FontWeight.semiBold}>{title}</AppText>
+              <Pressable
+                style={styles.downloadBtn}
+                onPress={() => runExport("excel", () => exportTableAsExcel(exportColumns, toExportRows(filteredData), exportFileName))}
+                disabled={busyAction === "excel"}
+              >
+                {busyAction === "excel" ? (
+                  <ActivityIndicator size="small" color={Colors.white} />
+                ) : (
+                  <Ionicons name="download-outline" size={15} color={Colors.white} />
+                )}
+                <AppText style={styles.downloadBtnText} color={Colors.white} weight={FontWeight.semiBold}>
+                  Download Report
+                </AppText>
+              </Pressable>
+            </View>
+          ) : (
+            <DataTableToolbar
+              pageSize={pageSize}
+              pageSizeOptions={pageSizeOptions}
+              onPageSizeChange={(size) => {
+                setPageSize(size);
+                setPage(1);
+              }}
+              search={search}
+              onSearchChange={(value) => {
+                setSearch(value);
+                setPage(1);
+              }}
+              searchPlaceholder={searchPlaceholder}
+              columns={columns.map((column) => ({ key: column.key, header: column.header }))}
+              hiddenColumns={hiddenColumns}
+              onToggleColumn={toggleColumn}
+              onCopy={() => runExport("copy", () => copyTableToClipboard(exportColumns, toExportRows(filteredData)))}
+              onExportCsv={() => runExport("csv", () => exportTableAsCsv(exportColumns, toExportRows(filteredData), exportFileName))}
+              onExportExcel={() => runExport("excel", () => exportTableAsExcel(exportColumns, toExportRows(filteredData), exportFileName))}
+              onExportPdf={() => runExport("pdf", () => exportTableAsPdf(title, exportColumns, toExportRows(filteredData), exportFileName))}
+              onPrint={() => runExport("print", () => printTable(title, exportColumns, toExportRows(filteredData)))}
+              busyAction={busyAction}
+            />
+          )}
         </View>
 
         <View style={styles.tableBox}>
           <ScrollView horizontal showsHorizontalScrollIndicator>
             <View>
-              <View style={styles.headerRow}>
+              <View style={[styles.headerRow, headerBackgroundColor ? { backgroundColor: headerBackgroundColor } : null]}>
                 {visibleColumns.map((column) => {
                   const isSortable = column.sortable !== false;
                   const isActive = sort?.key === column.key;
+                  const headerColor = headerTextColor ?? (isActive ? Colors.mainColour1 : Colors.gray600);
                   return (
                     <Pressable
                       key={column.key}
@@ -179,19 +206,12 @@ export default function DataTable<T>({
                     >
                       <AppText
                         style={styles.headerCellText}
-                        color={isActive ? Colors.mainColour1 : Colors.gray600}
+                        color={headerColor}
                         weight={FontWeight.semiBold}
                         numberOfLines={1}
                       >
                         {column.header}
                       </AppText>
-                      {isSortable && (
-                        <Ionicons
-                          name={isActive ? (sort!.direction === "asc" ? "chevron-up" : "chevron-down") : "swap-vertical"}
-                          size={11}
-                          color={isActive ? Colors.mainColour1 : Colors.gray400}
-                        />
-                      )}
                     </Pressable>
                   );
                 })}
@@ -205,7 +225,7 @@ export default function DataTable<T>({
                 pagedData.map((row, localIndex) => {
                   const absoluteIndex = (pageSize === "all" ? 0 : (currentPage - 1) * pageSize) + localIndex;
                   return (
-                    <View key={keyExtractor(row)} style={styles.bodyRow}>
+                    <View key={keyExtractor(row, absoluteIndex)} style={styles.bodyRow}>
                       {visibleColumns.map((column) => (
                         <View key={column.key} style={[styles.bodyCell, { width: column.minWidth ?? 110 }]}>
                           {column.render ? (
@@ -249,6 +269,25 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   toolbarWrap: { padding: 12, paddingBottom: 4 },
+  downloadToolbar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+    paddingBottom: 8,
+  },
+  downloadTitle: { fontSize: Fonts.bodySm, flexShrink: 1 },
+  downloadBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 2,
+    backgroundColor: Colors.mainColour1,
+    borderRadius: Radius.md,
+    paddingHorizontal: 4,
+    height: 25,
+  },
+  downloadBtnText: { fontSize: Fonts.bodySm ,flexShrink: 1,alignSelf: "center",justifyContent: "center" },
   tableBox: {
     marginHorizontal: 10,
     marginBottom: 12,
@@ -275,16 +314,16 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 4,
     paddingHorizontal: 6,
-    paddingVertical: 10,
+    paddingVertical: 8,
   },
-  headerCellText: { fontSize: Fonts.overline, letterSpacing: 0.3 },
+  headerCellText: { fontSize: 9, letterSpacing: 0.2, textAlign: "center" },
   bodyRow: {
     flexDirection: "row",
     borderBottomWidth: 1,
     borderBottomColor: Colors.gray100,
     alignItems: "center",
+    justifyContent: "center",
   },
   bodyCell: {
     flexDirection: "row",
@@ -293,7 +332,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 5,
   },
-  bodyCellText: { fontSize: Fonts.bodySm },
+  bodyCellText: { fontSize: Fonts.overline, textAlign: "center" },
   emptyRow: { padding: 24, alignItems: "center" },
   emptyText: { fontSize: Fonts.bodySm },
 });

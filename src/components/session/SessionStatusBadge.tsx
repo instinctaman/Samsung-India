@@ -1,16 +1,16 @@
-import React from "react";
-import { View, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { StyleSheet, View } from "react-native";
 
 import AppText from "@/components/ui/AppText";
 import { Colors } from "@/theme/colors";
-import { Fonts } from "@/theme/fonts";
+import { FontWeight } from "@/theme/fontWeight";
 
 type Props = {
   label: string;
   live?: boolean;
   completed?: boolean;
   missed?: boolean;
+  scoreBadge?: boolean;
 };
 
 export default function SessionStatusBadge({
@@ -18,38 +18,40 @@ export default function SessionStatusBadge({
   live = false,
   completed = false,
   missed = false,
+  scoreBadge = false,
 }: Props) {
+  const isUpcoming = !live && !completed && !missed && !scoreBadge;
+
   return (
     <View
       style={[
         styles.container,
         live && styles.liveContainer,
         completed && styles.completedContainer,
+        scoreBadge && styles.scoreBadgeContainer,
         missed && styles.missedContainer,
+        isUpcoming && styles.upcomingContainer,
       ]}
     >
-      {completed && (
-        <Ionicons
-          name="checkmark-circle"
-          size={10}
-          color={Colors.success}
-        />
-      )}
-      {missed && (
-        <Ionicons
-          name="close-circle"
-          size={10}
-          color={Colors.danger}
-        />
-      )}
+      {scoreBadge ? (
+        <Ionicons name="star" size={11} color={Colors.white} />
+      ) : completed ? (
+        <Ionicons name="checkmark" size={11} color={Colors.white} />
+      ) : live ? (
+        <View style={styles.liveDot} />
+      ) : missed ? (
+        <Ionicons name="close-circle" size={11} color={Colors.danger} />
+      ) : null}
 
       <AppText
         style={[
           styles.text,
-          live && styles.liveText,
+          (live || scoreBadge) && styles.liveText,
           completed && styles.completedText,
           missed && styles.missedText,
+          isUpcoming && styles.upcomingText,
         ]}
+        weight={FontWeight.bold}
       >
         {label}
       </AppText>
@@ -59,46 +61,51 @@ export default function SessionStatusBadge({
 
 const styles = StyleSheet.create({
   container: {
-    borderWidth: 1,
-    borderColor: Colors.primary,
-    borderRadius: 3,
-    paddingHorizontal: 5,
-    paddingVertical: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    borderRadius: 5,
+    paddingHorizontal: 8,
+    paddingVertical: 3.5,
   },
-
   liveContainer: {
-    borderColor: Colors.success,
-    backgroundColor: Colors.success,
+    backgroundColor: Colors.headerBlue,
   },
-
+  scoreBadgeContainer: {
+    backgroundColor: Colors.headerBlue,
+  },
   completedContainer: {
-    borderColor: Colors.success,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 3,
+    backgroundColor: Colors.recordedGreen,
   },
-
   missedContainer: {
-    borderColor: Colors.danger,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 3,
+    backgroundColor: "#FEE2E2",
   },
-
+  upcomingContainer: {
+    borderWidth: 1.2,
+    borderColor: Colors.headerBlue,
+    backgroundColor: "transparent",
+  },
+  liveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: Colors.white,
+  },
   text: {
-    fontSize: Fonts.overline,
-    color: Colors.primary,
+    fontSize: 9.5,
+    letterSpacing: 0.2,
   },
 
   liveText: {
     color: Colors.white,
   },
-
   completedText: {
-    color: Colors.success,
+    color: Colors.white,
   },
-
   missedText: {
     color: Colors.danger,
+  },
+  upcomingText: {
+    color: Colors.headerBlue,
   },
 });

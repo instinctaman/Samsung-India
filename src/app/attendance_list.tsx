@@ -45,6 +45,7 @@ export default function AttendanceListScreen() {
       refreshing={refreshing}
       onRefresh={() => load("refresh")}
       onBack={() => router.back()}
+      onViewCandidate={(row) => router.push({ pathname: "/session_dashboard", params: { conferenceUid: row.conferenceId ?? "" } })}
       exportFileName="attendance-list"
       emptyLabel="No attendance records yet."
     />

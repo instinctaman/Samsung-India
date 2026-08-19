@@ -45,6 +45,7 @@ export default function PendingAttendanceScreen() {
       refreshing={refreshing}
       onRefresh={() => load("refresh")}
       onBack={() => router.back()}
+      onViewCandidate={(row) => router.push({ pathname: "/session_dashboard", params: { conferenceUid: row.conferenceId ?? "" } })}
       exportFileName="pending-attendance-list"
       emptyLabel="No pending attendance. Everyone has been marked."
     />

@@ -2,49 +2,16 @@ import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, V
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 
-import ActionIcon from "@/assets/images/svg/action.svg";
 import { DataTable, DataTableColumn } from "@/components/ui/DataTable";
 import AppText from "@/components/ui/AppText";
 import ScreenBanner from "@/components/ui/ScreenBanner";
-import { StatusPill, StatusTone } from "@/components/ui/StatusPill";
 import { Colors } from "@/theme/colors";
 import { Fonts } from "@/theme/fonts";
 import { FontWeight } from "@/theme/fontWeight";
-import { Radius } from "@/theme/radius";
-import { formatDisplayDate } from "@/utils/formatDisplayDate";
 import { TrainingAgendaItem } from "@/api/training";
+import { buildTrainingListColumns } from "./trainingListColumns";
 
-const APPROVAL_STATUS_PRESENTATION: Record<string, { label: string; tone: StatusTone }> = {
-  Pending: { label: "Pending", tone: "warning" },
-  Approved: { label: "Approved", tone: "success" },
-  Rejected: { label: "Terminated", tone: "danger" },
-};
-
-export function approvalStatusColumn(): DataTableColumn<TrainingAgendaItem> {
-  return {
-    key: "status",
-    header: "Status",
-    minWidth: 92,
-    render: (row) => {
-      const presentation = APPROVAL_STATUS_PRESENTATION[row.approvalStatus] ?? {
-        label: row.approvalStatus,
-        tone: "neutral" as StatusTone,
-      };
-      return <StatusPill label={presentation.label} tone={presentation.tone} />;
-    },
-    exportValue: (row) => APPROVAL_STATUS_PRESENTATION[row.approvalStatus]?.label ?? row.approvalStatus,
-  };
-}
-
-export function pendingStatusColumn(): DataTableColumn<TrainingAgendaItem> {
-  return {
-    key: "status",
-    header: "Status",
-    minWidth: 92,
-    render: () => <StatusPill label="Pending" tone="warning" />,
-    exportValue: () => "Pending",
-  };
-}
+export { pendingStatusColumn, conferenceStatusColumn } from "./statusColumns";
 
 type TrainingListViewProps = {
   title: string;
@@ -74,49 +41,7 @@ export function TrainingListView({
   emptyLabel,
 }: TrainingListViewProps) {
   const insets = useSafeAreaInsets();
-
-  const columns: DataTableColumn<TrainingAgendaItem>[] = [
-    {
-      key: "slNo",
-      header: "Sl No.",
-      minWidth: 48,
-      sortable: false,
-      render: (_row, index) => <AppText style={styles.cellText}>{index + 1}</AppText>,
-      exportValue: (_row, index) => String(index + 1),
-    },
-    {
-      key: "action",
-      header: "Action",
-      minWidth: 48,
-      sortable: false,
-      render: (row) => (
-        <Pressable style={styles.actionButton} onPress={() => onEdit(row)} hitSlop={4}>
-          <ActionIcon width={15} height={15} />
-        </Pressable>
-      ),
-      exportValue: () => "",
-    },
-    statusColumn,
-    {
-      key: "trainerName",
-      header: "Trainer Name",
-      minWidth: 118,
-      exportValue: (row) => row.trainerName ?? "--",
-    },
-    {
-      key: "date",
-      header: "Date",
-      minWidth: 128,
-      exportValue: (row) => formatDisplayDate(row.conferenceDate),
-      searchValue: (row) => row.conferenceDate ?? "",
-    },
-    {
-      key: "time",
-      header: "Time",
-      minWidth: 76,
-      exportValue: (row) => row.conferenceTime ?? "--",
-    },
-  ];
+  const columns = buildTrainingListColumns(onEdit, statusColumn);
 
   return (
     <SafeAreaView style={styles.container} edges={["bottom"]}>
@@ -175,15 +100,6 @@ const styles = StyleSheet.create({
   content: { paddingHorizontal: 8, paddingVertical: 16, flexGrow: 1 },
   centered: { flex: 1, alignItems: "center", justifyContent: "center", paddingVertical: 60 },
 
-  cellText: { fontSize: Fonts.bodySm },
-  actionButton: {
-    width: 26,
-    height: 26,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.success,
-    alignItems: "center",
-    justifyContent: "center",
-  },
   secureFooter: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 10 },
   secureFooterText: { fontSize: Fonts.overline },
 });

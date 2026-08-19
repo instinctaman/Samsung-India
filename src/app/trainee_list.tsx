@@ -45,6 +45,7 @@ export default function TraineeListScreen() {
       refreshing={refreshing}
       onRefresh={() => load("refresh")}
       onBack={() => router.back()}
+      onEdit={() => router.push("/session_dashboard")}
       exportFileName="trainee-list"
       emptyLabel="No trainees yet. Trainees you register will show up here, approved or not."
     />

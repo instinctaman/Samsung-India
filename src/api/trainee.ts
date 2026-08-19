@@ -3,7 +3,7 @@ import type { NewTraineeRecord } from "@/data/mockData";
 import { apiRequest } from "./client";
 import * as mock from "./mockService";
 
-export type NewTraineeInput = Omit<NewTraineeRecord, "registeredAt" | "approvalStatus">;
+export type NewTraineeInput = Omit<NewTraineeRecord, "registeredAt" | "approvalStatus" | "updatedBy" | "updationOn" | "timestamp">;
 export type TraineeListItem = NewTraineeRecord;
 
 export function registerNewTrainee(token: string, payload: NewTraineeInput) {

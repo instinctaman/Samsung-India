@@ -1,11 +1,10 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import Svg, { Circle } from "react-native-svg";
 
-import { DashboardStats } from "./dashboardUtils";
 import { Colors } from "@/theme/colors";
-import { Radius } from "@/theme/radius";
 import { Shadows } from "@/theme/shadows";
+import { DashboardStats } from "./dashboardUtils";
 
 type TrainingEfficiencyCardProps = {
   stats: DashboardStats;
@@ -16,13 +15,14 @@ export default function TrainingEfficiencyCard({
   stats,
   onOverviewPress,
 }: TrainingEfficiencyCardProps) {
-  const size = 120;
-  const strokeWidth = 14;
+  const size = 100;
+  const strokeWidth = 12;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
 
   // Percentage calculations
-  const executedPercent = stats.totalSessions > 0 ? stats.executedPercentage : 70;
+  const executedPercent =
+    stats.totalSessions > 0 ? stats.executedPercentage : 70;
   const pendingPercent = 100 - executedPercent;
 
   const executedStrokeDashoffset =
@@ -41,7 +41,7 @@ export default function TrainingEfficiencyCard({
           hitSlop={6}
         >
           <Text style={styles.overviewText}>Overview</Text>
-          <Ionicons name="chevron-down" size={13} color="#4B5563" />
+          <Ionicons name="chevron-down" size={11} color="#4B5563" />
         </Pressable>
       </View>
 
@@ -127,7 +127,7 @@ export default function TrainingEfficiencyCard({
           </View>
 
           {/* Pending Section */}
-          <View style={[styles.statItem, { marginTop: 14 }]}>
+          <View style={[styles.statItem, { marginTop: 10 }]}>
             <View style={styles.statHeader}>
               <View style={styles.statLabelRow}>
                 <View style={[styles.dot, { backgroundColor: "#0066FF" }]} />
@@ -163,38 +163,38 @@ export default function TrainingEfficiencyCard({
 const styles = StyleSheet.create({
   container: {
     backgroundColor: Colors.white,
-    borderRadius: 20,
+    borderRadius: 16,
     borderWidth: 1.2,
     borderColor: "#EAECF0",
-    padding: 16,
-    marginHorizontal: 16,
-    marginTop: 12,
+    padding: 12,
+    marginHorizontal: 12,
+    marginTop: 10,
     ...Shadows.card,
   },
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 12,
+    marginBottom: 10,
   },
   title: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "700",
     color: "#111827",
   },
   overviewButton: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
+    gap: 3,
     borderWidth: 1,
     borderColor: "#D1D5DB",
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
     backgroundColor: Colors.white,
   },
   overviewText: {
-    fontSize: 11,
+    fontSize: 10,
     color: "#374151",
     fontWeight: "500",
   },
@@ -205,8 +205,8 @@ const styles = StyleSheet.create({
   },
   chartWrapper: {
     position: "relative",
-    width: 120,
-    height: 120,
+    width: 100,
+    height: 100,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -216,20 +216,20 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   centerValue: {
-    fontSize: 22,
+    fontSize: 19,
     fontWeight: "800",
     color: "#111827",
   },
   centerLabel: {
-    fontSize: 8.5,
+    fontSize: 7.5,
     fontWeight: "700",
     color: "#9CA3AF",
-    letterSpacing: 0.5,
+    letterSpacing: 0.4,
     marginTop: 1,
   },
   statsColumn: {
     flex: 1,
-    marginLeft: 20,
+    marginLeft: 14,
     justifyContent: "center",
   },
   statItem: {},
@@ -241,44 +241,44 @@ const styles = StyleSheet.create({
   statLabelRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 5,
   },
   dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "600",
     color: "#111827",
   },
   valueRow: {
-    marginTop: 2,
-    marginBottom: 4,
+    marginTop: 1,
+    marginBottom: 3,
   },
   executedValue: {
-    fontSize: 15,
+    fontSize: 13.5,
     fontWeight: "700",
     color: "#10B981",
   },
   pendingValue: {
-    fontSize: 15,
+    fontSize: 13.5,
     fontWeight: "700",
     color: "#0066FF",
   },
   percentageText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "500",
   },
   progressBarTrack: {
-    height: 5,
+    height: 4.5,
     backgroundColor: "#F3F4F6",
     borderRadius: 2.5,
     overflow: "hidden",
   },
   progressBarFill: {
-    height: 5,
+    height: 4.5,
     borderRadius: 2.5,
   },
 });

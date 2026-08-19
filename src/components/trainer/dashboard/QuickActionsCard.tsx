@@ -1,7 +1,7 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/theme/colors";
 import { Shadows } from "@/theme/shadows";
+import { Ionicons } from "@expo/vector-icons";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 type QuickActionsCardProps = {
   onCreateTraining: () => void;
@@ -59,18 +59,12 @@ export default function QuickActionsCard({
             onPress={action.onPress}
           >
             <View style={styles.leftContent}>
-              <Ionicons
-                name={action.iconName}
-                size={16}
-                color={action.color}
-              />
-              <Text style={styles.actionText}>{action.title}</Text>
+              <Ionicons name={action.iconName} size={13} color={action.color} />
+              <Text style={styles.actionText} numberOfLines={1}>
+                {action.title}
+              </Text>
             </View>
-            <Ionicons
-              name="chevron-forward"
-              size={12}
-              color={action.color}
-            />
+            <Ionicons name="chevron-forward" size={10} color={action.color} />
           </Pressable>
         ))}
       </View>
@@ -82,37 +76,39 @@ const styles = StyleSheet.create({
   card: {
     flex: 1,
     backgroundColor: Colors.white,
-    borderRadius: 18,
+    borderRadius: 14,
     borderWidth: 1.2,
     borderColor: "#EAECF0",
-    padding: 12,
+    padding: 8,
     ...Shadows.card,
   },
   headerTitle: {
-    fontSize: 12,
+    fontSize: 10.5,
     fontWeight: "700",
     color: "#111827",
-    marginBottom: 8,
+    marginBottom: 6,
   },
   actionsList: {
-    gap: 6,
+    gap: 4,
   },
   actionRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 7,
-    paddingHorizontal: 8,
-    borderRadius: 8,
+    paddingVertical: 5,
+    paddingHorizontal: 5,
+    borderRadius: 6,
   },
   leftContent: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 4,
+    flex: 1,
   },
   actionText: {
-    fontSize: 9.5,
+    fontSize: 7.5,
     fontWeight: "600",
     color: "#1F2937",
+    flex: 1,
   },
 });

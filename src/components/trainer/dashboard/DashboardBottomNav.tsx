@@ -1,4 +1,6 @@
+import { ReactNode } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/theme/colors";
 import { Shadows } from "@/theme/shadows";
@@ -15,10 +17,11 @@ export default function DashboardBottomNav({
   activeTab = "home",
   onSelectTab,
 }: DashboardBottomNavProps) {
+  const insets = useSafeAreaInsets();
   const tabs: {
     key: DashboardTab;
     label: string;
-    icon: (isActive: boolean) => JSX.Element;
+    icon: (isActive: boolean) => ReactNode;
   }[] = [
     {
       key: "home",
@@ -26,7 +29,7 @@ export default function DashboardBottomNav({
       icon: (active) => (
         <Ionicons
           name={active ? "home" : "home-outline"}
-          size={24}
+          size={21}
           color={active ? Colors.mainColour1 : "#6B7280"}
         />
       ),
@@ -37,7 +40,7 @@ export default function DashboardBottomNav({
       icon: (active) => (
         <Ionicons
           name={active ? "calendar" : "calendar-outline"}
-          size={24}
+          size={21}
           color={active ? Colors.mainColour1 : "#6B7280"}
         />
       ),
@@ -48,7 +51,7 @@ export default function DashboardBottomNav({
       icon: (active) => (
         <Ionicons
           name={active ? "person-circle" : "person-circle-outline"}
-          size={24}
+          size={21}
           color={active ? Colors.mainColour1 : "#6B7280"}
         />
       ),
@@ -59,7 +62,7 @@ export default function DashboardBottomNav({
       icon: (active) => (
         <Ionicons
           name={active ? "grid" : "grid-outline"}
-          size={24}
+          size={21}
           color={active ? Colors.mainColour1 : "#6B7280"}
         />
       ),
@@ -67,7 +70,7 @@ export default function DashboardBottomNav({
   ];
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingBottom: Math.max(insets.bottom, 8) }]}>
       {tabs.map((tab) => {
         const isActive = activeTab === tab.key;
         return (
@@ -101,9 +104,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-around",
     backgroundColor: Colors.white,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingVertical: 10,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingVertical: 8,
     borderTopWidth: 1,
     borderColor: "#F3F4F6",
     ...Shadows.raised,
@@ -112,11 +115,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 2,
-    minWidth: 64,
+    minWidth: 56,
   },
   tabLabel: {
-    fontSize: 11,
-    marginTop: 4,
+    fontSize: 10,
+    marginTop: 3,
     fontWeight: "500",
   },
   activeTabLabel: {

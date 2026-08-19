@@ -1,2 +1,2 @@
 export { default as DataTable } from "./DataTable";
-export type { DataTableColumn, DataTablePageSize, ExportAction } from "./types";
+export type { DataTableColumn, DataTablePageSize, DataTableToolbarVariant, ExportAction } from "./types";

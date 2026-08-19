@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { useFocusEffect, useRouter } from "expo-router";
 
-import { TrainingListView, approvalStatusColumn } from "@/components/training/TrainingListView";
+import { TrainingListView, conferenceStatusColumn } from "@/components/training/TrainingListView";
 import { useAuth } from "@/hooks/useAuth";
 import { TrainingAgendaItem, fetchTrainerAgenda } from "@/api/training";
 
@@ -46,7 +46,7 @@ export default function TrainingListScreen() {
       onRefresh={() => load("refresh")}
       onBack={() => router.back()}
       onEdit={(row) => router.push({ pathname: "/session_dashboard", params: { conferenceUid: row.conferenceUid } })}
-      statusColumn={approvalStatusColumn()}
+      statusColumn={conferenceStatusColumn()}
       exportFileName="training-list"
       emptyLabel="No trainings yet. Sessions you create will show up here, approved or not."
     />

@@ -45,6 +45,7 @@ export default function PendingTraineeScreen() {
       refreshing={refreshing}
       onRefresh={() => load("refresh")}
       onBack={() => router.back()}
+      onEdit={() => router.push("/session_dashboard")}
       exportFileName="pending-trainee-list"
       emptyLabel="No pending trainees. Everything registered so far has already been reviewed."
     />

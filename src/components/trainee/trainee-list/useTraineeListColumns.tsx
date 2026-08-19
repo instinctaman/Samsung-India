@@ -1,4 +1,4 @@
-import { StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet } from "react-native";
 
 import ActionIcon from "@/assets/images/svg/action.svg";
 import { DataTableColumn } from "@/components/ui/DataTable";
@@ -7,11 +7,10 @@ import { StatusPill, StatusTone } from "@/components/ui/StatusPill";
 import { Colors } from "@/theme/colors";
 import { Fonts } from "@/theme/fonts";
 import { Radius } from "@/theme/radius";
-import { formatDisplayDate } from "@/utils/formatDisplayDate";
 import { TraineeListItem } from "@/api/trainee";
 import { APPROVAL_STATUS_PRESENTATION } from "./formatting";
 
-export function useTraineeListColumns(): DataTableColumn<TraineeListItem>[] {
+export function useTraineeListColumns(onEdit: (row: TraineeListItem) => void): DataTableColumn<TraineeListItem>[] {
   return [
     {
       key: "slNo",
@@ -26,10 +25,10 @@ export function useTraineeListColumns(): DataTableColumn<TraineeListItem>[] {
       header: "Action",
       minWidth: 48,
       sortable: false,
-      render: () => (
-        <View style={styles.actionButton}>
+      render: (row) => (
+        <Pressable style={styles.actionButton} onPress={() => onEdit(row)} hitSlop={4}>
           <ActionIcon width={15} height={15} />
-        </View>
+        </Pressable>
       ),
       exportValue: () => "",
     },
@@ -46,30 +45,20 @@ export function useTraineeListColumns(): DataTableColumn<TraineeListItem>[] {
       },
       exportValue: (row) => APPROVAL_STATUS_PRESENTATION[row.approvalStatus]?.label ?? row.approvalStatus,
     },
-    {
-      key: "name",
-      header: "Name",
-      minWidth: 128,
-      exportValue: (row) => row.fullName,
-    },
-    {
-      key: "trainerName",
-      header: "Trainer Name",
-      minWidth: 118,
-      exportValue: (row) => row.trainerName ?? "--",
-    },
-    {
-      key: "date",
-      header: "Date",
-      minWidth: 128,
-      exportValue: (row) => formatDisplayDate(row.registeredAt),
-      searchValue: (row) => row.registeredAt ?? "",
-    },
+    { key: "traineeUid", header: "Trainee Uid", minWidth: 150, exportValue: (row) => row.traineeUid },
+    { key: "name", header: "Name", minWidth: 128, exportValue: (row) => row.fullName },
+    { key: "phone", header: "Phone", minWidth: 110, exportValue: (row) => row.primaryPhone ?? "--" },
+    { key: "trainerName", header: "Trainer Name", minWidth: 118, exportValue: (row) => row.trainerName || "--" },
+    { key: "supervisorName", header: "Supervisor Name", minWidth: 130, exportValue: (row) => row.supervisorName || "--" },
+    { key: "district", header: "District", minWidth: 110, exportValue: (row) => row.district ?? "--" },
+    { key: "updatedBy", header: "Updated By", minWidth: 96, exportValue: (row) => row.updatedBy ?? "--" },
+    { key: "updationOn", header: "Updation On", minWidth: 140, exportValue: (row) => row.updationOn ?? "--" },
+    { key: "timestamp", header: "Timestamp", minWidth: 140, exportValue: (row) => row.timestamp ?? "--" },
   ];
 }
 
 const styles = StyleSheet.create({
-  cellText: { fontSize: Fonts.bodySm },
+  cellText: { fontSize: Fonts.overline, textAlign: "center" },
   actionButton: {
     width: 26,
     height: 26,

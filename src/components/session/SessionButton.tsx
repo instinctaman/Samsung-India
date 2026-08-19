@@ -4,37 +4,44 @@ import { Ionicons } from "@expo/vector-icons";
 
 import AppText from "@/components/ui/AppText";
 import { Colors } from "@/theme/colors";
-import { Fonts } from "@/theme/fonts";
 import { FontWeight } from "@/theme/fontWeight";
 
 type SessionButtonProps = {
   title: string;
   onPress: () => void;
-  backgroundColor: string;
+  backgroundColor?: string;
   icon?: keyof typeof Ionicons.glyphMap;
 };
 
 export default function SessionButton({
   title,
   onPress,
-  backgroundColor,
+  backgroundColor = Colors.headerBlue,
   icon,
 }: SessionButtonProps) {
   return (
     <Pressable
       onPress={onPress}
-      style={[
+      style={({ pressed }) => [
         styles.button,
-        {
-          backgroundColor,
-        },
+        { backgroundColor },
+        pressed && styles.buttonPressed,
       ]}
+      accessibilityRole="button"
+      accessibilityLabel={title}
     >
-      {icon && <Ionicons name={icon} size={16} color={Colors.white} style={styles.icon} />}
+      {icon && (
+        <Ionicons
+          name={icon}
+          size={18}
+          color={Colors.white}
+          style={styles.icon}
+        />
+      )}
       <AppText
         style={styles.text}
         color={Colors.white}
-        weight={FontWeight.medium}
+        weight={FontWeight.bold}
       >
         {title}
       </AppText>
@@ -44,18 +51,23 @@ export default function SessionButton({
 
 const styles = StyleSheet.create({
   button: {
-    borderRadius: 4,
+    borderRadius: 8,
+    height: 42,
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 7,
-    paddingVertical:2,
+    marginTop: 12,
+    paddingHorizontal: 16,
+  },
+  buttonPressed: {
+    opacity: 0.88,
+    transform: [{ scale: 0.99 }],
   },
   icon: {
     marginRight: 6,
   },
-
   text: {
-    fontSize: Fonts.body,
+    fontSize: 15,
+    letterSpacing: 0.2,
   },
 });

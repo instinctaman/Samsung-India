@@ -77,6 +77,13 @@ export type TrainingAgendaItem = {
   trainingType: string | null;
   state: string | null;
   trainingHub: string | null;
+  totalPax: number | null;
+  hoid: string | null;
+  venueName: string | null;
+  district: string | null;
+  updatedBy: string | null;
+  updationOn: string | null;
+  timestamp: string | null;
 };
 
 export type AudienceBreakdown = {
@@ -116,6 +123,7 @@ export type ExecutionFlowItem = {
   startedAt: string | null;
   endedAt: string | null;
   elapsedSeconds: number | null;
+  assignedMinutes: number | null;
 };
 
 export type AuditLogEntry = {
@@ -132,6 +140,7 @@ export type AuditLogEntry = {
 export type SessionDashboard = {
   conferenceUid: string;
   title: string;
+  trainingType: string | null;
   conferenceDate: string | null;
   conferenceTime: string | null;
   trainerName: string | null;

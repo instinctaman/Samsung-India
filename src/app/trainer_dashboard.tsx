@@ -1,13 +1,13 @@
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
-import { Alert, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
+import { RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { TrainingAgendaItem, fetchTrainerAgenda } from "@/api/training";
+import Calendar from "@/components/calendar/Calendar";
 import DashboardBottomNav from "@/components/trainer/dashboard/DashboardBottomNav";
 import DashboardHeader from "@/components/trainer/dashboard/DashboardHeader";
 import { calculateDashboardStats } from "@/components/trainer/dashboard/dashboardUtils";
-import Calendar from "@/components/calendar/Calendar";
 import QuickActionsCard from "@/components/trainer/dashboard/QuickActionsCard";
 import RecentSessionsCard from "@/components/trainer/dashboard/RecentSessionsCard";
 import SummaryStatsRow from "@/components/trainer/dashboard/SummaryStatsRow";
@@ -17,15 +17,11 @@ import DateDrop, {
   DateRange,
   rangeForPreset,
 } from "@/components/trainer/DateDrop";
-import MoreMenuGrid from "@/components/trainer/dashboard/MoreMenuGrid";
+import TrainerMoreMenu, { toApiDate, useTrainerNavigate } from "@/components/trainer/dashboard/TrainerMoreMenu";
 import TrainingsQuickPanel from "@/components/trainer/TrainingsQuickPanel";
 import AppModal from "@/components/ui/AppModal";
 import { useAuth } from "@/hooks/useAuth";
 import { Colors } from "@/theme/colors";
-
-const pad2 = (n: number) => String(n).padStart(2, "0");
-const toApiDate = (d: Date) =>
-  `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 
 export default function TrainerDashboardScreen() {
   const router = useRouter();
@@ -80,6 +76,13 @@ export default function TrainerDashboardScreen() {
     setDateRange(range);
     setDatePreset(preset);
     setDateDropOpen(false);
+    router.push({
+      pathname: "/sessions",
+      params: {
+        start: toApiDate(range.start),
+        end: toApiDate(range.end),
+      },
+    });
   };
 
   const handleLogout = () => {
@@ -96,29 +99,10 @@ export default function TrainerDashboardScreen() {
     setQuickActionsOpen(false);
   };
 
+  const navigate = useTrainerNavigate(dateRange);
   const handleNavigate = (label: string) => {
     closePanels();
-    if (label === "Add New Trainings" || label === "New Training") {
-      router.push("/add_training");
-    } else if (label === "Pending Trainings" || label === "Pending Training") {
-      router.push("/pending_trainings");
-    } else if (label === "Training List") {
-      router.push("/training_list");
-    } else if (label === "Attendance List") {
-      router.push("/attendance_list");
-    } else if (label === "New Trainee") {
-      router.push("/new_trainee");
-    } else if (label === "Trainee List") {
-      router.push("/trainee_list");
-    } else if (label === "Pending Trainee") {
-      router.push("/pending_trainee");
-    } else if (label === "Confirmed Attendance") {
-      router.push("/confirmed_attendance");
-    } else if (label === "Pending Attendance") {
-      router.push("/pending_attendance");
-    } else if (label === "View Reports" || label === "View Sessions") {
-      Alert.alert("Coming Soon", `${label} isn't available yet.`);
-    }
+    navigate(label);
   };
 
   const handleBottomNavSelect = (tab: "home" | "plan" | "profile" | "more") => {
@@ -126,7 +110,13 @@ export default function TrainerDashboardScreen() {
     if (tab === "home") {
       // Return to home view
     } else if (tab === "plan") {
-      setDateDropOpen(true);
+      router.push({
+        pathname: "/sessions",
+        params: {
+          start: toApiDate(dateRange.start),
+          end: toApiDate(dateRange.end),
+        },
+      });
     } else if (tab === "profile") {
       router.push("/trainer_profile");
     } else if (tab === "more") {
@@ -196,14 +186,7 @@ export default function TrainerDashboardScreen() {
       </SafeAreaView>
 
       {/* Modals & Slide-out Drawers */}
-      <AppModal
-        visible={menuOpen}
-        onClose={closePanels}
-        position="bottom"
-        contentStyle={styles.moreSheet}
-      >
-        <MoreMenuGrid onSelect={handleNavigate} />
-      </AppModal>
+      <TrainerMoreMenu visible={menuOpen} onClose={closePanels} dateRange={dateRange} />
 
       <AppModal
         visible={quickActionsOpen}
@@ -242,12 +225,9 @@ const styles = StyleSheet.create({
   },
   twoColumnRow: {
     flexDirection: "row",
-    gap: 10,
-    paddingHorizontal: 16,
-    marginTop: 12,
-  },
-  moreSheet: {
-    width: "100%",
+    gap: 8,
+    paddingHorizontal: 12,
+    marginTop: 10,
   },
   topPanel: {
     width: "100%",

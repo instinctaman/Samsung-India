@@ -27,7 +27,7 @@ export default function AccessGrantedView({ details, onContinue, onHome }: Props
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <View style={[styles.statusBarBackground, { height: insets.top }]} />
-      <StatusBar style="light" animated />
+      <StatusBar style="dark" animated />
       <View style={styles.successArea}>
         <View style={styles.successHalo}>
           <Sparkle width={219} height={101} style={styles.sparkle} />

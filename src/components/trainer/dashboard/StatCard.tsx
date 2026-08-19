@@ -1,7 +1,7 @@
-import { ReactNode } from "react";
-import { StyleSheet, Text, View } from "react-native";
 import { Colors } from "@/theme/colors";
 import { Shadows } from "@/theme/shadows";
+import { ReactNode } from "react";
+import { StyleSheet, Text, View } from "react-native";
 
 type StatCardProps = {
   icon: ReactNode;
@@ -32,9 +32,7 @@ export default function StatCard({
       <Text style={styles.title} numberOfLines={1}>
         {title}
       </Text>
-      <Text style={[styles.value, { color: valueColor }]}>
-        {value}
-      </Text>
+      <Text style={[styles.value, { color: valueColor }]}>{value}</Text>
       <Text style={[styles.subtext, { color: subtextColor }]} numberOfLines={1}>
         {subtext}
       </Text>
@@ -46,42 +44,42 @@ const styles = StyleSheet.create({
   card: {
     flex: 1,
     backgroundColor: Colors.white,
-    borderRadius: 16,
+    borderRadius: 14,
     borderWidth: 1.2,
     borderColor: "#EAECF0",
-    paddingVertical: 14,
-    paddingHorizontal: 4,
+    paddingVertical: 10,
+    paddingHorizontal: 2,
     alignItems: "center",
     justifyContent: "center",
     ...Shadows.card,
   },
   activeCard: {
     borderColor: Colors.mainColour1,
-    borderWidth: 1.8,
+    borderWidth: 1.6,
   },
   iconWrapper: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
   },
   title: {
-    fontSize: 9.5,
+    fontSize: 8.5,
     color: "#6B7280",
-    marginTop: 8,
+    marginTop: 5,
     textAlign: "center",
     fontWeight: "500",
   },
   value: {
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: "700",
-    marginTop: 3,
+    marginTop: 2,
     textAlign: "center",
   },
   subtext: {
-    fontSize: 9,
-    marginTop: 2,
+    fontSize: 8,
+    marginTop: 1,
     textAlign: "center",
     fontWeight: "400",
   },

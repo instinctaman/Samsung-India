@@ -67,12 +67,12 @@ const styles = StyleSheet.create({
   weekdaysRow: {
     flexDirection: "row",
     justifyContent: "space-around",
-    marginBottom: 4,
+    marginBottom: 3,
   },
   weekdayLabel: {
-    width: 21,
+    width: 18.5,
     textAlign: "center",
-    fontSize: 8.5,
+    fontSize: 8,
     color: "#6B7280",
     fontWeight: "500",
   },

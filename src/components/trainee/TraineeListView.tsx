@@ -19,6 +19,7 @@ type TraineeListViewProps = {
   refreshing: boolean;
   onRefresh: () => void;
   onBack: () => void;
+  onEdit: (row: TraineeListItem) => void;
   exportFileName: string;
   emptyLabel: string;
 };
@@ -31,11 +32,12 @@ export function TraineeListView({
   refreshing,
   onRefresh,
   onBack,
+  onEdit,
   exportFileName,
   emptyLabel,
 }: TraineeListViewProps) {
   const insets = useSafeAreaInsets();
-  const columns = useTraineeListColumns();
+  const columns = useTraineeListColumns(onEdit);
 
   return (
     <SafeAreaView style={styles.container} edges={["bottom"]}>
