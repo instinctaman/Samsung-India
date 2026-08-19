@@ -178,7 +178,8 @@ export default function ProctoringPanel({
     onMaxWarnings,
   ]);
 
-  const isInactive = !active || paused || !permission?.granted || !token || maxedOut;
+  const isInactive =
+    !active || paused || !permission?.granted || !token || maxedOut;
   const currentBadge = isInactive ? null : activeCandidateBadge;
 
   const footerLabel = !permission?.granted

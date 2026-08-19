@@ -12,13 +12,6 @@ import {
   SecurityViolationType,
 } from "@/components/proctoring/violations";
 import {
-  analyzeImagePixels,
-  decodeBase64ToBytes,
-  detectFacesWithShapeDetection,
-  detectFacesWithWebCanvas,
-  parseJpeg,
-} from "@/utils/proctoringEngine";
-import {
   DEMO_ADMIN_SESSION_ADMIN,
   DEMO_ADMIN_SESSION_TRAINER,
   DEMO_ADMIN_TRAINER,
@@ -34,6 +27,13 @@ import {
   DEMO_SURVEY_QUESTIONS,
   DEMO_TRAINEE,
 } from "@/data/mockData";
+import {
+  analyzeImagePixels,
+  decodeBase64ToBytes,
+  detectFacesWithShapeDetection,
+  detectFacesWithWebCanvas,
+  parseJpeg,
+} from "@/utils/proctoringEngine";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const delay = (ms = 650) => new Promise<void>((r) => setTimeout(r, ms));

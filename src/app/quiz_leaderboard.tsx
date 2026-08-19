@@ -68,7 +68,7 @@ export default function QuizLeaderboardScreen() {
             color={Colors.white}
             weight={FontWeight.semiBold}
           >
-            YOUR LIVE ACCURACY
+            Your Live Accuracy
           </AppText>
           <AppText
             style={styles.scoreValue}
@@ -115,7 +115,7 @@ export default function QuizLeaderboardScreen() {
             <View style={styles.titleRow}>
               <Ionicons name="trophy" size={16} color="#F59E0B" />
               <AppText style={styles.cardTitle} weight={FontWeight.bold}>
-                GLOBAL TOP 100
+                Global Top 100
               </AppText>
             </View>
 

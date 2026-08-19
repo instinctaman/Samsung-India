@@ -20,7 +20,7 @@ export type LeaderboardListProps = {
 };
 
 export default function LeaderboardList({
-  title = "GLOBAL TOP 100",
+  title = "Global Top 100",
   users,
   onViewAll,
   correctCount,
@@ -30,10 +30,10 @@ export default function LeaderboardList({
 }: LeaderboardListProps) {
   const [filterOpen, setFilterOpen] = useState(false);
   const [filterValues, setFilterValues] = useState<LeaderboardFilterValues>({
-    trainingType: "CLASSROOM TRAINING",
-    state: "DELHI",
-    district: "NEW DELHI",
-    zone: "SOUTH",
+    trainingType: "Classroom Training",
+    state: "Delhi",
+    district: "New Delhi",
+    zone: "South",
   });
 
   const defaultUsers: LeaderboardUser[] = users ?? [

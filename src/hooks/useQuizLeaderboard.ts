@@ -75,10 +75,10 @@ export function useQuizLeaderboard() {
 
   const [filterOpen, setFilterOpen] = useState(false);
   const [filterValues, setFilterValues] = useState<LeaderboardFilterValues>({
-    trainingType: "CLASSROOM TRAINING",
-    state: "DELHI",
-    district: "NEW DELHI",
-    zone: "SOUTH",
+    trainingType: "Classroom Training",
+    state: "Delhi",
+    district: "New Delhi",
+    zone: "South",
   });
   const [appliedZone, setAppliedZone] = useState("");
 

@@ -35,15 +35,15 @@ export default function LeaderboardFilter({
       {/* Training Type Input */}
       <View style={styles.fieldBlock}>
         <AppText style={styles.fieldLabel} weight={FontWeight.semiBold}>
-          TRAINING TYPE :
+          Training Type :
         </AppText>
         <TextInput
           style={styles.fieldInput}
           value={values.trainingType}
           onChangeText={(t) => updateField("trainingType", t)}
-          placeholder="CLASSROOM TRAINING"
+          placeholder="Classroom Training"
           placeholderTextColor="#94A3B8"
-          autoCapitalize="characters"
+          autoCapitalize="words"
         />
       </View>
 
@@ -51,29 +51,29 @@ export default function LeaderboardFilter({
       <View style={styles.twoColRow}>
         <View style={styles.col}>
           <AppText style={styles.fieldLabel} weight={FontWeight.semiBold}>
-            STATE :
+            State :
           </AppText>
           <TextInput
             style={styles.fieldInput}
             value={values.state}
             onChangeText={(t) => updateField("state", t)}
-            placeholder="DELHI"
+            placeholder="Delhi"
             placeholderTextColor="#94A3B8"
-            autoCapitalize="characters"
+            autoCapitalize="words"
           />
         </View>
 
         <View style={styles.col}>
           <AppText style={styles.fieldLabel} weight={FontWeight.semiBold}>
-            DISTRICT :
+            District :
           </AppText>
           <TextInput
             style={styles.fieldInput}
             value={values.district}
             onChangeText={(t) => updateField("district", t)}
-            placeholder="NEW DELHI"
+            placeholder="New Delhi"
             placeholderTextColor="#94A3B8"
-            autoCapitalize="characters"
+            autoCapitalize="words"
           />
         </View>
       </View>
@@ -82,15 +82,15 @@ export default function LeaderboardFilter({
       <View style={styles.twoColRow}>
         <View style={styles.col}>
           <AppText style={styles.fieldLabel} weight={FontWeight.semiBold}>
-            ZONE :
+            Zone :
           </AppText>
           <TextInput
             style={styles.fieldInput}
             value={values.zone}
             onChangeText={(t) => updateField("zone", t)}
-            placeholder="SOUTH"
+            placeholder="South"
             placeholderTextColor="#94A3B8"
-            autoCapitalize="characters"
+            autoCapitalize="words"
           />
         </View>
 
@@ -106,7 +106,7 @@ export default function LeaderboardFilter({
               color={Colors.white}
               weight={FontWeight.bold}
             >
-              FILTER
+              Filter
             </AppText>
           </Pressable>
         </View>
