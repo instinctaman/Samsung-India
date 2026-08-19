@@ -12,6 +12,11 @@ class Settings(BaseSettings):
     ALGORITHM: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int
 
+    # Network settings used by the local Uvicorn development server. Binding
+    # to all interfaces lets phones on the same Wi-Fi reach this machine.
+    BACKEND_HOST: str = "0.0.0.0"
+    BACKEND_PORT: int = 8000
+
     ALLOW_ATTENDANCE_RETEST: bool = False
 
     # Google Cloud Vision API key used for proctoring face-count checks

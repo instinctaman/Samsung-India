@@ -9,5 +9,6 @@ const LOCAL_HOST = Platform.select({
   default: "127.0.0.1",
 });
 
+// Only used when USE_MOCK_DATA is false (see src/config/dataSource.ts).
 export const API_BASE_URL =
   process.env.EXPO_PUBLIC_API_URL ?? `http://${LOCAL_HOST}:8000`;

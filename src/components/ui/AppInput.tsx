@@ -6,6 +6,7 @@ import {
   View,
   TextInputProps,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 import { Colors } from "@/theme/colors";
 import { Fonts } from "@/theme/fonts";
@@ -16,11 +17,13 @@ import { Spacing } from "@/theme/spacing";
 interface AppInputProps extends TextInputProps {
   label?: string;
   caption?: string;
+  icon?: keyof typeof Ionicons.glyphMap;
 }
 
 export default function AppInput({
   label,
   caption,
+  icon,
   ...props
 }: AppInputProps) {
   const [focused, setFocused] = useState(false);
@@ -34,13 +37,16 @@ export default function AppInput({
         )
       }
 
-      <TextInput
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
-        style={styles.input}
-        placeholderTextColor={Colors.gray400}
-        {...props}
-      />
+      <View style={styles.inputRow}>
+        {icon && <Ionicons name={icon} size={16} color={Colors.gray600} style={styles.icon} />}
+        <TextInput
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          style={[styles.input, icon && styles.inputWithIcon, props.editable === false && styles.inputDisabled]}
+          placeholderTextColor={Colors.gray400}
+          {...props}
+        />
+      </View>
 
       {
         caption && (
@@ -67,7 +73,19 @@ const styles = StyleSheet.create({
     fontFamily: FontFamily.medium,
   },
 
+  inputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  icon: {
+    position: "absolute",
+    left: Spacing.lg,
+    zIndex: 1,
+  },
+
   input: {
+    flex: 1,
     height: 50,
     borderWidth: 1,
     borderColor: Colors.gray200,
@@ -79,6 +97,15 @@ const styles = StyleSheet.create({
     // borderColor: focused
     //   ? Colors.mainColour1
     //   : Colors.gray200
+  },
+
+  inputWithIcon: {
+    paddingLeft: Spacing.lg + 16 + 8,
+  },
+
+  inputDisabled: {
+    backgroundColor: Colors.gray100,
+    color: Colors.gray600,
   },
 
   caption: {

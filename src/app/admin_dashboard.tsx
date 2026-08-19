@@ -93,7 +93,7 @@ export default function AdminDashboardScreen() {
 
   return (
     <>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
       <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
         <ScrollView
           contentContainerStyle={styles.scrollContent}

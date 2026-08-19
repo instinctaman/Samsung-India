@@ -20,6 +20,10 @@ type SearchableSelectProps = {
   value: string;
   options: SelectOption[];
   onSelect: (option: SelectOption) => void;
+  icon?: keyof typeof Ionicons.glyphMap;
+  disabled?: boolean;
+  // Smaller height/padding for tight layouts like the sessions filter panel.
+  compact?: boolean;
 };
 
 export function SearchableSelect({
@@ -30,6 +34,9 @@ export function SearchableSelect({
   value,
   options,
   onSelect,
+  icon,
+  disabled,
+  compact = false,
 }: SearchableSelectProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -49,16 +56,18 @@ export function SearchableSelect({
         </AppText>
       )}
       <Pressable
-        style={styles.trigger}
+        style={[styles.trigger, compact && styles.triggerCompact, disabled && styles.triggerDisabled]}
+        disabled={disabled}
         onPress={() => {
           setQuery("");
           setOpen(true);
         }}
       >
-        <AppText style={styles.triggerText} color={selected ? Colors.black : Colors.gray400} numberOfLines={1}>
+        {icon && <Ionicons name={icon} size={compact ? 14 : 16} color={Colors.gray600} />}
+        <AppText style={[styles.triggerText, compact && styles.triggerTextCompact]} color={selected ? Colors.black : Colors.gray400} numberOfLines={1}>
           {selected?.label ?? placeholder}
         </AppText>
-        <Ionicons name="chevron-down" size={16} color={Colors.gray600} />
+        <Ionicons name="chevron-down" size={compact ? 14 : 16} color={Colors.gray600} />
       </Pressable>
 
       <AppModal
@@ -219,7 +228,7 @@ const styles = StyleSheet.create({
   trigger: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    gap: 8,
     height: 50,
     borderWidth: 1,
     borderColor: Colors.gray200,
@@ -227,7 +236,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     backgroundColor: Colors.white,
   },
-  triggerText: { fontSize: Fonts.xs, flex: 1, marginRight: 8 },
+  triggerDisabled: { backgroundColor: Colors.gray100, opacity: 0.7 },
+  triggerCompact: { height: 38, paddingHorizontal: Spacing.md, gap: 6 },
+  triggerText: { fontSize: Fonts.xs, flex: 1 },
+  triggerTextCompact: { fontSize: 12 },
   sheet: { paddingHorizontal: Spacing.lg, paddingBottom: Spacing.xl, paddingTop: Spacing.sm },
   searchRow: {
     flexDirection: "row",

@@ -1,37 +1,43 @@
 import React from "react";
 import { StyleSheet, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
-import Loading from "@/assets/images/svg/loading.svg";
 import AppText from "@/components/ui/AppText";
 import { Colors } from "@/theme/colors";
-import { Fonts } from "@/theme/fonts";
 import { FontWeight } from "@/theme/fontWeight";
 
 type WaitingCardProps = {
   title?: string;
   subtitle?: string;
+  color?: string;
+  backgroundColor?: string;
 };
 
 export default function WaitingCard({
   title = "Please Wait",
   subtitle = "Trainer will unlock soon...",
+  color = Colors.headerBlue,
+  backgroundColor = Colors.waitingBlueBg,
 }: WaitingCardProps) {
   return (
-    <View style={styles.container}>
-      <Loading width={17} height={17} />
+    <View style={[styles.container, { backgroundColor }]}>
+      <Ionicons
+        name="hourglass-outline"
+        size={24}
+        color={color}
+      />
 
-      <View>
+      <View style={styles.textWrap}>
         <AppText
-          style={styles.title}
-          color={Colors.primary}
-          weight={FontWeight.medium}
+          style={[styles.title, { color }]}
+          weight={FontWeight.bold}
         >
           {title}
         </AppText>
 
         <AppText
-          style={styles.subtitle}
-          color={Colors.primary}
+          style={[styles.subtitle, { color }]}
+          weight={FontWeight.medium}
         >
           {subtitle}
         </AppText>
@@ -44,19 +50,21 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 7,
-    backgroundColor: "#DDEEFF",
-    borderRadius: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 5,
-    marginTop: 7,
+    gap: 10,
+    backgroundColor: Colors.waitingBlueBg,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginTop: 10,
   },
-
+  textWrap: {
+    gap: 1,
+  },
   title: {
-    fontSize: Fonts.caption,
+    fontSize: 13.5,
+    letterSpacing: 0.1,
   },
-
   subtitle: {
-    fontSize: Fonts.overline,
+    fontSize: 11.5,
   },
 });

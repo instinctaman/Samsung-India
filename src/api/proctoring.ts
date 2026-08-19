@@ -1,10 +1,13 @@
+import { USE_MOCK_DATA } from "@/config/dataSource";
 import { apiRequest } from "./client";
+import * as mock from "./mockService";
 
 export type FaceCheckResult = {
   faceCount: number;
 };
 
 export function checkFrameForFaces(token: string, imageBase64: string) {
+  if (USE_MOCK_DATA) return mock.checkFrameForFaces(token, imageBase64);
   return apiRequest<FaceCheckResult>("/proctoring/check-frame", {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },

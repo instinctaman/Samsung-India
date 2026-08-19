@@ -1,4 +1,6 @@
+import { USE_MOCK_DATA } from "@/config/dataSource";
 import { apiRequest } from "./client";
+import * as mock from "./mockService";
 
 export type SessionModuleKey = "ATTENDANCE" | "STANDARD_TEST" | "LIVE_QUIZ" | "SURVEY";
 
@@ -15,8 +17,10 @@ export type SessionModule = {
   isMissed: boolean;
   completedAt: string | null;
   score: string | null;
+  ranDuration?: string | null;
   assessmentSuiteUid: string | null;
 };
+
 
 export type CurrentSession = {
   conferenceUid: string;
@@ -33,6 +37,7 @@ export type CurrentSession = {
 };
 
 export function getCurrentSession(token: string) {
+  if (USE_MOCK_DATA) return mock.getCurrentSession(token);
   return apiRequest<CurrentSession>("/sessions/current", {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -49,6 +54,7 @@ export type SessionHistoryItem = {
 };
 
 export function getSessionHistory(token: string) {
+  if (USE_MOCK_DATA) return mock.getSessionHistory(token);
   return apiRequest<SessionHistoryItem[]>("/sessions/history", {
     headers: { Authorization: `Bearer ${token}` },
   });

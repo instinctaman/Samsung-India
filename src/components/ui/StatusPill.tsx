@@ -1,0 +1,45 @@
+import { StyleSheet, View } from "react-native";
+
+import AppText from "@/components/ui/AppText";
+import { Colors } from "@/theme/colors";
+import { FontWeight } from "@/theme/fontWeight";
+import { Fonts } from "@/theme/fonts";
+import { Radius } from "@/theme/radius";
+
+export type StatusTone = "success" | "warning" | "danger" | "neutral";
+
+const TONE_BACKGROUND: Record<StatusTone, string> = {
+  success: Colors.success,
+  warning: Colors.pendingColour,
+  danger: Colors.danger,
+  neutral: Colors.gray100,
+};
+
+const TONE_TEXT: Record<StatusTone, string> = {
+  success: Colors.white,
+  warning: Colors.white,
+  danger: Colors.white,
+  neutral: Colors.gray600,
+};
+
+export function StatusPill({ label, tone }: { label: string; tone: StatusTone }) {
+  return (
+    <View style={[styles.pill, { backgroundColor: TONE_BACKGROUND[tone] }]}>
+      <AppText style={styles.text} color={TONE_TEXT[tone]} weight={FontWeight.semiBold} numberOfLines={1}>
+        {label}
+      </AppText>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  pill: {
+    width: 60,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: Radius.md,
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+  },
+  text: { fontSize: Fonts.overline, textAlign: "center" },
+});

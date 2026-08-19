@@ -1,0 +1,53 @@
+import { useCallback, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+
+import { AttendanceListView } from "@/components/attendance/AttendanceListView";
+import { useAuth } from "@/hooks/useAuth";
+import { AttendanceListItem, fetchAttendanceList } from "@/api/attendanceList";
+
+export default function AttendanceListScreen() {
+  const router = useRouter();
+  const { adminToken } = useAuth();
+  const [items, setItems] = useState<AttendanceListItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const load = useCallback(
+    async (mode: "load" | "refresh" = "load") => {
+      if (!adminToken) return;
+      if (mode === "refresh") setRefreshing(true);
+      else setLoading(true);
+      try {
+        const data = await fetchAttendanceList(adminToken);
+        setItems(data);
+      } catch {
+        setItems([]);
+      } finally {
+        if (mode === "refresh") setRefreshing(false);
+        else setLoading(false);
+      }
+    },
+    [adminToken]
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [load])
+  );
+
+  return (
+    <AttendanceListView
+      title="Attendance List"
+      subtitle="View and manage all attendance"
+      items={items}
+      loading={loading}
+      refreshing={refreshing}
+      onRefresh={() => load("refresh")}
+      onBack={() => router.back()}
+      onViewCandidate={(row) => router.push({ pathname: "/session_dashboard", params: { conferenceUid: row.conferenceId ?? "" } })}
+      exportFileName="attendance-list"
+      emptyLabel="No attendance records yet."
+    />
+  );
+}
