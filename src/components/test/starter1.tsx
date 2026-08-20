@@ -3,6 +3,7 @@ import { StyleSheet, View, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { Ionicons } from "@expo/vector-icons";
 import AppCard from "@/components/ui/AppCard";
 import AuthHeader from "@/components/common/AppHeader";
 import AppText from "@/components/ui/AppText";
@@ -128,6 +129,15 @@ export default function Starter1() {
           <View style={styles.securityFooter}>
             <SecurityFooter />
           </View>
+          <Pressable
+            style={styles.trainerLogin}
+            onPress={() => router.push("/trainer_login")}
+          >
+            <View style={styles.trainerLoginIcon}>
+              <Ionicons name="school-outline" size={24} color={Colors.white} />
+            </View>
+            <AppText style={styles.trainerLoginLabel}>Trainer Login</AppText>
+          </Pressable>
           <RegisterSheet
             visible={isRegisterOpen}
             onClose={closeRegister}
@@ -185,5 +195,22 @@ const styles = StyleSheet.create({
   },
   securityFooter: {
     marginTop: 42,
+  },
+  trainerLogin: {
+    marginTop: 18,
+    alignItems: "center",
+    gap: 6,
+  },
+  trainerLoginIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: Colors.mainColour1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  trainerLoginLabel: {
+    fontSize: Fonts.bodySm,
+    color: Colors.mainColour1,
   },
 });
