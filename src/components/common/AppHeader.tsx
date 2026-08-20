@@ -12,6 +12,7 @@ export default function AuthHeader() {
                     source={require("@/assets/images/Icons/user_icon.png")}
                     style={styles.icon}
                     resizeMode="contain"
+                    tintColor="#E8F0FF"
                 />
             </View>
             <AppText
@@ -49,7 +50,6 @@ const styles = StyleSheet.create({
         width: Fonts.profileIconSize,
         height: Fonts.profileIconSize,
         backgroundColor: Colors.mainColour1,
-        tintColor: "#E8F0FF",
         borderRadius: 45,
     },
     title: {

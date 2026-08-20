@@ -7,7 +7,10 @@
  * Mutable module-level state persists within a single app session (resets on restart).
  */
 
-import { SecurityViolationType } from "@/components/proctoring/violations";
+import {
+  SECURITY_VIOLATIONS,
+  SecurityViolationType,
+} from "@/components/proctoring/violations";
 import {
   DEMO_ADMIN_SESSION_ADMIN,
   DEMO_ADMIN_SESSION_TRAINER,
@@ -364,9 +367,9 @@ export async function checkFrameForFaces(
   _token: string,
   imageBase64: string,
 ): Promise<{ faceCount: number; violation?: SecurityViolationType | null }> {
-  // If frame data is completely empty/invalid, there's nothing to evaluate
+  // If frame data is completely empty/invalid, report NO_FACE
   if (!imageBase64 || imageBase64.length < 50) {
-    return { faceCount: 0, violation: null };
+    return { faceCount: 0, violation: SECURITY_VIOLATIONS.NO_FACE };
   }
 
   // 1. Web environment: Native ShapeDetection or Canvas Analysis

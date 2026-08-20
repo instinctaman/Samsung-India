@@ -9,6 +9,7 @@ export class ApiError extends Error {
   }
 }
 
+// Only called when USE_MOCK_DATA is false (see src/config/dataSource.ts).
 export async function apiRequest<T>(
   path: string,
   options: RequestInit = {}

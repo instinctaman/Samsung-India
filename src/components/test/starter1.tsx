@@ -3,7 +3,6 @@ import { StyleSheet, View, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { Ionicons } from "@expo/vector-icons";
 import AppCard from "@/components/ui/AppCard";
 import AuthHeader from "@/components/common/AppHeader";
 import AppText from "@/components/ui/AppText";
@@ -11,12 +10,37 @@ import AppInput from "@/components/ui/AppInput";
 import AppButton from "@/components/ui/AppButton";
 import RegisterSheet from "@/components/common/RegisterSheet";
 import SecurityFooter from "@/components/common/SecurityFooter";
-import AppFooter from "@/components/ui/AppFooter";
 // import RegisterBottomSheet from "@/components/bottom-sheet/RegisterSheet";
 import { Colors } from "@/theme/colors";
 import { Fonts } from "@/theme/fonts";
-import { ApiError, loginTrainee } from "@/api/auth";
+import { ApiError, AuthSession, loginTrainee } from "@/api/auth";
 import { useAuth } from "@/hooks/useAuth";
+
+const BYPASS_LOGIN = process.env.EXPO_PUBLIC_BYPASS_LOGIN === "true";
+
+function createDevelopmentSession(phone: string): AuthSession {
+  return {
+    // This is intentionally not a real credential. Requests requiring a
+    // server-issued token will remain protected by the backend.
+    access_token: "development-login-bypass",
+    token_type: "bearer",
+    trainee: {
+      id: 0,
+      traineeUid: "development-trainee",
+      name: "Test Trainee",
+      phone: Number(phone) || 0,
+      email: "test@example.com",
+      gender: null,
+      designation: "Test User",
+      employee_id: "DEV-001",
+      supervisorName: null,
+      state: null,
+      district: null,
+      profilePhoto: null,
+      status: "Active",
+    },
+  };
+}
 
 export default function Starter1() {
   const router = useRouter();
@@ -38,6 +62,12 @@ export default function Starter1() {
     setLoading(true);
     setError(null);
     try {
+      if (BYPASS_LOGIN) {
+        setSession(createDevelopmentSession(trimmed));
+        router.replace("/session");
+        return;
+      }
+
       const session = await loginTrainee(trimmed);
       setSession(session);
       router.push("/session");
@@ -106,23 +136,6 @@ export default function Starter1() {
           ref={bottomSheetRef}
         /> */}
         </View>
-        <AppFooter
-          items={[
-            {
-              key: "trainer-login",
-              label: "Trainer Login",
-              center: true,
-              icon: ({ size, color }) => (
-                <Ionicons
-                  name="school-outline"
-                  size={size}
-                  color={color}
-                />
-              ),
-              onPress: () => router.push("/trainer_login"),
-            },
-          ]}
-        />
       </SafeAreaView>
     </>
   );

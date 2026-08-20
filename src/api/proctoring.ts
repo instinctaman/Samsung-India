@@ -1,14 +1,15 @@
+import { USE_MOCK_DATA } from "@/config/dataSource";
 import { apiRequest } from "./client";
-import { USE_MOCK_DATA } from "./mockConfig";
 import * as mock from "./mockService";
 import { SecurityViolationType } from "@/components/proctoring/violations";
 
 export type FaceCheckResult = {
   faceCount: number;
   violation?: SecurityViolationType | null;
+  confidence?: number;
 };
 
-export function checkFrameForFaces(token: string, imageBase64: string) {
+ function checkFrameForFaces(token: string, imageBase64: string) {
   if (USE_MOCK_DATA) return mock.checkFrameForFaces(token, imageBase64);
   return apiRequest<FaceCheckResult>("/proctoring/check-frame", {
     method: "POST",
@@ -18,3 +19,5 @@ export function checkFrameForFaces(token: string, imageBase64: string) {
 }
 
 export { ApiError } from "./client";
+export { checkFrameForFaces } from "@/api/mockService";
+

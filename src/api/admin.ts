@@ -1,5 +1,5 @@
+import { USE_MOCK_DATA } from "@/config/dataSource";
 import { apiRequest } from "./client";
-import { USE_MOCK_DATA } from "./mockConfig";
 import * as mock from "./mockService";
 
 export type AdminAccount = {

@@ -1,5 +1,5 @@
+import { USE_MOCK_DATA } from "@/config/dataSource";
 import { apiRequest } from "./client";
-import { USE_MOCK_DATA } from "./mockConfig";
 import * as mock from "./mockService";
 
 export type AssessmentQuestion = {
@@ -8,7 +8,10 @@ export type AssessmentQuestion = {
   question_type: string;
   sort_order: number;
   options: { id: string; text: string }[];
+  correctAnswer?: string | null;
+  explanation?: string | null;
 };
+
 
 export type AssessmentAnswer = {
   questionId: number;
@@ -29,14 +32,14 @@ export type AssessmentQuestionsResponse = {
   questions: AssessmentQuestion[];
 };
 
-export function getAssessmentQuestions(token: string, suiteUid: string) {
+ function getAssessmentQuestions(token: string, suiteUid: string) {
   if (USE_MOCK_DATA) return mock.getAssessmentQuestions(token, suiteUid);
   return apiRequest<AssessmentQuestionsResponse>(`/assessments/${suiteUid}/questions`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 }
 
-export function submitAssessment(
+ function submitAssessment(
   token: string,
   suiteUid: string,
   conferenceUid: string,
@@ -50,27 +53,9 @@ export function submitAssessment(
   });
 }
 
-export type TerminateAssessmentResult = {
-  locked: boolean;
-  violationType?: string;
-  attemptedCount?: number;
-};
 
-export function terminateAssessmentWithViolation(
-  token: string,
-  suiteUid: string,
-  conferenceUid: string,
-  violationType: string,
-  answers: AssessmentAnswer[]
-) {
-  if (USE_MOCK_DATA) {
-    return mock.terminateAssessmentWithViolation(token, suiteUid, conferenceUid, violationType, answers);
-  }
-  return apiRequest<TerminateAssessmentResult>(`/assessments/${suiteUid}/terminate`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ conferenceUid, violationType, answers }),
-  });
-}
+// Demo implementations — no network calls.
+export { getAssessmentQuestions, submitAssessment, terminateAssessmentWithViolation } from "@/api/mockService";
+export { ApiError } from "@/api/client";
 
-export { ApiError } from "./client";
+

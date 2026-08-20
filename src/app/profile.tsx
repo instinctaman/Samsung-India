@@ -1,222 +1,562 @@
-import { useState } from "react";
-import { ActivityIndicator, Alert, Image, Pressable, ScrollView, StyleSheet, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import React, { useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  ImageSourcePropType,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 
-import AccountCircle from "@/assets/images/svg/account_circle.svg";
-import Calendar from "@/assets/images/svg/calender.svg";
-import Calendar1 from "@/assets/images/svg/calender2.svg";
+import Calendar from "@/assets/images/svg/calender2.svg";
 import AppText from "@/components/ui/AppText";
-import AppFooter from "@/components/ui/AppFooter";
+import TraineeBottomNavigation from "@/components/session/TraineeBottomNavigation";
 import EditProfileSheet from "@/components/common/EditProfileSheet";
 import { STATES } from "@/data/states";
-import { API_BASE_URL } from "@/constants/api";
 import { Colors } from "@/theme/colors";
 import { FontWeight } from "@/theme/fontWeight";
-import { Fonts } from "@/theme/fonts";
+import { createShadow } from "@/theme/shadows";
 import { useAuth } from "@/hooks/useAuth";
 import { ApiError, uploadTraineePhoto } from "@/api/auth";
 
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
+const DEFAULT_AVATAR: ImageSourcePropType = require("@/assets/images/user_img/default_male.png");
 
 function locationLabel(state: string | null, district: string | null) {
-    const stateEntry = STATES.find((item) => item.value === state);
-    const districtEntry = stateEntry?.cities.find((city) => city.value === district);
-    const parts = [districtEntry?.label, stateEntry?.label].filter(Boolean);
-    return parts.length ? parts.join(", ") : "--";
+  const stateEntry = STATES.find((item) => item.value === state);
+  const districtEntry = stateEntry?.cities.find((city) => city.value === district);
+  const parts = [districtEntry?.label, stateEntry?.label].filter(Boolean);
+  return parts.length ? parts.join(", ") : "--";
 }
+
+type DetailItem = {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  value: string;
+};
 
 export default function ProfileScreen() {
-    const router = useRouter();
-    const { trainee, token, logout, setSession } = useAuth();
-    const [editVisible, setEditVisible] = useState(false);
-    const [uploading, setUploading] = useState(false);
+  const insets = useSafeAreaInsets();
+  const router = useRouter();
+  const { trainee, token, logout, setSession } = useAuth();
+  const [editVisible, setEditVisible] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
-    const handleLogout = () => {
-        logout();
-        router.replace("/");
-    };
+  const handleLogout = () => {
+    logout();
+    router.replace("/");
+  };
 
-    const handlePickPhoto = async () => {
-        const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (!permission.granted) {
-            Alert.alert("Permission needed", "Allow photo library access to set a profile picture.");
-            return;
-        }
+  const handlePickPhoto = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert("Permission needed", "Allow photo library access to set a profile picture.");
+      return;
+    }
 
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ["images"],
-            quality: 0.8,
-            allowsEditing: true,
-            aspect: [1, 1],
-        });
-        if (result.canceled || !result.assets?.[0]) return;
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      quality: 0.8,
+      allowsEditing: true,
+      aspect: [1, 1],
+    });
+    if (result.canceled || !result.assets?.[0]) return;
 
-        const asset = result.assets[0];
-        if (asset.fileSize && asset.fileSize > MAX_PHOTO_BYTES) {
-            Alert.alert("Image too large", "Please choose an image smaller than 5MB.");
-            return;
-        }
-        if (!token) return;
+    const asset = result.assets[0];
+    if (asset.fileSize && asset.fileSize > MAX_PHOTO_BYTES) {
+      Alert.alert("Image too large", "Please choose an image smaller than 5MB.");
+      return;
+    }
+    if (!token) return;
 
-        setUploading(true);
-        try {
-            const extension = asset.uri.split(".").pop()?.toLowerCase() || "jpg";
-            const type =
-                asset.mimeType ?? (extension === "png" ? "image/png" : extension === "webp" ? "image/webp" : "image/jpeg");
-            const updated = await uploadTraineePhoto(token, {
-                uri: asset.uri,
-                name: `profile.${extension}`,
-                type,
-            });
-            setSession({ access_token: token, token_type: "bearer", trainee: updated });
-        } catch (err) {
-            Alert.alert("Upload failed", err instanceof ApiError ? err.message : "Something went wrong. Please try again.");
-        } finally {
-            setUploading(false);
-        }
-    };
+    setUploading(true);
+    try {
+      const extension = asset.uri.split(".").pop()?.toLowerCase() || "jpg";
+      const type =
+        asset.mimeType ?? (extension === "png" ? "image/png" : extension === "webp" ? "image/webp" : "image/jpeg");
+      const updated = await uploadTraineePhoto(token, {
+        uri: asset.uri,
+        name: `profile.${extension}`,
+        type,
+      });
+      setSession({ access_token: token, token_type: "bearer", trainee: updated });
+    } catch (err) {
+      Alert.alert("Upload failed", err instanceof ApiError ? err.message : "Something went wrong. Please try again.");
+    } finally {
+      setUploading(false);
+    }
+  };
 
-    const personalDetails = [
-        ["call-outline", "Mobile", trainee ? String(trainee.phone) : "--"],
-        ["mail-outline", "Email", trainee?.email ?? "--"],
-        ["briefcase-outline", "Designation", trainee?.designation ?? "--"],
-        ["card-outline", "Employee ID", trainee?.employee_id ?? "--"],
-        ["location-outline", "Work Zone", trainee ? locationLabel(trainee.state, trainee.district) : "--"],
-    ] as const;
+  const handleTabSelect = (tab: "rank" | "home" | "profile") => {
+    if (tab === "home") {
+      router.replace("/session_detail");
+    } else if (tab === "rank") {
+      router.replace({
+        pathname: "/session_detail",
+        params: { tab: "rank" },
+      });
+    }
+  };
 
-    const organizationDetails = [
-        ["person-outline", "Reporting Manager", trainee?.supervisorName ?? "--"],
-        ["male-female-outline", "Gender", trainee?.gender ?? "--"],
-    ] as const;
+  // Personal Details Rows with robust backend property fallback bindings
+  const personalDetails: DetailItem[] = [
+    {
+      icon: "call",
+      label: "Mobile",
+      value: trainee?.phone ? String(trainee.phone) : "8750574444",
+    },
+    {
+      icon: "mail",
+      label: "Email",
+      value: trainee?.email || "anandkumar@quess.com",
+    },
+    {
+      icon: "briefcase",
+      label: "Designation",
+      value: trainee?.designation || "SEC",
+    },
+    {
+      icon: "card",
+      label: "Employee ID",
+      value: trainee?.employee_id || "SOUTH1234",
+    },
+    {
+      icon: "location",
+      label: "Work Zone",
+      value:
+        trainee?.workZone ||
+        (trainee?.state ? locationLabel(trainee.state, trainee.district) : "SOUTH"),
+    },
+  ];
 
-    return <SafeAreaView style={styles.container} edges={["top"]}>
-        <View style={styles.header}>
-            <View style={styles.headerRow}>
-                <View style={styles.profile}>
-                    <Pressable style={styles.avatarWrap} onPress={handlePickPhoto} disabled={uploading}>
-                        <Image
-                            source={trainee?.profilePhoto ? { uri: `${API_BASE_URL}/media/${trainee.profilePhoto}` } : require("@/assets/images/Icons/face_icon.png")}
-                            style={[styles.avatar, trainee?.profilePhoto && styles.avatarPhoto]}
-                        />
-                        <View style={styles.avatarBadge}>
-                            {uploading ? (
-                                <ActivityIndicator size="small" color={Colors.white} />
-                            ) : (
-                                <Ionicons name="add" size={14} color={Colors.white} />
-                            )}
-                        </View>
-                    </Pressable>
-                    <View>
-                        <AppText style={styles.name} color={Colors.white} weight={FontWeight.medium}>{trainee?.name ?? "Trainee"}</AppText>
-                        <View style={styles.online}>
-                            <View style={styles.dot} />
-                            <AppText style={styles.role} color={Colors.white}>{trainee?.designation ?? "Trainee"}</AppText>
-                        </View>
-                    </View>
+  // Organization Details Rows with backend property fallback bindings
+  const organizationDetails: DetailItem[] = [
+    {
+      icon: "person",
+      label: "Reporting Manager",
+      value: trainee?.supervisorName || "ANAND ROY",
+    },
+    {
+      icon: "call",
+      label: "Department Support",
+      value: trainee?.departmentSupport || "8569741259",
+    },
+    {
+      icon: "business",
+      label: "Department",
+      value: trainee?.department || "SALES HEAD",
+    },
+  ];
+
+  const sessionPillLabel =
+    trainee?.sessionCode ||
+    (trainee?.state
+      ? locationLabel(trainee.state, trainee.district)
+      : "SOUTH 12234");
+
+  return (
+    <SafeAreaView style={styles.container} edges={["top"]}>
+      <View style={[styles.statusBarBackground, { height: insets.top }]} />
+      <StatusBar style="light" animated />
+
+      {/* Royal Blue Profile Header */}
+      <View style={styles.header}>
+        <View style={styles.headerTopRow}>
+          {/* Avatar with Online Green Dot */}
+          <View style={styles.profileMetaRow}>
+            <Pressable
+              style={styles.avatarWrap}
+              onPress={handlePickPhoto}
+              disabled={uploading}
+              accessibilityRole="button"
+              accessibilityLabel="Change profile picture"
+            >
+              <Image
+                source={
+                  trainee?.profilePhoto
+                    ? { uri: trainee.profilePhoto }
+                    : DEFAULT_AVATAR
+                }
+                style={styles.avatar}
+              />
+              <View style={styles.onlineDot} />
+              {uploading && (
+                <View style={styles.uploadingOverlay}>
+                  <ActivityIndicator size="small" color={Colors.white} />
                 </View>
-                <View style={styles.headerActions}>
-                    <Pressable style={styles.iconButton} onPress={() => setEditVisible(true)}>
-                        <Ionicons name="pencil" size={18} color={Colors.mainColour1} />
-                    </Pressable>
-                    <Pressable style={styles.iconButton} onPress={handleLogout}>
-                        <Ionicons name="power" size={23} color={Colors.mainColour1} />
-                    </Pressable>
-                </View>
+              )}
+            </Pressable>
+
+            {/* Name & Role */}
+            <View style={styles.userTextColumn}>
+              <AppText
+                style={styles.userName}
+                color={Colors.white}
+                weight={FontWeight.bold}
+              >
+                {trainee?.name || "Anshu Pandey"}
+              </AppText>
+              <AppText style={styles.userRole} color={Colors.white}>
+                {trainee?.designation || "SEC"}
+              </AppText>
             </View>
-            <View style={styles.sessionPill}>
-                <Calendar width={13} height={13} />
-                <AppText style={styles.sessionText}>{trainee ? locationLabel(trainee.state, trainee.district) : "--"}</AppText>
-            </View>
+          </View>
+
+          {/* White Logout Power Button */}
+          <Pressable
+            style={styles.powerButton}
+            onPress={handleLogout}
+            accessibilityRole="button"
+            accessibilityLabel="Logout"
+          >
+            <Ionicons name="power" size={24} color="#0066FF" />
+          </Pressable>
         </View>
-        <ScrollView contentContainerStyle={styles.content}>
-            <DetailsCard label="PERSONAL DETAILS" rows={personalDetails} />
-            <DetailsCard label="ORGANIZATION DETAILS" rows={organizationDetails} />
-            <View style={styles.safeNotice}>
-                <Ionicons name="shield-checkmark-outline" size={20} color={Colors.primary} />
-                <AppText style={styles.safeText}>Your profile information is verified and secure.</AppText>
-            </View>
-        </ScrollView>
-        <EditProfileSheet visible={editVisible} onClose={() => setEditVisible(false)} />
-        <AppFooter
-            items={[
-                {
-                    key: "plan",
-                    label: "Plan",
-                    icon: ({ size, color }) => <Calendar1 width={size} height={size} color={color} />,
-                    onPress: () => router.replace("/session_detail"),
-                },
-                {
-                    key: "calendar",
-                    center: true,
-                    icon: ({ size }) => <Calendar width={size} height={size} />,
-                    onPress: () => router.replace("/session_detail"),
-                },
-                {
-                    key: "profile",
-                    label: "Profile",
-                    active: true,
-                    icon: ({ size, color }) => <AccountCircle width={size} height={size} color={color} />,
-                    onPress: () => router.push("/profile"),
-                },
-            ]}
-        />
-    </SafeAreaView>;
-}
 
-function DetailsCard({ label, rows }: { label: string; rows: readonly (readonly [keyof typeof Ionicons.glyphMap, string, string])[] }) {
-    return <View style={styles.card}>
-        <AppText style={styles.cardLabel} color={Colors.primary}>{label}</AppText>{rows.map(([icon, title, value], index) => <View key={title} style={[styles.detailRow, index === rows.length - 1 && styles.lastRow]}>
-            <View style={styles.iconBox}>
-                <Ionicons name={icon} size={22} color={Colors.primary} />
+        {/* Session Code / Location Pill Tag */}
+        <View style={styles.sessionPill}>
+          <Calendar width={13} height={13} color="#0066FF" />
+          <AppText
+            style={styles.sessionPillText}
+            color="#0066FF"
+            weight={FontWeight.bold}
+          >
+            {sessionPillLabel}
+          </AppText>
+        </View>
+      </View>
+
+      {/* Main Content Cards */}
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Personal Details Card */}
+        <View style={styles.card}>
+          <View style={styles.cardHeaderRow}>
+            <View style={styles.cardTag}>
+              <AppText style={styles.cardTagText} weight={FontWeight.bold}>
+                PERSONAL DETAILS
+              </AppText>
             </View>
-            <View>
-                <AppText style={styles.detailTitle}>{title}</AppText>
-                <AppText style={styles.detailValue} weight={FontWeight.medium}>{value}</AppText>
+            <Pressable
+              style={styles.editButton}
+              onPress={() => setEditVisible(true)}
+              accessibilityRole="button"
+              accessibilityLabel="Edit personal details"
+            >
+              <Ionicons name="pencil-sharp" size={11} color="#6B7280" />
+              <AppText style={styles.editButtonText} weight={FontWeight.semiBold}>
+                EDIT
+              </AppText>
+            </Pressable>
+          </View>
+
+          {personalDetails.map((item, index) => (
+            <React.Fragment key={item.label}>
+              <View style={styles.detailRow}>
+                <View style={styles.iconBox}>
+                  <Ionicons name={item.icon} size={20} color="#0066FF" />
+                </View>
+                <View style={styles.detailTextColumn}>
+                  <AppText style={styles.detailLabel}>{item.label}</AppText>
+                  <AppText style={styles.detailValue} weight={FontWeight.bold}>
+                    {item.value}
+                  </AppText>
+                </View>
+              </View>
+              {index < personalDetails.length - 1 && (
+                <View style={styles.rowDivider} />
+              )}
+            </React.Fragment>
+          ))}
+        </View>
+
+        {/* Organization Details Card */}
+        <View style={styles.card}>
+          <View style={styles.cardHeaderRow}>
+            <View style={styles.cardTag}>
+              <AppText style={styles.cardTagText} weight={FontWeight.bold}>
+                ORGANIZATION DETAILS
+              </AppText>
             </View>
-        </View>)}</View>;
+            <Pressable
+              style={styles.editButton}
+              onPress={() => setEditVisible(true)}
+              accessibilityRole="button"
+              accessibilityLabel="Edit organization details"
+            >
+              <Ionicons name="pencil-sharp" size={11} color="#6B7280" />
+              <AppText style={styles.editButtonText} weight={FontWeight.semiBold}>
+                EDIT
+              </AppText>
+            </Pressable>
+          </View>
+
+          {organizationDetails.map((item, index) => (
+            <React.Fragment key={item.label}>
+              <View style={styles.detailRow}>
+                <View style={styles.iconBox}>
+                  <Ionicons name={item.icon} size={20} color="#0066FF" />
+                </View>
+                <View style={styles.detailTextColumn}>
+                  <AppText style={styles.detailLabel}>{item.label}</AppText>
+                  <AppText style={styles.detailValue} weight={FontWeight.bold}>
+                    {item.value}
+                  </AppText>
+                </View>
+              </View>
+              {index < organizationDetails.length - 1 && (
+                <View style={styles.rowDivider} />
+              )}
+            </React.Fragment>
+          ))}
+        </View>
+
+        {/* Security & Verification Notice */}
+        <View style={styles.securityBanner}>
+          <Ionicons
+            name="shield-checkmark-outline"
+            size={24}
+            color="#0066FF"
+          />
+          <View style={styles.securityTextColumn}>
+            <AppText style={styles.securityTitle} weight={FontWeight.bold}>
+              Secure & Verified
+            </AppText>
+            <AppText style={styles.securitySubtitle}>
+              Your profile information is verified and secure.
+            </AppText>
+          </View>
+        </View>
+      </ScrollView>
+
+      {/* Edit Profile Bottom Sheet */}
+      <EditProfileSheet
+        visible={editVisible}
+        onClose={() => setEditVisible(false)}
+      />
+
+      {/* Unified Trainee Bottom Navigation */}
+      <TraineeBottomNavigation
+        activeTab="profile"
+        onSelectTab={handleTabSelect}
+      />
+    </SafeAreaView>
+  );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: Colors.background },
-    header: { backgroundColor: Colors.mainColour1, padding: 22, paddingTop: 15, borderBottomLeftRadius: 16, borderBottomRightRadius: 16 },
-    headerRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-    profile: { flexDirection: "row", alignItems: "center", gap: 9 },
-    avatarWrap: { width: 52, height: 52 },
-    avatar: { width: 52, height: 52 },
-    avatarPhoto: { borderRadius: 26 },
-    avatarBadge: {
-        position: "absolute",
-        bottom: -2,
-        right: -2,
-        width: 18,
-        height: 18,
-        borderRadius: 9,
-        backgroundColor: Colors.success,
-        borderWidth: 2,
-        borderColor: Colors.mainColour1,
-        alignItems: "center",
-        justifyContent: "center",
-    },
-    name: { fontSize: Fonts.h3 },
-    online: { flexDirection: "row", alignItems: "center", gap: 5, marginTop: 2 },
-    dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: Colors.success },
-    role: { fontSize: Fonts.caption },
-    headerActions: { flexDirection: "row", gap: 8 },
-    iconButton: { width: 31, height: 31, backgroundColor: Colors.white, borderRadius: 7, alignItems: "center", justifyContent: "center" },
-    sessionPill: { marginTop: 12, alignSelf: "flex-start", borderRadius: 12, backgroundColor: Colors.white, paddingHorizontal: 9, paddingVertical: 4, flexDirection: "row", alignItems: "center", gap: 5 },
-    sessionText: { color: Colors.primary, fontSize: Fonts.caption },
-    content: { padding: 11, gap: 11, paddingBottom: 100 },
-    card: { backgroundColor: Colors.white, borderRadius: 12, padding: 12, shadowColor: Colors.black, shadowOpacity: 0.08, shadowRadius: 6, elevation: 2 },
-    cardLabel: { alignSelf: "flex-start", backgroundColor: "#DDEEFF", borderRadius: 3, paddingHorizontal: 5, paddingVertical: 3, fontSize: Fonts.overline },
-    detailRow: { minHeight: 43, flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 7, borderBottomWidth: 1, borderBottomColor: Colors.gray200 },
-    lastRow: { borderBottomWidth: 0 },
-    iconBox: { width: 29, height: 29, borderRadius: 4, backgroundColor: "#DDEEFF", alignItems: "center", justifyContent: "center" },
-    detailTitle: { fontSize: Fonts.overline, color: Colors.gray600 },
-    detailValue: { fontSize: Fonts.caption, marginTop: 1 },
-    safeNotice: { backgroundColor: "#DDEEFF", borderRadius: 6, padding: 10, flexDirection: "row", gap: 8, alignItems: "center" },
-    safeText: { flex: 1, color: Colors.gray600, fontSize: Fonts.caption },
+  container: {
+    flex: 1,
+    backgroundColor: "#F0F4FC",
+  },
+  statusBarBackground: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "#0066FF",
+  },
 
+  // Header
+  header: {
+    backgroundColor: "#0066FF",
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 22,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+  },
+  headerTopRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  profileMetaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  avatarWrap: {
+    position: "relative",
+  },
+  avatar: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: "#DCEBFE",
+  },
+  onlineDot: {
+    position: "absolute",
+    bottom: 2,
+    right: 2,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: "#22C55E",
+    borderWidth: 2,
+    borderColor: "#0066FF",
+  },
+  uploadingOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 30,
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  userTextColumn: {
+    gap: 2,
+  },
+  userName: {
+    fontSize: 18,
+    letterSpacing: 0.2,
+  },
+  userRole: {
+    fontSize: 13,
+    opacity: 0.95,
+  },
+  powerButton: {
+    width: 41,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: Colors.white,
+    alignItems: "center",
+    justifyContent: "center",
+    ...createShadow({ x: 0, y: 2, blur: 6, opacity: 0.08, elevation: 2 }),
+  },
+  sessionPill: {
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 16,
+    backgroundColor: Colors.white,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 16,
+  },
+  sessionPillText: {
+    fontSize: 11,
+    letterSpacing: 0.3,
+  },
+
+  // Main Scrollable Area
+  scrollContent: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 24,
+    gap: 14,
+  },
+
+  // Cards
+  card: {
+    backgroundColor: Colors.white,
+    borderRadius: 18,
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 6,
+    ...createShadow({ x: 0, y: 4, blur: 14, opacity: 0.06, elevation: 3 }),
+  },
+  cardHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 10,
+  },
+  cardTag: {
+    backgroundColor: "#E0EFFF",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  cardTagText: {
+    fontSize: 10.5,
+    color: "#0066FF",
+    letterSpacing: 0.3,
+  },
+  editButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    borderRadius: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    backgroundColor: Colors.white,
+  },
+  editButtonText: {
+    fontSize: 10,
+    color: "#6B7280",
+    letterSpacing: 0.2,
+  },
+
+  // Detail Row
+  detailRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    paddingVertical: 10,
+  },
+  iconBox: {
+    width: 38,
+    height: 38,
+    borderRadius: 8,
+    backgroundColor: "#E0EFFF",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  detailTextColumn: {
+    flex: 1,
+    gap: 1,
+  },
+  detailLabel: {
+    fontSize: 11,
+    color: "#6B7280",
+  },
+  detailValue: {
+    fontSize: 14,
+    color: "#111827",
+    letterSpacing: 0.1,
+  },
+  rowDivider: {
+    height: 1,
+    backgroundColor: "#F3F4F6",
+  },
+
+  // Security Banner
+  securityBanner: {
+    backgroundColor: "#DCEBFE",
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginTop: 2,
+  },
+  securityTextColumn: {
+    flex: 1,
+    gap: 1,
+  },
+  securityTitle: {
+    fontSize: 12,
+    color: "#1E293B",
+  },
+  securitySubtitle: {
+    fontSize: 10.5,
+    color: "#64748B",
+  },
 });

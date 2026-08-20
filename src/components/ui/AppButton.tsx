@@ -39,9 +39,18 @@ export default function AppButton({
   leftIcon,
   rightIcon,
 }: AppButtonProps) {
+  const handlePress = () => {
+    if (typeof document !== "undefined") {
+      (document.activeElement as HTMLElement)?.blur?.();
+      setTimeout(onPress, 10);
+    } else {
+      onPress();
+    }
+  };
+
   return (
     <Pressable
-      onPress={onPress}
+      onPress={handlePress}
       disabled={disabled || loading}
       style={({ pressed }) => [
         styles.button,

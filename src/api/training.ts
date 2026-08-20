@@ -1,6 +1,7 @@
+import { USE_MOCK_DATA } from "@/config/dataSource";
 import { apiRequest } from "./client";
-import { USE_MOCK_DATA } from "./mockConfig";
 import * as mock from "./mockService";
+// All types are preserved — they are used extensively across screens.
 
 export type ModuleConfig = {
   category?: string;
@@ -67,6 +68,7 @@ export type TrainingOut = {
 export type TrainingAgendaItem = {
   conferenceUid: string;
   title: string;
+  trainerName: string | null;
   conferenceDate: string | null;
   conferenceTime: string | null;
   conferenceStatus: string;
@@ -76,6 +78,13 @@ export type TrainingAgendaItem = {
   trainingType: string | null;
   state: string | null;
   trainingHub: string | null;
+  totalPax: number | null;
+  hoid: string | null;
+  venueName: string | null;
+  district: string | null;
+  updatedBy: string | null;
+  updationOn: string | null;
+  timestamp: string | null;
 };
 
 export type AudienceBreakdown = {
@@ -115,6 +124,7 @@ export type ExecutionFlowItem = {
   startedAt: string | null;
   endedAt: string | null;
   elapsedSeconds: number | null;
+  assignedMinutes: number | null;
 };
 
 export type AuditLogEntry = {
@@ -131,6 +141,7 @@ export type AuditLogEntry = {
 export type SessionDashboard = {
   conferenceUid: string;
   title: string;
+  trainingType: string | null;
   conferenceDate: string | null;
   conferenceTime: string | null;
   trainerName: string | null;
@@ -159,6 +170,7 @@ export function createTraining(token: string, payload: TrainingCreatePayload) {
 }
 
 export function fetchTrainerAgenda(token: string, range?: { start?: string; end?: string }) {
+  if (USE_MOCK_DATA) return mock.fetchTrainerAgenda(token, range);
   const params = new URLSearchParams();
   if (range?.start) params.set("start", range.start);
   if (range?.end) params.set("end", range.end);

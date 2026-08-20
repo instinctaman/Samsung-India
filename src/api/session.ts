@@ -1,5 +1,5 @@
+import { USE_MOCK_DATA } from "@/config/dataSource";
 import { apiRequest } from "./client";
-import { USE_MOCK_DATA } from "./mockConfig";
 import * as mock from "./mockService";
 
 export type SessionModuleKey = "ATTENDANCE" | "STANDARD_TEST" | "LIVE_QUIZ" | "SURVEY";
@@ -17,8 +17,21 @@ export type SessionModule = {
   isMissed: boolean;
   completedAt: string | null;
   score: string | null;
+  ranDuration?: string | null;
   assessmentSuiteUid: string | null;
 };
+
+
+export type SessionFlowState =
+  | "JOINED"
+  | "SECURE_CHECKIN"
+  | "LOCATION_VERIFIED"
+  | "CAMERA_VERIFIED"
+  | "MARK_ATTENDANCE"
+  | "ACCESS_GRANTED"
+  | "ATTENDANCE_RECORDED";
+
+export type AttendanceState = SessionFlowState;
 
 export type CurrentSession = {
   conferenceUid: string;
@@ -31,10 +44,13 @@ export type CurrentSession = {
   started: boolean;
   startsAt: string | null;
   attendanceGeoFencing: boolean;
+  securityCheckInCompleted?: boolean;
+  attendanceState?: AttendanceState;
+  flowState?: SessionFlowState;
   modules: SessionModule[];
 };
 
-export function getCurrentSession(token: string) {
+ function getCurrentSession(token: string) {
   if (USE_MOCK_DATA) return mock.getCurrentSession(token);
   return apiRequest<CurrentSession>("/sessions/current", {
     headers: { Authorization: `Bearer ${token}` },
@@ -51,11 +67,23 @@ export type SessionHistoryItem = {
   passed: boolean | null;
 };
 
-export function getSessionHistory(token: string) {
+function getSessionHistory(token: string) {
   if (USE_MOCK_DATA) return mock.getSessionHistory(token);
   return apiRequest<SessionHistoryItem[]>("/sessions/history", {
     headers: { Authorization: `Bearer ${token}` },
   });
 }
+// Demo implementations — no network calls.
+export {
+  getCurrentSession,
+  getSessionHistory,
+  setSecurityCheckInCompleted,
+  getAttendanceState,
+  setAttendanceState,
+  getSessionFlowState,
+  setSessionFlowState,
+  resetSessionFlowState,
+  isAttendanceRecorded,
+} from "@/api/mockService";
+export { ApiError } from "@/api/client";
 
-export { ApiError } from "./client";

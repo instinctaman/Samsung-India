@@ -4,49 +4,40 @@ import { Ionicons } from "@expo/vector-icons";
 
 import AppText from "@/components/ui/AppText";
 import { Colors } from "@/theme/colors";
-import { Fonts } from "@/theme/fonts";
 import { FontWeight } from "@/theme/fontWeight";
 
 type RecordedCardProps = {
-  title: string;
-  subtitle: string;
-  color: string;
+  title?: string;
+  subtitle?: string;
+  color?: string;
   backgroundColor?: string;
 };
 
 export default function RecordedCard({
-  title,
-  subtitle,
-  color,
-  backgroundColor = "#D8F8EB",
+  title = "Recorded",
+  subtitle = "Good Job !",
+  color = Colors.recordedGreen,
+  backgroundColor = Colors.recordedGreenBg,
 }: RecordedCardProps) {
   return (
-    <View
-      style={[
-        styles.container,
-        {
-          backgroundColor,
-        },
-      ]}
-    >
+    <View style={[styles.container, { backgroundColor }]}>
       <Ionicons
         name="checkmark-circle"
-        size={18}
+        size={26}
         color={color}
       />
 
-      <View>
+      <View style={styles.textWrap}>
         <AppText
-          style={styles.title}
-          color={color}
-          weight={FontWeight.medium}
+          style={[styles.title, { color }]}
+          weight={FontWeight.bold}
         >
           {title}
         </AppText>
 
         <AppText
-          style={styles.subtitle}
-          color={color}
+          style={[styles.subtitle, { color }]}
+          weight={FontWeight.medium}
         >
           {subtitle}
         </AppText>
@@ -59,18 +50,21 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 7,
-    borderRadius: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 5,
-    marginTop: 7,
+    gap: 10,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginTop: 10,
   },
-
+  textWrap: {
+    gap: 1,
+  },
   title: {
-    fontSize: Fonts.body,
+    fontSize: 12,
+    letterSpacing: 0.1,
   },
-
   subtitle: {
-    fontSize: Fonts.bodySm,
+    fontSize: 9,
   },
 });
+
