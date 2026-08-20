@@ -1,4 +1,6 @@
 import { apiRequest } from "./client";
+import { USE_MOCK_DATA } from "./mockConfig";
+import * as mock from "./mockService";
 
 export type AssessmentQuestion = {
   id: number;
@@ -28,6 +30,7 @@ export type AssessmentQuestionsResponse = {
 };
 
 export function getAssessmentQuestions(token: string, suiteUid: string) {
+  if (USE_MOCK_DATA) return mock.getAssessmentQuestions(token, suiteUid);
   return apiRequest<AssessmentQuestionsResponse>(`/assessments/${suiteUid}/questions`, {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -39,10 +42,34 @@ export function submitAssessment(
   conferenceUid: string,
   answers: AssessmentAnswer[]
 ) {
+  if (USE_MOCK_DATA) return mock.submitAssessment(token, suiteUid, conferenceUid, answers);
   return apiRequest<AssessmentResult>(`/assessments/${suiteUid}/submit`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
     body: JSON.stringify({ conferenceUid, answers }),
+  });
+}
+
+export type TerminateAssessmentResult = {
+  locked: boolean;
+  violationType?: string;
+  attemptedCount?: number;
+};
+
+export function terminateAssessmentWithViolation(
+  token: string,
+  suiteUid: string,
+  conferenceUid: string,
+  violationType: string,
+  answers: AssessmentAnswer[]
+) {
+  if (USE_MOCK_DATA) {
+    return mock.terminateAssessmentWithViolation(token, suiteUid, conferenceUid, violationType, answers);
+  }
+  return apiRequest<TerminateAssessmentResult>(`/assessments/${suiteUid}/terminate`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ conferenceUid, violationType, answers }),
   });
 }
 

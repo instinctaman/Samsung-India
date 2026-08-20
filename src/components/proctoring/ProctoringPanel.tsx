@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
-import * as FileSystem from "expo-file-system";
+import { File } from "expo-file-system";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -137,9 +137,7 @@ export default function ProctoringPanel({
         let frameBase64: string | undefined = photo?.base64;
         if (!frameBase64 && photo?.uri && Platform.OS !== "web") {
           try {
-            frameBase64 = await FileSystem.readAsStringAsync(photo.uri, {
-              encoding: FileSystem.EncodingType.Base64,
-            });
+            frameBase64 = await new File(photo.uri).base64();
           } catch {
             // File unreadable — skip this frame
           }
