@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import * as FileSystem from "expo-file-system";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Platform,
@@ -23,9 +23,11 @@ import {
   VIOLATION_FOOTER_LABELS,
 } from "./violations";
 
-// 700ms interval reliably takes 3 samples within the 2-second continuous window
-const CHECK_INTERVAL_MS = 700;
-const CONTINUOUS_VIOLATION_THRESHOLD_MS = 2000;
+const CHECK_INTERVAL_MS = 500;
+// Give the candidate a moment to settle into frame before checks start —
+// otherwise the very first capture (face still off-center/out of view) fires
+// a false violation the instant the camera turns on.
+const GRACE_PERIOD_MS = 400 ;
 
 type Props = {
   token: string | null;
@@ -52,15 +54,44 @@ export default function ProctoringPanel({
   const cameraRef = useRef<CameraView>(null);
   const isChecking = useRef(false);
 
-  // Tracks candidate violation currently observed in camera
-  const candidateViolationRef = useRef<SecurityViolationType | null>(null);
-  // Timestamp when candidate violation started continuously
-  const candidateStartTimeRef = useRef<number | null>(null);
   // Guard flag: triggers exactly ONE violation per continuous event until problem clears
   const hasTriggeredCurrentRef = useRef<boolean>(false);
 
   const [activeCandidateBadge, setActiveCandidateBadge] =
     useState<SecurityViolationType | null>(null);
+
+  // Captures feed a lightweight heuristic (downsampled to ~120x90 anyway), so
+  // ask the hardware for its smallest supported size — decoding a full-res
+  // photo every 700ms would otherwise stall the JS thread.
+  const [pictureSize, setPictureSize] = useState<string | undefined>(
+    undefined,
+  );
+
+  // Timestamp the camera actually came alive, so checks can wait out
+  // GRACE_PERIOD_MS from that moment rather than from component mount.
+  const cameraReadyAtRef = useRef<number | null>(null);
+  const [inGracePeriod, setInGracePeriod] = useState(true);
+
+  const handleCameraReady = useCallback(() => {
+    if (!cameraReadyAtRef.current) {
+      cameraReadyAtRef.current = Date.now();
+    }
+    if (pictureSize || !cameraRef.current) return;
+    cameraRef.current
+      .getAvailablePictureSizesAsync()
+      .then((sizes) => {
+        if (sizes.length === 0) return;
+        const smallest = sizes.reduce((best, size) => {
+          const [w, h] = size.split("x").map(Number);
+          const [bw, bh] = best.split("x").map(Number);
+          return w * h < bw * bh ? size : best;
+        });
+        setPictureSize(smallest);
+      })
+      .catch(() => {
+        // Keep the hardware default if sizes can't be fetched
+      });
+  }, [pictureSize]);
 
   const maxedOut = warningsCount >= MAX_PROCTORING_WARNINGS;
 
@@ -70,8 +101,6 @@ export default function ProctoringPanel({
 
   useEffect(() => {
     if (!active || paused || !permission?.granted || !token || maxedOut) {
-      candidateViolationRef.current = null;
-      candidateStartTimeRef.current = null;
       hasTriggeredCurrentRef.current = false;
       return;
     }
@@ -80,6 +109,14 @@ export default function ProctoringPanel({
       if (isChecking.current || !cameraRef.current || paused || maxedOut) {
         return;
       }
+
+      const readyAt = cameraReadyAtRef.current;
+      if (!readyAt || Date.now() - readyAt < GRACE_PERIOD_MS) {
+        setInGracePeriod(true);
+        return;
+      }
+      setInGracePeriod(false);
+
       isChecking.current = true;
 
       try {
@@ -90,6 +127,9 @@ export default function ProctoringPanel({
           // encoder may not finish writing the base64 payload, causing silent
           // failures where photo.base64 is undefined or empty.
           skipProcessing: false,
+          // Background proctoring captures fire every 700ms — without this the
+          // device's shutter sound/click plays continuously through the test.
+          shutterSound: false,
         });
 
         // On some Android builds (Samsung, Pixel), photo.base64 is undefined
@@ -119,36 +159,20 @@ export default function ProctoringPanel({
             currentFrameViolation = result.violation;
           }
 
-          // ── Continuous 2-Second Verification Logic ─────────────────────────
+          // ── Immediate Violation Trigger ──────────────────────────────────
           if (currentFrameViolation) {
             setActiveCandidateBadge(currentFrameViolation);
-            const now = Date.now();
 
-            if (!candidateStartTimeRef.current) {
-              // Violation candidate started
-              candidateViolationRef.current = currentFrameViolation;
-              candidateStartTimeRef.current = now;
-              hasTriggeredCurrentRef.current = false;
-            } else {
-              // Update to most recent violation type
-              candidateViolationRef.current = currentFrameViolation;
-              if (
-                !hasTriggeredCurrentRef.current &&
-                now - candidateStartTimeRef.current >=
-                  CONTINUOUS_VIOLATION_THRESHOLD_MS
-              ) {
-                // Violation persisted continuously for ≥ 2000ms:
-                hasTriggeredCurrentRef.current = true;
-                onViolation?.(currentFrameViolation);
-                if (warningsCount + 1 >= MAX_PROCTORING_WARNINGS) {
-                  onMaxWarnings?.();
-                }
+            if (!hasTriggeredCurrentRef.current) {
+              // Fire on the very first frame the violation is seen on.
+              hasTriggeredCurrentRef.current = true;
+              onViolation?.(currentFrameViolation);
+              if (warningsCount + 1 >= MAX_PROCTORING_WARNINGS) {
+                onMaxWarnings?.();
               }
             }
           } else {
-            // Problem cleared: reset candidate tracking
-            candidateViolationRef.current = null;
-            candidateStartTimeRef.current = null;
+            // Problem cleared: reset guard so the next occurrence retriggers.
             hasTriggeredCurrentRef.current = false;
             setActiveCandidateBadge(null);
           }
@@ -162,8 +186,6 @@ export default function ProctoringPanel({
 
     return () => {
       clearInterval(interval);
-      candidateViolationRef.current = null;
-      candidateStartTimeRef.current = null;
       hasTriggeredCurrentRef.current = false;
       setActiveCandidateBadge(null);
     };
@@ -188,7 +210,9 @@ export default function ProctoringPanel({
       ? "Submitting…"
       : currentBadge
         ? VIOLATION_FOOTER_LABELS[currentBadge] || "VIOLATION\nDETECTED"
-        : "AI Active";
+        : inGracePeriod
+          ? "Get Ready…"
+          : "AI Active";
 
   const isDangerBadge = !!currentBadge || maxedOut;
 
@@ -233,30 +257,36 @@ export default function ProctoringPanel({
             </Pressable>
           </View>
         ) : (
-          <CameraView
-            ref={cameraRef}
-            style={styles.camera}
-            facing="front"
-            mirror
-          />
+          <>
+            <CameraView
+              ref={cameraRef}
+              style={styles.camera}
+              facing="front"
+              mirror
+              pictureSize={pictureSize}
+              onCameraReady={handleCameraReady}
+              // Background proctoring captures fire every 700ms — without this
+              // the screen visibly flashes on every silent capture.
+              animateShutter={false}
+            />
+            <View
+              style={[
+                styles.footer,
+                isDangerBadge && styles.footerDanger,
+                !isDangerBadge && warningsCount > 0 && styles.footerWarning,
+              ]}
+            >
+              <Ionicons name={footerIcon} size={12} color={Colors.white} />
+              <AppText
+                style={styles.footerText}
+                weight={FontWeight.bold}
+                numberOfLines={2}
+              >
+                {footerLabel}
+              </AppText>
+            </View>
+          </>
         )}
-      </View>
-
-      <View
-        style={[
-          styles.footer,
-          isDangerBadge && styles.footerDanger,
-          !isDangerBadge && warningsCount > 0 && styles.footerWarning,
-        ]}
-      >
-        <Ionicons name={footerIcon} size={12} color={Colors.white} />
-        <AppText
-          style={styles.footerText}
-          weight={FontWeight.bold}
-          numberOfLines={2}
-        >
-          {footerLabel}
-        </AppText>
       </View>
     </View>
   );
@@ -292,6 +322,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#1F2937",
     alignItems: "center",
     justifyContent: "center",
+    position: "relative",
   },
   camera: { width: "100%", height: "100%" },
 
@@ -315,6 +346,10 @@ const styles = StyleSheet.create({
   },
   permissionButtonText: { color: Colors.white, fontSize: Fonts.overline },
   footer: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",

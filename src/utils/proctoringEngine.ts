@@ -4,6 +4,8 @@
  * checks (No Face, Multiple People, Side-Look, Head-Tilt) for Web and React Native.
  */
 
+import jpeg from "jpeg-js";
+
 import {
   SECURITY_VIOLATIONS,
   SecurityViolationType,
@@ -49,75 +51,47 @@ export function decodeBase64ToBytes(base64: string): Uint8Array {
   return bytes;
 }
 
-// ─── Fast Baseline JPEG Parser & Decoder ─────────────────────────────────────
+// ─── JPEG Parser & Decoder ────────────────────────────────────────────────────
+// Real Huffman/IDCT decode via jpeg-js, downsampled afterwards to keep the
+// per-frame pixel analysis below cheap (proctoring runs this every 700ms).
+const MAX_DECODE_WIDTH = 120;
+const MAX_DECODE_HEIGHT = 90;
+
 export function parseJpeg(
   bytes: Uint8Array,
 ): { width: number; height: number; data: Uint8Array } | null {
   try {
-    if (bytes.length < 4 || bytes[0] !== 0xff || bytes[1] !== 0xd8) {
-      return null;
-    }
+    const decoded = jpeg.decode(bytes, {
+      useTArray: true,
+      formatAsRGBA: false,
+      tolerantDecoding: true,
+    });
+    if (!decoded || !decoded.width || !decoded.height) return null;
 
-    let offset = 2;
-    let width = 0;
-    let height = 0;
-    let scanOffset = 0;
-
-    while (offset < bytes.length) {
-      if (bytes[offset] !== 0xff) {
-        offset++;
-        continue;
-      }
-      const marker = bytes[offset + 1];
-      offset += 2;
-
-      // SOF0 (Baseline DCT)
-      if (marker === 0xc0) {
-        const length = (bytes[offset] << 8) | bytes[offset + 1];
-        height = (bytes[offset + 3] << 8) | bytes[offset + 4];
-        width = (bytes[offset + 5] << 8) | bytes[offset + 6];
-        offset += length;
-      }
-      // SOS (Start of Scan)
-      else if (marker === 0xda) {
-        const length = (bytes[offset] << 8) | bytes[offset + 1];
-        offset += length;
-        scanOffset = offset;
-        break;
-      } else if (marker === 0xd9) {
-        break;
-      } else {
-        const length = (bytes[offset] << 8) | bytes[offset + 1];
-        offset += length;
-      }
-    }
-
-    if (width <= 0 || height <= 0 || scanOffset <= 0) return null;
-
-    const outWidth = Math.min(width, 120);
-    const outHeight = Math.min(height, 90);
+    const scale = Math.min(
+      1,
+      MAX_DECODE_WIDTH / decoded.width,
+      MAX_DECODE_HEIGHT / decoded.height,
+    );
+    const outWidth = Math.max(1, Math.round(decoded.width * scale));
+    const outHeight = Math.max(1, Math.round(decoded.height * scale));
     const rgbData = new Uint8Array(outWidth * outHeight * 3);
 
-    const scanLength = bytes.length - scanOffset;
-    if (scanLength > 100) {
-      for (let y = 0; y < outHeight; y++) {
-        const rowFraction = y / outHeight;
-        for (let x = 0; x < outWidth; x++) {
-          const colFraction = x / outWidth;
-          const sampleIndex =
-            scanOffset +
-            Math.floor(
-              (rowFraction * 0.7 + colFraction * 0.3) * (scanLength - 4),
-            );
-          const b1 = bytes[sampleIndex] || 128;
-          const b2 = bytes[sampleIndex + 1] || 128;
-          const b3 = bytes[sampleIndex + 2] || 128;
-
-          const outIdx = (y * outWidth + x) * 3;
-          rgbData[outIdx] = Math.min(255, b1 + 50);
-          rgbData[outIdx + 1] = Math.min(255, b2 + 20);
-          rgbData[outIdx + 2] = b3;
-        }
+    for (let y = 0; y < outHeight; y++) {
+      const srcY = Math.min(
+        decoded.height - 1,
+        Math.floor((y / outHeight) * decoded.height),
+      );
+      for (let x = 0; x < outWidth; x++) {
+        const srcX = Math.min(
+          decoded.width - 1,
+          Math.floor((x / outWidth) * decoded.width),
+        );
+        const srcIdx = (srcY * decoded.width + srcX) * 3;
+        const outIdx = (y * outWidth + x) * 3;
+        rgbData[outIdx] = decoded.data[srcIdx];
+        rgbData[outIdx + 1] = decoded.data[srcIdx + 1];
+        rgbData[outIdx + 2] = decoded.data[srcIdx + 2];
       }
     }
 
@@ -246,7 +220,6 @@ export function analyzeImagePixels(
   // 3. SINGLE FACE POSE ESTIMATION
   const centroidX = sumX / totalSkinPixels;
   const centroidY = sumY / totalSkinPixels;
-  const normX = centroidX / width;
   const normY = centroidY / height;
 
   const faceBoxWidth = Math.max(maxX - minX, 1);
@@ -328,13 +301,6 @@ export function analyzeImagePixels(
   let darkSumX = 0;
   let darkCount = 0;
 
-  // Luminance on left half vs right half
-  const midFaceX = (minX + maxX) / 2;
-  let leftLumaSum = 0;
-  let leftLumaCount = 0;
-  let rightLumaSum = 0;
-  let rightLumaCount = 0;
-
   for (let y = minY; y <= maxY; y++) {
     for (let x = minX; x <= maxX; x++) {
       const idx = (y * width + x) * channels;
@@ -351,14 +317,6 @@ export function analyzeImagePixels(
           leftColSkin++;
         } else if (x > col2End) {
           rightColSkin++;
-        }
-
-        if (x < midFaceX) {
-          leftLumaSum += lum;
-          leftLumaCount++;
-        } else {
-          rightLumaSum += lum;
-          rightLumaCount++;
         }
 
         // Dark features in the eye/nose vertical band (upper 20% - 65% of face)
@@ -387,27 +345,10 @@ export function analyzeImagePixels(
     darkFeatureOffset = Math.abs(darkCenterX - centroidX) / faceBoxWidth;
   }
 
-  // 3. Luminance / Shading Asymmetry between face halves
-  const avgLeftLuma = leftLumaCount > 0 ? leftLumaSum / leftLumaCount : 100;
-  const avgRightLuma = rightLumaCount > 0 ? rightLumaSum / rightLumaCount : 100;
-  const lumaAsymmetry =
-    Math.abs(avgLeftLuma - avgRightLuma) /
-    Math.max((avgLeftLuma + avgRightLuma) / 2, 1);
-
-  // 4. Horizontal Frame Centroid (Shifted towards margins)
-  const isFrameShift = normX < 0.35 || normX > 0.65;
-
   const isSideLookColumnRatio = columnRatio > 1.6;
   const isSideLookDarkFeature = darkFeatureOffset > 0.08;
-  const isSideLookLumaAsymmetry =
-    lumaAsymmetry > 0.16 && leftLumaCount + rightLumaCount > 80;
 
-  if (
-    isSideLookColumnRatio ||
-    isSideLookDarkFeature ||
-    isSideLookLumaAsymmetry ||
-    isFrameShift
-  ) {
+  if (isSideLookColumnRatio || isSideLookDarkFeature) {
     return {
       faceCount: 1,
       violation: SECURITY_VIOLATIONS.SIDE_LOOK,
@@ -518,18 +459,15 @@ export async function detectFacesWithShapeDetection(
 
       // 2. Bounding Box Analysis
       if (firstFace.boundingBox) {
-        const vw = videoEl.videoWidth || 640;
         const vh = videoEl.videoHeight || 480;
-        const cx =
-          (firstFace.boundingBox.x + firstFace.boundingBox.width / 2) / vw;
         const cy =
           (firstFace.boundingBox.y + firstFace.boundingBox.height / 2) / vh;
         const aspect =
           firstFace.boundingBox.width /
           Math.max(firstFace.boundingBox.height, 1);
 
-        // Side-look: Face shifted horizontally or narrowed profile
-        if (cx < 0.35 || cx > 0.65 || aspect < 0.65) {
+        // Side-look: narrowed profile (head turned left/right)
+        if (aspect < 0.65) {
           return { faceCount: 1, violation: SECURITY_VIOLATIONS.SIDE_LOOK };
         }
 

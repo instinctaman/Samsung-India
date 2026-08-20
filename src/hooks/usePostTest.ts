@@ -6,7 +6,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Platform } from "react-native";
+import { AppState, Platform } from "react-native";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -209,7 +209,7 @@ export function usePostTest(
         return;
 
       const now = Date.now();
-      if (now - lastViolationTimeRef.current < 4000) return;
+      if (now - lastViolationTimeRef.current < 1500) return;
       lastViolationTimeRef.current = now;
 
       const newCount = recordSessionViolation(sessionKey, violationType);
@@ -249,6 +249,23 @@ export function usePostTest(
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () =>
       document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [readyToStart, testStatus, triggerViolation]);
+
+  // App-switch detection (Native — the equivalent of a tab switch on web)
+  useEffect(() => {
+    if (Platform.OS === "web" || !readyToStart) return;
+
+    const subscription = AppState.addEventListener("change", (nextState) => {
+      if (
+        nextState === "background" &&
+        testStatus === "active" &&
+        !terminatingRef.current
+      ) {
+        triggerViolation(SECURITY_VIOLATIONS.TAB_SWITCH);
+      }
+    });
+
+    return () => subscription.remove();
   }, [readyToStart, testStatus, triggerViolation]);
 
   // Timer countdown
