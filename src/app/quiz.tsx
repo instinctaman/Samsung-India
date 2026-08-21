@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import React from "react";
+import { StatusBar } from "expo-status-bar";
 import {
   ActivityIndicator,
   Pressable,
@@ -8,21 +8,20 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { StatusBar } from "expo-status-bar";
 
-import AppText from "@/components/ui/AppText";
 import {
-  QuizLiveHeader,
-  QuizTimer,
-  QuizQuestionCard,
-  QuizResult,
-  QuizWaiting,
   AssessmentMap,
   QuizLeaderboard,
+  QuizLiveHeader,
+  QuizQuestionCard,
+  QuizResult,
+  QuizTimer,
+  QuizWaiting,
 } from "@/components/quiz";
-import { Colors } from "@/theme/colors";
-import { FontWeight } from "@/theme/fontWeight";
+import AppText from "@/components/ui/AppText";
 import { useQuiz } from "@/hooks/useQuiz";
+import { Colors } from "@/theme/colors";
+import { FontWeight } from "@/theme/typography";
 
 export default function QuizScreen() {
   const {
@@ -54,7 +53,9 @@ export default function QuizScreen() {
     return (
       <SafeAreaView style={styles.loadingContainer}>
         <ActivityIndicator color={Colors.headerBlue} size="large" />
-        <AppText style={styles.loadingText}>Loading the quiz…</AppText>
+        <AppText variant="body" color={Colors.gray600} align="center">
+          Loading the quiz…
+        </AppText>
       </SafeAreaView>
     );
   }
@@ -62,9 +63,15 @@ export default function QuizScreen() {
   if (loadError && questions.length === 0) {
     return (
       <SafeAreaView style={styles.loadingContainer}>
-        <AppText style={styles.loadingText}>{loadError}</AppText>
+        <AppText variant="body" color={Colors.danger} align="center">
+          {loadError}
+        </AppText>
         <Pressable style={styles.retryButton} onPress={loadQuestions}>
-          <AppText color={Colors.white} weight={FontWeight.bold}>
+          <AppText
+            variant="label"
+            color={Colors.white}
+            weight={FontWeight.bold}
+          >
             Try Again
           </AppText>
         </Pressable>
@@ -162,8 +169,6 @@ export default function QuizScreen() {
                   }}
                   selectedOptionId={selectedOptionId}
                   onSelectOption={handleSelectOption}
-                  disabled={false}
-                  isResultMode={false}
                 />
               )}
 
@@ -176,7 +181,8 @@ export default function QuizScreen() {
               >
                 <Ionicons name="play-forward" size={13} color="#D97706" />
                 <AppText
-                  style={styles.devSkipButtonText}
+                  variant="caption"
+                  color="#92400E"
                   weight={FontWeight.bold}
                 >
                   Skip Test (Testing)
@@ -185,7 +191,14 @@ export default function QuizScreen() {
               {/* === [END TEMPORARY DEV SKIP BUTTON] === */}
 
               {submitError && (
-                <AppText style={styles.inlineError}>{submitError}</AppText>
+                <AppText
+                  variant="caption"
+                  color={Colors.danger}
+                  align="center"
+                  style={styles.inlineError}
+                >
+                  {submitError}
+                </AppText>
               )}
             </View>
           </ScrollView>
@@ -198,34 +211,23 @@ export default function QuizScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    height: "100%",
-    minHeight: "100%",
     backgroundColor: Colors.background,
   },
   body: {
     flex: 1,
-    height: "100%",
     minHeight: 0,
     backgroundColor: Colors.background,
   },
   scrollView: {
     flex: 1,
-    height: "100%",
   },
   loadingContainer: {
     flex: 1,
-    height: "100%",
-    minHeight: "100%",
     alignItems: "center",
     justifyContent: "center",
     gap: 12,
     paddingHorizontal: 24,
     backgroundColor: Colors.background,
-  },
-  loadingText: {
-    fontSize: 14,
-    color: Colors.gray600,
-    textAlign: "center",
   },
   retryButton: {
     backgroundColor: Colors.headerBlue,
@@ -234,33 +236,26 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   inlineError: {
-    color: Colors.danger,
-    fontSize: 13,
     marginTop: 8,
-    textAlign: "center",
   },
   content: {
     flexGrow: 1,
     width: "100%",
-    maxWidth: "100%",
     paddingHorizontal: 16,
     paddingTop: 4,
     paddingBottom: 16,
   },
   activeTopSection: {
-    flex: 1,
     width: "100%",
-    maxWidth: "100%",
-    justifyContent: "space-between",
+    alignItems: "center",
   },
   timerContainer: {
-    flex: 1,
+    width: "100%",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 8,
+    paddingTop: 4,
+    paddingBottom: 8,
   },
-
-  /* === [TEMPORARY DEV SKIP BUTTON STYLES - REMOVE LATER] === */
   devSkipButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -268,19 +263,11 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingVertical: 8,
     paddingHorizontal: 14,
+    marginTop: 12,
     backgroundColor: "#FEF3C7",
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: "#FCD34D",
-    borderRadius: 10,
-    marginTop: 12,
     alignSelf: "center",
   },
-  devSkipButtonText: {
-    fontSize: 12,
-    color: "#B45309",
-  },
-  /* === [END TEMPORARY DEV SKIP BUTTON STYLES] === */
 });
-
-
-

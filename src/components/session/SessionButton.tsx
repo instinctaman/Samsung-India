@@ -4,7 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 
 import AppText from "@/components/ui/AppText";
 import { Colors } from "@/theme/colors";
-import { FontWeight } from "@/theme/fontWeight";
+import { FontWeight } from "@/theme/typography";
 
 type SessionButtonProps = {
   title: string;
@@ -48,7 +48,7 @@ export default function SessionButton({
         />
       )}
       <AppText
-        style={styles.text}
+        variant="bodySmall"
         color={Colors.white}
         weight={FontWeight.bold}
       >
@@ -74,9 +74,5 @@ const styles = StyleSheet.create({
   },
   icon: {
     marginRight: 6,
-  },
-  text: {
-    fontSize: 15,
-    letterSpacing: 0.2,
   },
 });

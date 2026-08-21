@@ -4,7 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 
 import AppText from "@/components/ui/AppText";
 import { Colors } from "@/theme/colors";
-import { FontWeight } from "@/theme/fontWeight";
+import { FontWeight } from "@/theme/typography";
 
 type WaitingCardProps = {
   title?: string;
@@ -29,14 +29,16 @@ export default function WaitingCard({
 
       <View style={styles.textWrap}>
         <AppText
-          style={[styles.title, { color }]}
+          variant="label"
+          color={color}
           weight={FontWeight.bold}
         >
           {title}
         </AppText>
 
         <AppText
-          style={[styles.subtitle, { color }]}
+          variant="caption"
+          color={color}
           weight={FontWeight.medium}
         >
           {subtitle}
@@ -59,12 +61,5 @@ const styles = StyleSheet.create({
   },
   textWrap: {
     gap: 1,
-  },
-  title: {
-    fontSize: 13.5,
-    letterSpacing: 0.1,
-  },
-  subtitle: {
-    fontSize: 11.5,
   },
 });

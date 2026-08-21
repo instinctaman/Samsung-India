@@ -310,6 +310,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#EEF4FF",
+    paddingTop: 50,
   },
   statusBarBackground: {
     position: "absolute",
@@ -319,18 +320,23 @@ const styles = StyleSheet.create({
     backgroundColor: "#EEF4FF",
   },
   scrollContent: {
+    flexGrow: 1,
     paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 32,
-    alignItems: "center",
+    paddingTop: 14,
+    paddingBottom: 20,
+    justifyContent: "space-between",
   },
 
   // Main Card
   card: {
     width: "100%",
+    maxWidth: 480,
+    alignSelf: "center",
     backgroundColor: Colors.white,
     borderRadius: 24,
     padding: 20,
+    flex: 1,
+    justifyContent: "space-between",
     ...createShadow({ x: 0, y: 4, blur: 12, opacity: 0.08, elevation: 3 }),
   },
   title: {
@@ -344,21 +350,22 @@ const styles = StyleSheet.create({
     color: "#6B7280",
     textAlign: "center",
     marginTop: 6,
-    marginBottom: 16,
+    marginBottom: 10,
     lineHeight: 18,
   },
 
   // Viewfinder
   viewfinderBox: {
-    width: 313,
-    height: 346,
-    maxWidth: "100%",
+    width: "100%",
+    flex: 1,
+    minHeight: 340,
     alignSelf: "center",
     borderRadius: 20,
     overflow: "hidden",
     backgroundColor: "#BDBDBD",
     alignItems: "center",
     justifyContent: "center",
+    marginVertical: 10,
   },
   placeholderBox: {
     alignItems: "center",
@@ -503,6 +510,8 @@ const styles = StyleSheet.create({
   // Bottom Alerts
   blueAlertBanner: {
     width: "100%",
+    maxWidth: 480,
+    alignSelf: "center",
     backgroundColor: "#DBEAFE",
     borderRadius: 12,
     paddingHorizontal: 14,
@@ -510,7 +519,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    marginTop: 18,
+    marginTop: 14,
   },
   blueShieldIconWrap: {
     width: 32,
@@ -533,11 +542,14 @@ const styles = StyleSheet.create({
     color: "#64748B",
   },
   encryptionFooter: {
+    width: "100%",
+    maxWidth: 480,
+    alignSelf: "center",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
-    marginTop: 20,
+    marginTop: 16,
   },
   lockIconCircle: {
     width: 20,

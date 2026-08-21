@@ -4,7 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 
 import AppText from "@/components/ui/AppText";
 import { Colors } from "@/theme/colors";
-import { FontWeight } from "@/theme/fontWeight";
+import { FontWeight } from "@/theme/typography";
 
 type RecordedCardProps = {
   title?: string;
@@ -29,14 +29,16 @@ export default function RecordedCard({
 
       <View style={styles.textWrap}>
         <AppText
-          style={[styles.title, { color }]}
+          variant="label"
+          color={color}
           weight={FontWeight.bold}
         >
           {title}
         </AppText>
 
         <AppText
-          style={[styles.subtitle, { color }]}
+          variant="tiny"
+          color={color}
           weight={FontWeight.medium}
         >
           {subtitle}
@@ -59,12 +61,4 @@ const styles = StyleSheet.create({
   textWrap: {
     gap: 1,
   },
-  title: {
-    fontSize: 12,
-    letterSpacing: 0.1,
-  },
-  subtitle: {
-    fontSize: 9,
-  },
 });
-

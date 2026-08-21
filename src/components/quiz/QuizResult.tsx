@@ -1,4 +1,3 @@
-import React from "react";
 import { ScrollView, StyleSheet } from "react-native";
 
 import QuizQuestionCard, { QuizQuestionData } from "./QuizQuestionCard";
@@ -32,11 +31,7 @@ export default function QuizResult({
       showsVerticalScrollIndicator={false}
     >
       {/* Result Hero Header (Correct / Incorrect / Time's Up) */}
-      <QuizResultHero
-        type={type}
-        title={heroTitle}
-        subtitle={heroSubtitle}
-      />
+      <QuizResultHero type={type} title={heroTitle} subtitle={heroSubtitle} />
 
       {/* Question Card in Result State */}
       <QuizQuestionCard

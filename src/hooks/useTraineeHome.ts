@@ -462,7 +462,7 @@ export function useTraineeHome() {
     }
 
     router.push({
-      pathname: "/post_test_proctoring",
+      pathname: "/post_test",
       params: {
         conferenceUid: session.conferenceUid,
         suiteUid: standardTest.assessmentSuiteUid,

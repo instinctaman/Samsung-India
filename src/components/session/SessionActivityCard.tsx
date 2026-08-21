@@ -4,7 +4,7 @@ import { StyleSheet, View } from "react-native";
 import AppText from "@/components/ui/AppText";
 import { SessionActivityData } from "@/hooks/useTraineeHome";
 import { Colors } from "@/theme/colors";
-import { FontWeight } from "@/theme/fontWeight";
+import { FontWeight } from "@/theme/typography";
 import { Radius } from "@/theme/radius";
 import { Shadows } from "@/theme/shadows";
 import RecordedCard from "./RecordedCard";
@@ -89,12 +89,8 @@ export default function SessionActivityCard({
         <View style={styles.typeSection}>
           {renderTypeIcon()}
           <AppText
-            style={[
-              styles.typeLabel,
-              {
-                color: isAttendance ? Colors.recordedGreen : Colors.headerBlue,
-              },
-            ]}
+            variant="overline"
+            color={isAttendance ? Colors.recordedGreen : Colors.headerBlue}
             weight={FontWeight.bold}
           >
             {activity.type}
@@ -104,7 +100,7 @@ export default function SessionActivityCard({
         <View style={styles.headerBadges}>
           {isAttendance && isCompleted && (
             <View style={styles.runtimePill}>
-              <AppText style={styles.runtimeText} weight={FontWeight.medium}>
+              <AppText variant="tiny" color={Colors.gray600} weight={FontWeight.medium}>
                 {activity.ranDuration ?? "Ran : 45m 3s"}
               </AppText>
             </View>
@@ -112,7 +108,7 @@ export default function SessionActivityCard({
 
           {isQuiz && isCompleted && (
             <View style={styles.runtimePill}>
-              <AppText style={styles.runtimeText} weight={FontWeight.medium}>
+              <AppText variant="tiny" color={Colors.gray600} weight={FontWeight.medium}>
                 {activity.ranDuration ?? "Ran : 1h 55m"}
               </AppText>
             </View>
@@ -120,7 +116,7 @@ export default function SessionActivityCard({
 
           {isPostTest && isCompleted && (
             <View style={styles.runtimePill}>
-              <AppText style={styles.runtimeText} weight={FontWeight.medium}>
+              <AppText variant="tiny" color={Colors.gray600} weight={FontWeight.medium}>
                 {activity.ranDuration ?? "Ran : 1h 50m"}
               </AppText>
             </View>
@@ -139,14 +135,14 @@ export default function SessionActivityCard({
       </View>
 
       {/* Card Title */}
-      <AppText style={styles.activityTitle} weight={FontWeight.bold}>
+      <AppText variant="body" weight={FontWeight.bold} style={styles.activityTitle}>
         {activity.title}
       </AppText>
 
       {/* Meta Row: Duration + Present / Completed Sub-status */}
       <View style={styles.metaRow}>
         <View style={styles.durationPill}>
-          <AppText style={styles.durationText} weight={FontWeight.bold}>
+          <AppText variant="overline" weight={FontWeight.bold} color="#374151">
             {activity.duration}
           </AppText>
         </View>
@@ -154,7 +150,7 @@ export default function SessionActivityCard({
         {isCompleted && isAttendance && (
           <View style={styles.presenceInfo}>
             <View style={styles.presenceDot} />
-            <AppText style={styles.presenceText} weight={FontWeight.semiBold}>
+            <AppText variant="tiny" weight={FontWeight.semiBold} color={Colors.recordedGreen}>
               {activity.completedAt
                 ? `Present (${activity.completedAt})`
                 : "Present (10:25)"}
@@ -166,7 +162,7 @@ export default function SessionActivityCard({
           <View style={styles.completedQuizInfo}>
             <Ionicons name="trophy" size={14} color="#F59E0B" />
             <AppText
-              style={styles.completedQuizText}
+              variant="caption"
               color={Colors.headerBlue}
               weight={FontWeight.semiBold}
             >
@@ -238,13 +234,13 @@ function MissedBanner() {
       </View>
       <View style={styles.missedTextColumn}>
         <AppText
-          style={styles.missedTitle}
+          variant="caption"
           color={Colors.danger}
           weight={FontWeight.bold}
         >
           Missed
         </AppText>
-        <AppText style={styles.missedSubtitle} color={Colors.danger}>
+        <AppText variant="overline" color={Colors.danger}>
           You missed this session, try next time.
         </AppText>
       </View>
@@ -260,13 +256,13 @@ function LockedViolationCard() {
       </View>
       <View style={styles.lockedTextColumn}>
         <AppText
-          style={styles.lockedTitle}
+          variant="caption"
           color="#EF4444"
           weight={FontWeight.bold}
         >
           Security Violation
         </AppText>
-        <AppText style={styles.lockedSubtitle} color="#B91C1C">
+        <AppText variant="overline" color="#B91C1C">
           Test was locked due to proctoring violation.
         </AppText>
       </View>
@@ -299,10 +295,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  typeLabel: {
-    fontSize: 11,
-    letterSpacing: 0.2,
-  },
   headerBadges: {
     flexDirection: "column",
     alignItems: "center",
@@ -314,13 +306,8 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     borderRadius: 4,
   },
-  runtimeText: {
-    fontSize: 8,
-    color: Colors.gray600,
-  },
   activityTitle: {
     marginTop: 8,
-    fontSize: 16,
     color: Colors.black,
   },
   metaRow: {
@@ -335,10 +322,6 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     borderRadius: 4,
   },
-  durationText: {
-    fontSize: 11,
-    color: "#374151",
-  },
 
   presenceInfo: {
     flexDirection: "row",
@@ -351,19 +334,11 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     backgroundColor: Colors.recordedGreen,
   },
-  presenceText: {
-    fontSize: 9.5,
-    color: Colors.recordedGreen,
-  },
 
   completedQuizInfo: {
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
-  },
-  completedQuizText: {
-    fontSize: 12.5,
-    color: Colors.headerBlue,
   },
   missedBanner: {
     flexDirection: "row",
@@ -389,14 +364,6 @@ const styles = StyleSheet.create({
     flex: 1,
     flexShrink: 1,
     gap: 2,
-  },
-  missedTitle: {
-    fontSize: 12.5,
-    lineHeight: 16,
-  },
-  missedSubtitle: {
-    fontSize: 11,
-    lineHeight: 15,
   },
   lockedBanner: {
     flexDirection: "row",
@@ -424,13 +391,5 @@ const styles = StyleSheet.create({
     flex: 1,
     flexShrink: 1,
     gap: 2,
-  },
-  lockedTitle: {
-    fontSize: 12.5,
-    lineHeight: 16,
-  },
-  lockedSubtitle: {
-    fontSize: 11,
-    lineHeight: 15,
   },
 });

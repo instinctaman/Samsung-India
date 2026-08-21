@@ -86,6 +86,6 @@ export default function SessionReportScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F3F7FA" },
   scroll: { marginTop: -50, zIndex: 1, elevation: 1 },
-  content: { paddingBottom: 24 },
+  content: { flexGrow: 1, paddingBottom: 24 },
   tableWrap: { marginHorizontal: 14, marginTop: 16 },
 });

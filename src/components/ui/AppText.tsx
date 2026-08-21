@@ -1,10 +1,15 @@
 import React from "react";
-import { Text, TextProps, StyleSheet } from "react-native";
+import { StyleSheet, Text, TextProps, TextStyle } from "react-native";
 
 import { Colors } from "@/theme/colors";
 import { FontFamily } from "@/theme/fontFamily";
+import {
+  FontWeight,
+  Typography,
+  TypographyVariant,
+} from "@/theme/typography";
 
-type TextWeight =
+export type TextWeight =
   | "300"
   | "400"
   | "500"
@@ -37,24 +42,41 @@ const fontFamilyForWeight: Record<TextWeight, keyof typeof FontFamily> = {
   black: "black",
 };
 
-interface AppTextProps extends TextProps {
+export interface AppTextProps extends TextProps {
   children?: React.ReactNode;
+  /** Semantic typography variant preset */
+  variant?: TypographyVariant;
+  /** @deprecated Use `variant` instead */
   size?: number;
-  color?: string;
+  /** @deprecated Use `variant` instead */
   weight?: TextWeight;
+  color?: string;
+  align?: TextStyle["textAlign"];
 }
 
 export default function AppText({
   children,
-  size = 14,
+  variant,
+  size,
+  weight,
   color = Colors.black,
-  weight = "400",
+  align,
   style,
   allowFontScaling = false,
   ...props
 }: AppTextProps) {
+  const preset = variant ? Typography[variant] : undefined;
+
+  const resolvedSize = size ?? preset?.fontSize ?? Typography.body.fontSize;
+  const resolvedLineHeight = preset?.lineHeight;
+  const resolvedWeight = weight ?? preset?.fontWeight ?? FontWeight.regular;
+  const resolvedLetterSpacing =
+    preset && "letterSpacing" in preset ? preset.letterSpacing : undefined;
+  const resolvedTextTransform =
+    preset && "textTransform" in preset ? preset.textTransform : undefined;
+
   const selectedFamily =
-    FontFamily[fontFamilyForWeight[weight]] || FontFamily.regular;
+    FontFamily[fontFamilyForWeight[resolvedWeight]] || FontFamily.regular;
 
   return (
     <Text
@@ -62,9 +84,13 @@ export default function AppText({
       style={[
         styles.text,
         {
-          fontSize: size,
+          fontSize: resolvedSize,
+          lineHeight: resolvedLineHeight,
           color,
           fontFamily: selectedFamily,
+          letterSpacing: resolvedLetterSpacing,
+          textTransform: resolvedTextTransform,
+          textAlign: align,
         },
         style,
       ]}

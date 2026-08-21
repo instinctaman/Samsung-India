@@ -71,6 +71,6 @@ export default function TrainerProfileScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
-  content: { padding: 16, paddingTop: 4, paddingBottom: 90, gap: 4 },
+  content: { flexGrow: 1, padding: 16, paddingTop: 4, paddingBottom: 16, gap: 4 },
   centered: { paddingVertical: 60, alignItems: "center" },
 });

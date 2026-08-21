@@ -9,31 +9,21 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import SecurityLockedView from "@/components/assessment/SecurityLockedView";
 import TestSubmittedView from "@/components/assessment/TestSubmittedView";
-import ProctoringPanel from "@/components/proctoring/ProctoringPanel";
-import ProctoringScreen from "@/components/proctoring/ProctoringScreen";
-import SecurityViolationModal from "@/components/proctoring/SecurityViolationModal";
-import { MAX_PROCTORING_WARNINGS } from "@/components/proctoring/violations";
 import AppText from "@/components/ui/AppText";
 import TimeProgress from "@/components/ui/TimeProgress";
 import { Colors } from "@/theme/colors";
-import { FontWeight } from "@/theme/fontWeight";
-import { Fonts } from "@/theme/fonts";
+import { FontSize, FontWeight } from "@/theme/typography";
 import { createShadow } from "@/theme/shadows";
 import { usePostTest } from "@/hooks/usePostTest";
 
 export default function PostTestScreen() {
-  const { conferenceUid, suiteUid, proctored } = useLocalSearchParams<{
+  const { conferenceUid, suiteUid } = useLocalSearchParams<{
     conferenceUid: string;
     suiteUid: string;
-    proctored?: string;
   }>();
 
   const {
-    token,
-    readyToStart,
-    setReadyToStart,
     questions,
     current,
     questionIndex,
@@ -46,10 +36,6 @@ export default function PostTestScreen() {
     isActive,
     isSubmitting,
     submittedAt,
-    violationCount,
-    currentViolation,
-    violationModalVisible,
-    lockedViolationType,
     totalSeconds,
     remainingSeconds,
     remainingMinutes,
@@ -59,22 +45,17 @@ export default function PostTestScreen() {
     selectOption,
     move,
     handleSubmit,
-    triggerViolation,
-    handleCloseViolationModal,
     retry,
     handleGoToDashboard,
-    handleSecurityLockedClose,
-  } = usePostTest(conferenceUid, suiteUid, proctored);
-
-  if (!readyToStart) {
-    return <ProctoringScreen onStartTest={() => setReadyToStart(true)} />;
-  }
+  } = usePostTest(conferenceUid, suiteUid);
 
   if (loading) {
     return (
       <SafeAreaView style={styles.loadingContainer}>
         <ActivityIndicator color={Colors.primary} size="large" />
-        <AppText style={styles.loadingText}>Loading the test…</AppText>
+        <AppText variant="body" color={Colors.gray600} align="center">
+          Loading the test…
+        </AppText>
       </SafeAreaView>
     );
   }
@@ -83,9 +64,11 @@ export default function PostTestScreen() {
     return (
       <SafeAreaView style={styles.loadingContainer}>
         <Ionicons name="alert-circle-outline" size={48} color={Colors.danger} />
-        <AppText style={styles.loadingText}>{error}</AppText>
+        <AppText variant="body" color={Colors.gray600} align="center">
+          {error}
+        </AppText>
         <Pressable style={styles.retryButton} onPress={retry}>
-          <AppText color={Colors.white} weight={FontWeight.medium}>
+          <AppText variant="label" color={Colors.white}>
             Try Again
           </AppText>
         </Pressable>
@@ -151,89 +134,21 @@ export default function PostTestScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
-      {/* Security Violation Modal (Strikes 1 & 2 only) */}
-      <SecurityViolationModal
-        visible={
-          violationModalVisible &&
-          testStatus === "active" &&
-          violationCount < MAX_PROCTORING_WARNINGS
-        }
-        violationType={currentViolation}
-        strikesRemaining={Math.max(MAX_PROCTORING_WARNINGS - violationCount, 0)}
-        maxStrikes={MAX_PROCTORING_WARNINGS}
-        onClose={handleCloseViolationModal}
-        isTerminal={false}
-      />
-
-      {/* Security Locked Overlay (Post test auto-terminated / locked state) */}
-      {testStatus === "security-locked" && (
-        <SecurityLockedView
-          violationType={lockedViolationType || currentViolation}
-          onClose={handleSecurityLockedClose}
-        />
-      )}
-
-      <View style={styles.header}>
-        <View style={styles.headerRow}>
-          <View style={styles.timer}>
-            <Ionicons name="time-outline" size={14} color={Colors.primary} />
-            <AppText style={styles.timerText}>
-              {String(remainingMinutes).padStart(2, "0")}:
-              {String(remainingSecondsPart).padStart(2, "0")}
-            </AppText>
-          </View>
-          <View style={styles.progress}>
-            <AppText style={styles.progressText}>Overall Progress</AppText>
-            <View style={styles.progressTrack}>
-              <View
-                style={[
-                  styles.progressFill,
-                  {
-                    width: `${Math.round(((questionIndex + 1) / questions.length) * 100)}%`,
-                  },
-                ]}
-              />
-            </View>
-            <AppText style={styles.progressPercent}>
-              {Math.round(((questionIndex + 1) / questions.length) * 100)}%
-            </AppText>
-          </View>
-          <View style={styles.headerIcon}>
-            <Ionicons name="cloud-outline" size={17} color={Colors.primary} />
-          </View>
-          <View style={styles.wifi}>
-            <Ionicons name="wifi" size={15} color={Colors.white} />
-          </View>
-        </View>
-      </View>
-
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.timerProctorRow}>
-          <View style={styles.timerColumn}>
-            <TimeProgress
-              totalMinutes={totalMinutes}
-              remainingMinutes={remainingMinutes}
-              remainingSeconds={remainingSecondsPart}
-              size={120}
-            />
-          </View>
-          <View style={styles.proctorColumn}>
-            <ProctoringPanel
-              token={token}
-              active={isActive}
-              paused={violationModalVisible || testStatus !== "active"}
-              warningsCount={violationCount}
-              latestViolation={currentViolation}
-              onViolation={triggerViolation}
-            />
-          </View>
+        <View style={styles.timerCard}>
+          <TimeProgress
+            totalMinutes={totalMinutes}
+            remainingMinutes={remainingMinutes}
+            remainingSeconds={remainingSecondsPart}
+            size={130}
+          />
         </View>
 
         <View style={styles.testTitle}>
-          <AppText style={styles.title} weight={FontWeight.semiBold}>
+          <AppText style = {styles.testTitleText} variant="body" >
             {suiteTitle ?? "MX Training Offline\nPost Test ( July 2026 )"}
           </AppText>
         </View>
@@ -241,26 +156,31 @@ export default function PostTestScreen() {
         <View style={styles.questionCard}>
           <View style={styles.questionBody}>
             <View style={styles.tags}>
-              <AppText style={styles.questionTag} weight={FontWeight.medium}>
+              <AppText variant="caption" style={styles.questionText}>
                 Question {questionIndex + 1} of {questions.length}
               </AppText>
-              <AppText style={styles.multiTag} weight={FontWeight.medium}>
+              <AppText
+                variant="caption"
+                style={styles.questionType}
+                weight={FontWeight.medium}
+              >
                 {current.question_type === "multi"
                   ? "Multi - Select"
                   : "Single Select"}
               </AppText>
               <View style={styles.unlimitedTag}>
-                <Ionicons name="infinite" size={13} color="#00A859" />
-                <AppText
-                  style={styles.unlimitedText}
-                  weight={FontWeight.medium}
-                >
+                <Ionicons name="infinite" size={15} color="#00A859" />
+                <AppText variant="caption" style={styles.unlimitedTagText}>
                   Unlimited
                 </AppText>
               </View>
             </View>
 
-            <AppText style={styles.question} weight={FontWeight.semiBold}>
+            <AppText
+              variant="body"
+              weight={FontWeight.semiBold}
+              style={styles.question}
+            >
               {current.question}
             </AppText>
 
@@ -292,13 +212,24 @@ export default function PostTestScreen() {
                         />
                       )}
                     </View>
-                    <AppText style={styles.optionText}>{option.text}</AppText>
+                    <AppText variant="bodySmall" style={styles.optionText}>
+                      {option.text}
+                    </AppText>
                   </Pressable>
                 );
               })}
             </View>
 
-            {error && <AppText style={styles.inlineError}>{error}</AppText>}
+            {error && (
+              <AppText
+                variant="caption"
+                color={Colors.danger}
+                align="center"
+                style={styles.inlineError}
+              >
+                {error}
+              </AppText>
+            )}
           </View>
 
           <View style={styles.actions}>
@@ -310,7 +241,13 @@ export default function PostTestScreen() {
                 (questionIndex === 0 || !isActive) && styles.disabledButton,
               ]}
             >
-              <AppText style={styles.previousText}>Previous Question</AppText>
+              <AppText
+                variant="label"
+                color={Colors.gray600}
+                weight={FontWeight.semiBold}
+              >
+                Previous Question
+              </AppText>
             </Pressable>
 
             <Pressable
@@ -325,9 +262,9 @@ export default function PostTestScreen() {
                 <ActivityIndicator color={Colors.white} />
               ) : (
                 <AppText
+                  variant="label"
                   color={Colors.white}
                   weight={FontWeight.semiBold}
-                  style={styles.nextText}
                 >
                   {isLastQuestion ? "Submit Test" : "Next Question"}
                 </AppText>
@@ -341,18 +278,13 @@ export default function PostTestScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+  container: { flex: 1, backgroundColor: Colors.background},
   loadingContainer: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
     gap: 12,
     paddingHorizontal: 24,
-  },
-  loadingText: {
-    fontSize: Fonts.body,
-    color: Colors.gray600,
-    textAlign: "center",
   },
   retryButton: {
     backgroundColor: Colors.primary,
@@ -361,93 +293,23 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   inlineError: {
-    color: Colors.danger,
-    fontSize: Fonts.bodySm,
     marginTop: 8,
-    textAlign: "center",
   },
-  header: { backgroundColor: Colors.mainColour1, padding: 9 },
-  headerRow: {
-    height: 30,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  timer: {
-    height: 22,
-    paddingHorizontal: 6,
-    borderRadius: 4,
+  content: { flexGrow: 1, padding: 13, gap: 11, paddingBottom: 28 },
+  timerCard: {
     backgroundColor: Colors.white,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 3,
-  },
-  timerText: { color: Colors.primary, fontSize: Fonts.caption },
-  progress: {
-    flex: 1,
-    height: 22,
-    backgroundColor: Colors.white,
-    borderRadius: 4,
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 5,
-    gap: 5,
-  },
-  progressText: { fontSize: Fonts.overline, color: Colors.black },
-  progressTrack: {
-    flex: 1,
-    height: 6,
-    backgroundColor: Colors.gray100,
-    borderRadius: 3,
-    overflow: "hidden",
-  },
-  progressFill: {
-    height: "100%",
-    backgroundColor: Colors.primary,
-    borderRadius: 3,
-  },
-  progressPercent: {
-    fontSize: Fonts.overline,
-    color: Colors.black,
-    minWidth: 26,
-    textAlign: "right",
-  },
-  headerIcon: {
-    width: 22,
-    height: 22,
-    borderRadius: 3,
-    backgroundColor: Colors.white,
+    borderRadius: 12,
+    height: 150,
     alignItems: "center",
     justifyContent: "center",
-  },
-  wifi: {
-    width: 22,
-    height: 22,
-    borderRadius: 3,
-    backgroundColor: "#16A34A",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  content: { padding: 13, gap: 11, paddingBottom: 28 },
-  timerProctorRow: {
-    backgroundColor: Colors.white,
-    borderRadius: 16,
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
     ...createShadow({ x: 0, y: 2, blur: 8, opacity: 0.06, elevation: 2 }),
   },
-  timerColumn: { flex: 1, alignItems: "center", justifyContent: "center" },
-  proctorColumn: { flex: 1, alignItems: "center", justifyContent: "center" },
   testTitle: {
     paddingVertical: 12,
     paddingHorizontal: 16,
-    borderRadius: 24,
-    borderWidth: 2,
+    borderRadius: 12,
     borderColor: "#006AFF",
-    backgroundColor: "#EBF4FE",
+    backgroundColor: "#ffffff",
     ...createShadow({
       x: 0,
       y: -6,
@@ -457,18 +319,15 @@ const styles = StyleSheet.create({
       color: "#000000",
     }),
   },
-  title: {
-    fontSize: Fonts.body,
-    lineHeight: 22,
-    textAlign: "center",
-    color: Colors.black,
+  testTitleText : {
+    fontSize: 23, 
+    alignItems: "center",
+    paddingInline: 20,
   },
   questionCard: {
-    borderRadius: 24,
-    borderWidth: 2,
-    borderColor: "#006AFF",
+    borderRadius: 12,
     overflow: "hidden",
-    backgroundColor: "#EBF4FE",
+    backgroundColor: "#ffffff",
     ...createShadow({
       x: 0,
       y: -8,
@@ -478,33 +337,62 @@ const styles = StyleSheet.create({
       color: "#000000",
     }),
   },
-  questionBody: { padding: 14 },
+  questionBody: { 
+    padding: 14 },
+    
   tags: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 8,
+    justifyContent: "flex-start",
+    marginBottom: 10,
+    gap: 9,
+    flexWrap: "wrap",
   },
-  questionTag: { fontSize: Fonts.caption, color: Colors.black },
-  multiTag: { fontSize: Fonts.caption, color: Colors.primary },
-  unlimitedTag: { flexDirection: "row", alignItems: "center", gap: 3 },
-  unlimitedText: { fontSize: Fonts.caption, color: "#00A859" },
+  questionText: {
+    fontSize: 10.5,
+    color: "#006AFF",
+    backgroundColor: "#006AFF20",
+    borderRadius: 6,
+    paddingVertical: 5,
+    paddingHorizontal: 14,
+  },
+  questionType: {
+    color: "#595959",
+    fontSize: FontSize.caption,
+    backgroundColor: "#C5C5C5",
+    paddingVertical: 5,
+    paddingHorizontal: 14,
+    borderRadius: 6,
+  },
+  unlimitedTag: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    backgroundColor: "#1cb07c24",
+    paddingVertical: 5,
+    paddingHorizontal: 14,
+    borderRadius: 6,
+  },
+  unlimitedTagText: {
+    color: "#00A859",
+    fontSize: 10.5,
+    fontWeight: FontWeight.medium,
+  },
   question: {
-    fontSize: Fonts.body,
-    lineHeight: 22,
-    color: Colors.black,
     marginBottom: 12,
+    fontSize: FontSize.body,
   },
-  options: { gap: 8 },
+  options: { gap: 10 },
   option: {
     flexDirection: "row",
     alignItems: "center",
     padding: 10,
-    borderRadius: 14,
-    backgroundColor: "#EFF4FF",
-    borderWidth: 1,
-    borderColor: "#DBEAFE",
-    gap: 9,
+    borderRadius: 8,
+    backgroundColor: "#ffffff",
+    minHeight: 56,
+    borderWidth: 2,
+    borderColor: "#c1c1c1",
+    gap: 18,
   },
   optionSelected: {
     backgroundColor: "#DCE8FE",
@@ -514,7 +402,7 @@ const styles = StyleSheet.create({
   checkbox: {
     width: 20,
     height: 20,
-    borderRadius: 10,
+    borderRadius: 5,
     borderWidth: 1.5,
     borderColor: Colors.gray400,
     alignItems: "center",
@@ -524,7 +412,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
     borderColor: Colors.primary,
   },
-  optionText: { fontSize: Fonts.bodySm, color: Colors.black, flex: 1 },
+  optionText: { flex: 1, fontSize: 13 },
   actions: {
     flexDirection: "row",
     gap: 10,
@@ -535,26 +423,20 @@ const styles = StyleSheet.create({
   },
   previousButton: {
     flex: 1,
-    height: 44,
-    borderRadius: 12,
-    borderWidth: 1,
+    height: 45,
+    borderRadius: 13,
+    borderWidth: 1.5,
     borderColor: Colors.gray400,
     alignItems: "center",
     justifyContent: "center",
   },
-  previousText: {
-    fontSize: Fonts.bodySm,
-    fontWeight: "600",
-    color: Colors.gray600,
-  },
   nextButton: {
     flex: 1,
-    height: 44,
-    borderRadius: 12,
+    height: 45,
+    borderRadius: 13,
     backgroundColor: Colors.primary,
     alignItems: "center",
     justifyContent: "center",
   },
-  nextText: { fontSize: Fonts.bodySm },
   disabledButton: { opacity: 0.5 },
 });

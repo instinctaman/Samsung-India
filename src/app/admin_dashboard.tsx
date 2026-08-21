@@ -258,7 +258,7 @@ export default function AdminDashboardScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
-  scrollContent: { flexGrow: 1 },
+  scrollContent: { flexGrow: 1, paddingBottom: 24 },
   banner: {
     backgroundColor: Colors.mainColour1,
     paddingHorizontal: 20,

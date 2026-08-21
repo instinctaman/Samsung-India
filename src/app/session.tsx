@@ -25,7 +25,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Colors } from "@/theme/colors";
 import { Fonts } from "@/theme/fonts";
 import { createShadow } from "@/theme/shadows";
-
+import { FontWeight } from "@/theme/typography";
 
 const AVATAR_BY_GENDER: Record<string, ImageSourcePropType> = {
   male: require("@/assets/images/user_img/default_male.png"),
@@ -87,12 +87,8 @@ export default function SessionScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.hero}>
         <Image source={avatar} style={styles.avatar} />
-        <AppText style={styles.name} color={Colors.white} weight="500">
-          {trainee?.name || "Trainee"}
-        </AppText>
-        <AppText style={styles.phone} color={Colors.white}>
-          {trainee?.phone || ""}
-        </AppText>
+        <AppText style={styles.name}>{trainee?.name || "Trainee"}</AppText>
+        <AppText style={styles.phone}>{trainee?.phone || ""}</AppText>
       </View>
 
       <View style={styles.content}>
@@ -101,7 +97,7 @@ export default function SessionScreen() {
             {details.map(([label, value]) => (
               <View key={label} style={styles.detail}>
                 <AppText style={styles.label}>{label}</AppText>
-                <AppText style={styles.value} weight="700">
+                <AppText style={styles.value} weight={FontWeight.bold}>
                   {value}
                 </AppText>
               </View>
@@ -144,10 +140,9 @@ export default function SessionScreen() {
                 },
               });
             }}
-            leftIcon={
-              <CheckCircle width={Fonts.bodyLg} height={Fonts.bodyLg} />
-            }
+            leftIcon={<CheckCircle width={24} height={24} />}
             buttonStyle={styles.joinButton}
+            textStyle={styles.joinButtonText}
           />
 
           <Pressable onPress={handleLogout} hitSlop={8}>
@@ -174,17 +169,18 @@ const styles = StyleSheet.create({
     borderTopRightRadius: Fonts.br,
   },
   avatar: {
-    width: Fonts.profileIconSize,
-    height: Fonts.profileIconSize,
-    marginBottom: 12,
+    width: 176,
+    height: 131,
+    marginBottom: 2,
   },
-  name: { fontSize: Fonts.h2 },
+  name: { fontSize: 26, color: "white", marginBottom: 4 },
   phone: {
-    fontSize: Fonts.body,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-    paddingHorizontal: 5,
-    paddingVertical: 2,
-    borderRadius: 2,
+    fontSize: 15,
+    color: Colors.white,
+    backgroundColor: "#398CFF",
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 4,
     marginTop: 3,
   },
   content: {
@@ -205,8 +201,8 @@ const styles = StyleSheet.create({
 
   details: { flexDirection: "row", flexWrap: "wrap", rowGap: 20 },
   detail: { width: "50%" },
-  label: { fontSize: Fonts.bodySm, color: "#505050", marginBottom: 6 },
-  value: { fontSize: Fonts.body, color: "#303030" },
+  label: { fontSize: 13, color: "#505050", marginBottom: 6 },
+  value: { fontSize: 15, color: "#303030", fontWeight: "bold" },
   notice: {
     flexDirection: "row",
     alignItems: "center",
@@ -215,16 +211,23 @@ const styles = StyleSheet.create({
   },
   noticeText: {
     flex: 1,
-    fontSize: Fonts.caption,
+    fontSize: 11,
     color: "#3D3D3D",
     marginLeft: 4,
   },
-  joinButton: { height: 40, borderRadius: 8 },
+  joinButton: {
+    backgroundColor: "#006AFF",
+    height: 48,
+    borderRadius: 8,
+  },
+  joinButtonText: {
+    fontSize: 20,
+  },
   logout: {
     marginTop: 14,
     textAlign: "center",
     textDecorationLine: "underline",
-    fontSize: Fonts.bodySm,
+    fontSize: 13,
     color: "#4D4D4D",
   },
   footer: { marginTop: 36 },

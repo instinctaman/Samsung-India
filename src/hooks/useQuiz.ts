@@ -1,7 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-import { useAuth } from "@/hooks/useAuth";
 import {
   ApiError,
   AssessmentQuestion,
@@ -9,10 +8,11 @@ import {
   getAssessmentQuestions,
   submitAssessment,
 } from "@/api/assessment";
+import { useAuth } from "@/hooks/useAuth";
 
 export const QUESTION_SECONDS = 30;
 export const RESULT_DISPLAY_SECONDS = 3500;
-export const WAITING_INTERMEDIATE_SECONDS = 2500;
+export const WAITING_INTERMEDIATE_SECONDS = 5000;
 
 export type QuizPhase = "waiting" | "active" | "result" | "map" | "leaderboard";
 export type QuizResultType = "correct" | "incorrect" | "timeout";
@@ -97,7 +97,7 @@ export function useQuiz() {
       setQuestions(data.questions);
     } catch (err) {
       setLoadError(
-        err instanceof ApiError ? err.message : "Couldn't load the quiz."
+        err instanceof ApiError ? err.message : "Couldn't load the quiz.",
       );
     } finally {
       setLoading(false);
@@ -130,7 +130,7 @@ export function useQuiz() {
       } catch (err) {
         if (!ignore) {
           setLoadError(
-            err instanceof ApiError ? err.message : "Couldn't load the quiz."
+            err instanceof ApiError ? err.message : "Couldn't load the quiz.",
           );
         }
       } finally {
@@ -155,7 +155,6 @@ export function useQuiz() {
       setSeconds((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          handleTimerExpired();
           return 0;
         }
         return prev - 1;
@@ -189,7 +188,7 @@ export function useQuiz() {
     return clearAutoTimeouts;
   }, [phase, questionIndex, questions.length, clearAutoTimeouts]);
 
-  // 3. Automated Transition: Waiting -> Next Question Active
+  // 3. Automated Transition: Waiting (5 seconds) -> Next Question Active
   useEffect(() => {
     if (phase !== "waiting") return;
 
@@ -230,7 +229,8 @@ export function useQuiz() {
   // Final submit handler with duplicate protection and API call
   const finishQuiz = async () => {
     clearAutoTimeouts();
-    if (!token || !suiteUid || !conferenceUid || submitting || hasSubmitted) return;
+    if (!token || !suiteUid || !conferenceUid || submitting || hasSubmitted)
+      return;
     setSubmitting(true);
     setSubmitError(null);
     try {
@@ -241,14 +241,14 @@ export function useQuiz() {
         questions.map((q, idx) => ({
           questionId: q.id,
           selectedOption: answers[idx] ?? null,
-        }))
+        })),
       );
       setResult(data);
       setHasSubmitted(true);
       setPhase("leaderboard");
     } catch (err) {
       setSubmitError(
-        err instanceof ApiError ? err.message : "Couldn't submit the quiz."
+        err instanceof ApiError ? err.message : "Couldn't submit the quiz.",
       );
     } finally {
       setSubmitting(false);
@@ -261,7 +261,9 @@ export function useQuiz() {
       params: {
         attendance: "recorded",
         quiz: "completed",
-        score: result ? `${result.correctCount}/${result.totalQuestions}` : "3/4",
+        score: result
+          ? `${result.correctCount}/${result.totalQuestions}`
+          : "3/4",
         duration: "Ran : 1h 55m",
       },
     });
@@ -305,7 +307,7 @@ export function useQuiz() {
         questions.map((q) => ({
           questionId: q.id,
           selectedOption: q.correctAnswer ?? "A",
-        }))
+        })),
       );
       setResult(data);
       setHasSubmitted(true);

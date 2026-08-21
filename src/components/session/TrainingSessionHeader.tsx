@@ -1,19 +1,23 @@
-import React from "react";
-import { Image, ImageSourcePropType, Pressable, StyleSheet, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import {
+  Image,
+  ImageSourcePropType,
+  Pressable,
+  StyleSheet,
+  View,
+} from "react-native";
 
 import CalendarIcon from "@/assets/images/svg/calender2.svg";
 import AppText from "@/components/ui/AppText";
 import { Colors } from "@/theme/colors";
-import { FontWeight } from "@/theme/fontWeight";
 import { Radius } from "@/theme/radius";
+import { FontWeight } from "@/theme/typography";
 
 const AVATAR_BY_GENDER: Record<string, ImageSourcePropType> = {
   male: require("@/assets/images/user_img/default_male.png"),
   female: require("@/assets/images/user_img/default_female.png"),
 };
 const DEFAULT_AVATAR: ImageSourcePropType = require("@/assets/images/user_img/default_male.png");
-
 
 export type TrainingSessionHeaderProps = {
   onBack?: () => void;
@@ -33,11 +37,9 @@ export type TrainingSessionHeaderProps = {
 export default function TrainingSessionHeader({
   onBack,
   onLogout,
-  onHistoryPress,
-  userName = "Anshu Pandey",
+  userName = "Tushar Prajapati",
   gender,
   profilePhoto,
-  isOnline = true,
   confirmationStatus = "Not Confirmed",
   sessionType = "One-Day Session",
   title = "Training Session",
@@ -46,9 +48,11 @@ export default function TrainingSessionHeader({
 }: TrainingSessionHeaderProps) {
   const avatar: ImageSourcePropType = profilePhoto
     ? { uri: profilePhoto }
-    : AVATAR_BY_GENDER[gender?.toLowerCase() ?? ""] ?? DEFAULT_AVATAR;
+    : (AVATAR_BY_GENDER[gender?.toLowerCase() ?? ""] ?? DEFAULT_AVATAR);
 
-  const isConfirmed = confirmationStatus.toLowerCase().includes("confirmed") && !confirmationStatus.toLowerCase().includes("not");
+  const isConfirmed =
+    confirmationStatus.toLowerCase().includes("confirmed") &&
+    !confirmationStatus.toLowerCase().includes("not");
 
   return (
     <View style={styles.header}>
@@ -81,7 +85,7 @@ export default function TrainingSessionHeader({
           {/* User Details */}
           <View style={styles.userMeta}>
             <AppText
-              style={styles.userName}
+              variant="body"
               color={Colors.white}
               weight={FontWeight.medium}
             >
@@ -92,10 +96,18 @@ export default function TrainingSessionHeader({
               <View
                 style={[
                   styles.statusIndicator,
-                  { backgroundColor: isConfirmed ? Colors.statusGreen : Colors.statusYellow },
+                  {
+                    backgroundColor: isConfirmed
+                      ? Colors.statusGreen
+                      : Colors.statusYellow,
+                  },
                 ]}
               />
-              <AppText style={styles.statusText} color={Colors.white}>
+              <AppText
+                variant="tiny"
+                color={Colors.white}
+                style={styles.statusText}
+              >
                 {confirmationStatus}
               </AppText>
             </View>
@@ -111,11 +123,7 @@ export default function TrainingSessionHeader({
               accessibilityRole="button"
               accessibilityLabel="Logout"
             >
-              <Ionicons
-                name="power"
-                size={25}
-                color={Colors.headerBlue}
-              />
+              <Ionicons name="power" size={25} color={Colors.headerBlue} />
             </Pressable>
           )}
         </View>
@@ -125,7 +133,7 @@ export default function TrainingSessionHeader({
       <View style={styles.sessionPill}>
         <CalendarIcon width={13} height={13} color={Colors.headerBlue} />
         <AppText
-          style={styles.sessionPillText}
+          variant="overline"
           color={Colors.headerBlue}
           weight={FontWeight.bold}
         >
@@ -135,9 +143,10 @@ export default function TrainingSessionHeader({
 
       {/* Large Session Title */}
       <AppText
-        style={styles.sessionTitle}
+        variant="h2"
         color={Colors.white}
         weight={FontWeight.bold}
+        style={styles.sessionTitle}
       >
         {title}
       </AppText>
@@ -146,7 +155,11 @@ export default function TrainingSessionHeader({
       <View style={styles.metaRow}>
         <View style={styles.metaItem}>
           <CalendarIcon width={14} height={14} color={Colors.white} />
-          <AppText style={styles.metaText} color={Colors.white}>
+          <AppText
+            variant="caption"
+            color={Colors.white}
+            style={styles.metaText}
+          >
             {date}
           </AppText>
         </View>
@@ -155,7 +168,11 @@ export default function TrainingSessionHeader({
 
         <View style={styles.metaItem}>
           <Ionicons name="location-outline" size={15} color={Colors.white} />
-          <AppText style={styles.metaText} color={Colors.white}>
+          <AppText
+            variant="caption"
+            color={Colors.white}
+            style={styles.metaText}
+          >
             {location}
           </AppText>
         </View>
@@ -200,10 +217,6 @@ const styles = StyleSheet.create({
   userMeta: {
     gap: 1,
   },
-  userName: {
-    fontSize: 16,
-    letterSpacing: 0.2,
-  },
   statusRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -215,7 +228,6 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   statusText: {
-    fontSize: 10,
     opacity: 0.95,
   },
   actionBtn: {
@@ -237,13 +249,8 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     borderRadius: Radius.pill,
   },
-  sessionPillText: {
-    fontSize: 11,
-    letterSpacing: 0.2,
-  },
   sessionTitle: {
     marginTop: 10,
-    fontSize: 23,
     letterSpacing: 0.3,
   },
   metaRow: {
@@ -258,7 +265,6 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   metaText: {
-    fontSize: 13,
     opacity: 0.95,
   },
   verticalDivider: {
@@ -267,5 +273,4 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
     opacity: 0.6,
   },
-
 });

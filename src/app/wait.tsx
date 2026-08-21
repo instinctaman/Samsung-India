@@ -24,7 +24,7 @@ export default function WaitScreen() {
   }, [conferenceUid, suiteUid, router]);
 
   useEffect(() => {
-    const transition = setTimeout(navigateToQuiz, 2200);
+    const transition = setTimeout(navigateToQuiz, 5000);
     return () => clearTimeout(transition);
   }, [navigateToQuiz]);
 

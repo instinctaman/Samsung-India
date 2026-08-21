@@ -1,4 +1,4 @@
-import { Image, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -10,8 +10,7 @@ import AppInput from "@/components/ui/AppInput";
 import AppButton from "@/components/ui/AppButton";
 import SecurityFooter from "@/components/common/SecurityFooter";
 import { Colors } from "@/theme/colors";
-import { Fonts } from "@/theme/fonts";
-import { FontWeight } from "@/theme/fontWeight";
+import { FontWeight } from "@/theme/typography";
 import { useTrainerLogin } from "@/hooks/useTrainerLogin";
 
 const LOGO = require("@/assets/images/logo/project_logo.png");
@@ -45,86 +44,96 @@ export default function TrainerLoginScreen() {
     <>
       <StatusBar style="dark" />
       <SafeAreaView style={styles.container}>
-        <ScrollView
-          contentContainerStyle={styles.content}
-          keyboardShouldPersistTaps="handled"
+        <KeyboardAvoidingView
+          style={styles.keyboardView}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
-          <Pressable
-            style={styles.backButton}
-            onPress={() => router.back()}
-            hitSlop={8}
+          <ScrollView
+            contentContainerStyle={styles.content}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
           >
-            <Ionicons name="arrow-back" size={20} color={Colors.mainColour1} />
-          </Pressable>
+            <Pressable
+              style={styles.backButton}
+              onPress={() => router.back()}
+              hitSlop={8}
+            >
+              <Ionicons name="arrow-back" size={20} color={Colors.mainColour1} />
+            </Pressable>
 
-          <AppCard style={styles.card}>
-            <View style={styles.header}>
-              <Image source={LOGO} style={styles.brandLogoImage} />
-            </View>
-
-            <View style={styles.body}>
-              <AppInput
-                label="Username"
-                placeholder="Enter username"
-                value={username}
-                onChangeText={setUsername}
-                autoCapitalize="none"
-              />
-              <AppInput
-                label="Password"
-                placeholder="Password"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
-              />
-
-              <View style={styles.optionsRow}>
-                <Checkbox
-                  label="Show Password"
-                  checked={showPassword}
-                  onToggle={() => setShowPassword((value) => !value)}
-                />
-                <Checkbox
-                  label="Remember Me"
-                  checked={rememberMe}
-                  onToggle={() => setRememberMe((value) => !value)}
-                />
+            <AppCard style={styles.card}>
+              <View style={styles.header}>
+                <Image source={LOGO} style={styles.brandLogoImage} />
               </View>
 
-              {notice && <AppText style={styles.notice}>{notice}</AppText>}
+              <View style={styles.body}>
+                <AppInput
+                  label="Username"
+                  placeholder="Enter username"
+                  value={username}
+                  onChangeText={setUsername}
+                  autoCapitalize="none"
+                />
+                <AppInput
+                  label="Password"
+                  placeholder="Password"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                />
 
-              <AppButton title="Login" onPress={handleLogin} loading={loading} />
+                <View style={styles.optionsRow}>
+                  <Checkbox
+                    label="Show Password"
+                    checked={showPassword}
+                    onToggle={() => setShowPassword((value) => !value)}
+                  />
+                  <Checkbox
+                    label="Remember Me"
+                    checked={rememberMe}
+                    onToggle={() => setRememberMe((value) => !value)}
+                  />
+                </View>
 
-              <AppText style={styles.orText} color={Colors.gray600}>
-                or sign in with other accounts?
-              </AppText>
-              <View style={styles.socialRow}>
-                {SOCIAL_ICONS.map((social) => (
-                  <View key={social.name} style={styles.socialIcon}>
-                    <Ionicons
-                      name={social.name}
-                      size={20}
-                      color={social.color}
-                    />
-                  </View>
-                ))}
-              </View>
-
-              <Pressable onPress={() => router.back()}>
-                <AppText style={styles.websiteText} color={Colors.gray600}>
-                  Go to website?{" "}
-                  <AppText color={Colors.mainColour1} weight={FontWeight.medium}>
-                    Click here.
+                {notice && (
+                  <AppText variant="caption" color={Colors.mainColour1} align="center" style={styles.notice}>
+                    {notice}
                   </AppText>
-                </AppText>
-              </Pressable>
-            </View>
-          </AppCard>
+                )}
 
-          <View style={styles.securityFooter}>
-            <SecurityFooter />
-          </View>
-        </ScrollView>
+                <AppButton title="Login" onPress={handleLogin} loading={loading} />
+
+                <AppText variant="caption" color={Colors.gray600} align="center" style={styles.orText}>
+                  or sign in with other accounts?
+                </AppText>
+                <View style={styles.socialRow}>
+                  {SOCIAL_ICONS.map((social) => (
+                    <View key={social.name} style={styles.socialIcon}>
+                      <Ionicons
+                        name={social.name}
+                        size={20}
+                        color={social.color}
+                      />
+                    </View>
+                  ))}
+                </View>
+
+                <Pressable onPress={() => router.back()}>
+                  <AppText variant="caption" color={Colors.gray600} align="center" style={styles.websiteText}>
+                    Go to website?{" "}
+                    <AppText variant="caption" color={Colors.mainColour1} weight={FontWeight.medium}>
+                      Click here.
+                    </AppText>
+                  </AppText>
+                </Pressable>
+              </View>
+            </AppCard>
+
+            <View style={styles.securityFooter}>
+              <SecurityFooter />
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </>
   );
@@ -146,7 +155,7 @@ function Checkbox({
           <Ionicons name="checkmark" size={12} color={Colors.white} />
         )}
       </View>
-      <AppText style={styles.checkboxLabel} color={Colors.gray600}>
+      <AppText variant="caption" color={Colors.gray600}>
         {label}
       </AppText>
     </Pressable>
@@ -155,6 +164,7 @@ function Checkbox({
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#EEF4FF" },
+  keyboardView: { flex: 1 },
   content: {
     flexGrow: 1,
     justifyContent: "center",
@@ -200,14 +210,10 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.mainColour1,
     borderColor: Colors.mainColour1,
   },
-  checkboxLabel: { fontSize: Fonts.bodySm },
   notice: {
-    color: Colors.mainColour1,
-    fontSize: Fonts.bodySm,
-    textAlign: "center",
     marginBottom: 12,
   },
-  orText: { fontSize: Fonts.bodySm, textAlign: "center", marginTop: 18 },
+  orText: { marginTop: 18 },
   socialRow: {
     flexDirection: "row",
     justifyContent: "center",
@@ -222,6 +228,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  websiteText: { fontSize: Fonts.bodySm, textAlign: "center", marginTop: 20 },
+  websiteText: { marginTop: 20 },
   securityFooter: { marginTop: 32 },
 });

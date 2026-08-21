@@ -6,11 +6,13 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 
+import CalendarIcon from "@/assets/images/svg/calender2.svg";
+import ClockIcon from "@/assets/images/svg/clock.svg";
+import LocationIcon from "@/assets/images/svg/location.svg";
 import Sparkle from "@/assets/images/svg/sparkle.svg";
 import AppText from "@/components/ui/AppText";
 import { Colors } from "@/theme/colors";
-import { FontWeight } from "@/theme/fontWeight";
-import { Fonts } from "@/theme/fonts";
+import { FontWeight } from "@/theme/typography";
 import { createShadow } from "@/theme/shadows";
 
 export type AccessGrantedDetail = {
@@ -41,30 +43,37 @@ export default function AccessGrantedView({
         showsVerticalScrollIndicator={false}
         bounces={false}
       >
-        {/* Top Green Section */}
+        {/* Top Green Hero Section */}
         <View style={styles.successArea}>
           <View style={styles.successHalo}>
-            <Sparkle width={213} height={101} style={styles.sparkle} />
+            <Sparkle width={170} height={80} style={styles.sparkle} />
             <View style={styles.successRing}>
               <View style={styles.successCircle}>
-                <Ionicons name="checkmark" size={60} color={Colors.success} />
+                <Ionicons name="checkmark" size={48} color={Colors.success} />
               </View>
             </View>
           </View>
 
           <AppText
-            style={styles.title}
+            variant="h1"
             color={Colors.white}
-            weight={FontWeight.semiBold}
+            weight={FontWeight.bold}
+            align="center"
+            style={styles.title}
           >
             Access Granted!
           </AppText>
-          <AppText style={styles.subtitle} color={Colors.white}>
+          <AppText
+            variant="label"
+            color="rgba(255, 255, 255, 0.95)"
+            align="center"
+            style={styles.subtitle}
+          >
             Your attendance is permanently recorded.
           </AppText>
         </View>
 
-        {/* Content Section: Full Height Card + Actions directly underneath */}
+        {/* Content Section: Overlapping Details Card + Bottom Actions */}
         <View style={styles.content}>
           <View style={styles.detailsCard}>
             {details.map((detail, index) => (
@@ -76,7 +85,7 @@ export default function AccessGrantedView({
             ))}
           </View>
 
-          {/* Bottom Actions directly under card */}
+          {/* Bottom Actions */}
           <View style={styles.bottomActions}>
             <Pressable
               style={styles.continueButton}
@@ -85,7 +94,7 @@ export default function AccessGrantedView({
               accessibilityLabel="Great, Continue"
             >
               <AppText
-                style={styles.continueText}
+                variant="h3"
                 color={Colors.white}
                 weight={FontWeight.bold}
               >
@@ -98,9 +107,14 @@ export default function AccessGrantedView({
               onPress={onHome}
               accessibilityRole="button"
               accessibilityLabel="Back to Home"
+              hitSlop={8}
             >
-              <Ionicons name="home-outline" size={16} color={Colors.success} />
-              <AppText style={styles.homeText} color={Colors.success}>
+              <Ionicons name="home-outline" size={15} color={Colors.success} />
+              <AppText
+                variant="caption"
+                color={Colors.success}
+                weight={FontWeight.semiBold}
+              >
                 Back to Home
               </AppText>
             </Pressable>
@@ -120,98 +134,32 @@ function DetailRow({
   return (
     <View style={[styles.detailRow, !isLast && styles.detailBorder]}>
       <View style={styles.detailIcon}>
-        <Ionicons name={icon} size={27} color={Colors.success} />
+        {icon === "calendar-outline" ||
+        label.toLowerCase().includes("session") ||
+        label.toLowerCase().includes("date") ? (
+          <CalendarIcon width={20} height={20} color="#1CB07D" />
+        ) : icon === "time-outline" ||
+          label.toLowerCase().includes("time") ||
+          label.toLowerCase().includes("checked") ? (
+          <ClockIcon width={20} height={20} color="#1CB07D" />
+        ) : icon === "location-outline" ||
+          label.toLowerCase().includes("location") ? (
+          <LocationIcon width={18} height={22} color="#1CB07D" />
+        ) : (
+          <Ionicons name={icon} size={22} color={Colors.success} />
+        )}
       </View>
       <View style={styles.detailTextColumn}>
-        <AppText style={styles.detailLabel}>{label}</AppText>
-        <AppText style={styles.detailValue} weight={FontWeight.medium}>
+        <AppText variant="caption" color={Colors.gray600}>
+          {label}
+        </AppText>
+        <AppText variant="label" color="#111827" weight={FontWeight.semiBold}>
           {value}
         </AppText>
       </View>
     </View>
   );
 }
-
-// Preserved alternate implementation (pre-redesign layout) from before the
-// upstream/Tushar merge. AccessGrantedView above is the active component; this is kept
-// intact rather than deleted since the same access-granted flow/styling is relied on
-// elsewhere and shouldn't be lost.
-export function AccessGrantedViewLegacy({ details, onContinue, onHome }: Props) {
-  const insets = useSafeAreaInsets();
-
-  return (
-    <SafeAreaView style={legacyStyles.container} edges={["top", "bottom"]}>
-      <View style={[legacyStyles.statusBarBackground, { height: insets.top }]} />
-      <StatusBar style="dark" animated />
-      <View style={legacyStyles.successArea}>
-        <View style={legacyStyles.successHalo}>
-          <Sparkle width={219} height={101} style={legacyStyles.sparkle} />
-          <View style={legacyStyles.successRing}>
-            <View style={legacyStyles.successCircle}>
-              <Ionicons name="checkmark" size={Fonts.iconSize} color={Colors.success} />
-            </View>
-          </View>
-        </View>
-        <AppText style={legacyStyles.title} color={Colors.white} weight={FontWeight.semiBold}>Access Granted!</AppText>
-        <AppText style={legacyStyles.subtitle} color={Colors.white}>Your attendance is permanently recorded.</AppText>
-      </View>
-
-      <View style={legacyStyles.content}>
-        <View style={legacyStyles.detailsCard}>
-          {details.map((detail, index) => (
-            <DetailRowLegacy key={detail.label} {...detail} isLast={index === details.length - 1} />
-          ))}
-        </View>
-        <Pressable style={legacyStyles.continueButton} onPress={onContinue}>
-          <AppText style={legacyStyles.continueText} color={Colors.white} weight={FontWeight.medium}>Great, Continue</AppText>
-          <Ionicons name="arrow-forward" size={20} color={Colors.white} />
-        </Pressable>
-        <Pressable style={legacyStyles.homeLink} onPress={onHome}>
-          <Ionicons name="home-outline" size={13} color={Colors.success} />
-          <AppText style={legacyStyles.homeText} color={Colors.success}>Back to Home</AppText>
-        </Pressable>
-      </View>
-    </SafeAreaView>
-  );
-}
-
-function DetailRowLegacy({ label, value, icon, isLast }: AccessGrantedDetail & { isLast: boolean }) {
-  return (
-    <View style={[legacyStyles.detailRow, !isLast && legacyStyles.detailBorder]}>
-      <View style={legacyStyles.detailIcon}><Ionicons name={icon} size={20} color={Colors.success} /></View>
-      <View>
-        <AppText style={legacyStyles.detailLabel}>{label}</AppText>
-        <AppText style={legacyStyles.detailValue} weight={FontWeight.medium}>{value}</AppText>
-      </View>
-    </View>
-  );
-}
-
-const legacyStyles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F2FFF9" },
-  statusBarBackground: { position: "absolute", top: 0, left: 0, right: 0, backgroundColor: Colors.success },
-  successArea: { height: "80%", minHeight: 350, alignItems: "center", justifyContent: "center", backgroundColor: Colors.success, borderBottomLeftRadius: 34, borderBottomRightRadius: 34, paddingBottom: 72 },
-  successHalo: { width: 144, height: 144, borderRadius: 72, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255, 255, 255, 0.035)", borderWidth: 1, borderColor: "rgba(255, 255, 255, 0.06)" },
-  sparkle: { position: "absolute", top: -65, zIndex: 0 },
-  successRing: { width: 116, height: 116, zIndex: 1, borderRadius: 58, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255, 255, 255, 0.07)", borderWidth: 1, borderColor: "rgba(255, 255, 255, 0.08)" },
-  successCircle: { width: 84, height: 84, borderRadius: 42, backgroundColor: Colors.white, alignItems: "center", justifyContent: "center", shadowColor: Colors.black, shadowOpacity: 0.08, shadowOffset: { width: 0, height: 3 }, shadowRadius: 6, elevation: 2 },
-  title: { marginTop: 23, fontSize: Fonts.h1 },
-  subtitle: { marginTop: 4, fontSize: Fonts.body },
-  content: { flex: 1, alignItems: "center", paddingHorizontal: 21, marginTop: -165 },
-  detailsCard: {
-    width: "100%", backgroundColor: Colors.white, borderRadius: 17, paddingHorizontal: 12, paddingVertical: 3, shadowColor: Colors.black, shadowOpacity: 0.12, shadowOffset: { width: 0, height: 3 },
-    shadowRadius: 10, elevation: 4
-  },
-  detailRow: { minHeight: 46, flexDirection: "row", alignItems: "center", gap: 10 },
-  detailBorder: { borderBottomWidth: 1, borderBottomColor: Colors.gray200 },
-  detailIcon: { width: 25, height: 25, borderRadius: 5, backgroundColor: "#D8F8EB", alignItems: "center", justifyContent: "center" },
-  detailLabel: { fontSize: Fonts.overline, color: Colors.gray600 },
-  detailValue: { fontSize: Fonts.bodySm, marginTop: 1 },
-  continueButton: { width: "100%", height: 32, marginTop: 15, borderRadius: 7, backgroundColor: "#00A86B", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 5 },
-  continueText: { fontSize: Fonts.body },
-  homeLink: { marginTop: 16, flexDirection: "row", alignItems: "center", gap: 5 },
-  homeText: { fontSize: Fonts.caption },
-});
 
 const styles = StyleSheet.create({
   container: {
@@ -227,7 +175,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: 32,
+    justifyContent: "space-between",
   },
   successArea: {
     alignItems: "center",
@@ -235,26 +183,26 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.success,
     borderBottomLeftRadius: 40,
     borderBottomRightRadius: 40,
-    paddingTop: 30,
-    paddingBottom: 270,
+    paddingTop: 60,
+    paddingBottom: 235,
     paddingHorizontal: 20,
   },
   successHalo: {
-    width: 213,
-    height: 213,
-    borderRadius: 106.5,
+    width: 170,
+    height: 170,
+    borderRadius: 85,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "rgba(255, 255, 255, 0.035)",
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.06)",
   },
-  sparkle: { position: "absolute", top: -35, zIndex: 0 },
+  sparkle: { position: "absolute", top: -28, zIndex: 0 },
   successRing: {
-    width: 168,
-    height: 168,
+    width: 134,
+    height: 134,
     zIndex: 1,
-    borderRadius: 84,
+    borderRadius: 67,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "rgba(255, 255, 255, 0.07)",
@@ -262,24 +210,19 @@ const styles = StyleSheet.create({
     borderColor: "rgba(255, 255, 255, 0.08)",
   },
   successCircle: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 96,
+    height: 96,
+    borderRadius: 48,
     backgroundColor: Colors.white,
     alignItems: "center",
     justifyContent: "center",
     ...createShadow({ x: 0, y: 3, blur: 6, opacity: 0.08, elevation: 2 }),
   },
   title: {
-    marginTop: 20,
-    fontSize: 29,
-    textAlign: "center",
+    marginTop: 16,
   },
   subtitle: {
     marginTop: 4,
-    fontSize: 15,
-    textAlign: "center",
-    opacity: 0.95,
   },
 
   // Overlapping Content
@@ -288,16 +231,20 @@ const styles = StyleSheet.create({
     maxWidth: 480,
     alignSelf: "center",
     paddingHorizontal: 20,
-    marginTop: -245,
+    marginTop: -205,
+    flex: 1,
+    justifyContent: "space-between",
+    paddingBottom: 24,
   },
   detailsCard: {
     width: "100%",
-    height: 295,
+    flex: 1,
+    minHeight: 290,
     backgroundColor: Colors.white,
     borderRadius: 24,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    justifyContent: "space-around",
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    justifyContent: "space-between",
     ...createShadow({ x: 0, y: 8, blur: 20, opacity: 0.09, elevation: 5 }),
   },
   detailRow: {
@@ -305,12 +252,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 14,
-    paddingVertical: 4,
+    paddingVertical: 8,
   },
   detailBorder: { borderBottomWidth: 1, borderBottomColor: Colors.gray200 },
   detailIcon: {
-    width: 40,
-    height: 40,
+    width: 42,
+    height: 42,
     borderRadius: 10,
     backgroundColor: "#D8F8EB",
     alignItems: "center",
@@ -318,17 +265,15 @@ const styles = StyleSheet.create({
   },
   detailTextColumn: {
     flex: 1,
-    gap: 1,
+    gap: 2,
   },
-  detailLabel: { fontSize: 12, color: Colors.gray600 },
-  detailValue: { fontSize: 14, color: "#111827" },
 
   // Bottom Actions directly under card
   bottomActions: {
     width: "100%",
     alignItems: "center",
-    gap: 14,
-    marginTop: 22,
+    gap: 10,
+    marginTop: 20,
   },
   continueButton: {
     width: "100%",
@@ -339,12 +284,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     ...createShadow({ x: 0, y: 4, blur: 10, opacity: 0.12, elevation: 3 }),
   },
-  continueText: { fontSize: 18, fontWeight: "700" },
   homeLink: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    paddingVertical: 2,
+    paddingVertical: 4,
   },
-  homeText: { fontSize: 12, fontWeight: "600" },
 });

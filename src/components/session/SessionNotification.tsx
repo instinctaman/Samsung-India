@@ -4,7 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 
 import AppText from "@/components/ui/AppText";
 import { Colors } from "@/theme/colors";
-import { FontWeight } from "@/theme/fontWeight";
+import { FontWeight } from "@/theme/typography";
 
 export type SessionNotificationProps = {
   title?: string;
@@ -37,10 +37,18 @@ export default function SessionNotification({
 
       {/* Text Copy */}
       <View style={styles.textWrap}>
-        <AppText style={styles.title} weight={FontWeight.bold}>
+        <AppText
+          variant="label"
+          color={Colors.black}
+          weight={FontWeight.bold}
+        >
           {title}
         </AppText>
-        <AppText style={styles.message} weight={FontWeight.medium}>
+        <AppText
+          variant="caption"
+          color={Colors.gray600}
+          weight={FontWeight.medium}
+        >
           {message}
         </AppText>
       </View>
@@ -75,13 +83,5 @@ const styles = StyleSheet.create({
   textWrap: {
     flex: 1,
     gap: 2,
-  },
-  title: {
-    fontSize: 14,
-    color: Colors.black,
-  },
-  message: {
-    fontSize: 11.5,
-    color: Colors.gray600,
   },
 });

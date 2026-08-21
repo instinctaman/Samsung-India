@@ -464,6 +464,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#F3F7FA",
   },
   scrollContent: {
+    flexGrow: 1,
     paddingBottom: 20,
   },
   qrModalContent: {
