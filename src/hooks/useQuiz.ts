@@ -155,6 +155,7 @@ export function useQuiz() {
       setSeconds((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
+          handleTimerExpired();
           return 0;
         }
         return prev - 1;

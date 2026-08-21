@@ -1,3 +1,4 @@
+import { FontSize, FontWeight, LineHeight } from "@/theme/typography";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams } from "expo-router";
 import {
@@ -12,10 +13,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import TestSubmittedView from "@/components/assessment/TestSubmittedView";
 import AppText from "@/components/ui/AppText";
 import TimeProgress from "@/components/ui/TimeProgress";
-import { Colors } from "@/theme/colors";
-import { FontSize, FontWeight } from "@/theme/typography";
-import { createShadow } from "@/theme/shadows";
 import { usePostTest } from "@/hooks/usePostTest";
+import { Colors } from "@/theme/colors";
+import { createShadow } from "@/theme/shadows";
 
 export default function PostTestScreen() {
   const { conferenceUid, suiteUid } = useLocalSearchParams<{
@@ -53,9 +53,7 @@ export default function PostTestScreen() {
     return (
       <SafeAreaView style={styles.loadingContainer}>
         <ActivityIndicator color={Colors.primary} size="large" />
-        <AppText variant="body" color={Colors.gray600} align="center">
-          Loading the test…
-        </AppText>
+        <AppText style={styles.loadingText}>Loading the test…</AppText>
       </SafeAreaView>
     );
   }
@@ -64,11 +62,9 @@ export default function PostTestScreen() {
     return (
       <SafeAreaView style={styles.loadingContainer}>
         <Ionicons name="alert-circle-outline" size={48} color={Colors.danger} />
-        <AppText variant="body" color={Colors.gray600} align="center">
-          {error}
-        </AppText>
+        <AppText style={styles.loadingText}>{error}</AppText>
         <Pressable style={styles.retryButton} onPress={retry}>
-          <AppText variant="label" color={Colors.white}>
+          <AppText color={Colors.white} weight={FontWeight.medium}>
             Try Again
           </AppText>
         </Pressable>
@@ -134,21 +130,56 @@ export default function PostTestScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+      <View style={styles.header}>
+        <View style={styles.headerRow}>
+          <View style={styles.timer}>
+            <Ionicons name="time-outline" size={14} color={Colors.primary} />
+            <AppText style={styles.timerText}>
+              {String(remainingMinutes).padStart(2, "0")}:
+              {String(remainingSecondsPart).padStart(2, "0")}
+            </AppText>
+          </View>
+          <View style={styles.progress}>
+            <AppText style={styles.progressText}>Overall Progress</AppText>
+            <View style={styles.progressTrack}>
+              <View
+                style={[
+                  styles.progressFill,
+                  {
+                    width: `${Math.round(((questionIndex + 1) / questions.length) * 100)}%`,
+                  },
+                ]}
+              />
+            </View>
+            <AppText style={styles.progressPercent}>
+              {Math.round(((questionIndex + 1) / questions.length) * 100)}%
+            </AppText>
+          </View>
+          <View style={styles.headerIcon}>
+            <Ionicons name="cloud-outline" size={17} color={Colors.primary} />
+          </View>
+          <View style={styles.wifi}>
+            <Ionicons name="wifi" size={15} color={Colors.white} />
+          </View>
+        </View>
+      </View>
+
       <ScrollView
+        style={styles.scrollView}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.timerCard}>
+        <View style={styles.timerRow}>
           <TimeProgress
             totalMinutes={totalMinutes}
             remainingMinutes={remainingMinutes}
             remainingSeconds={remainingSecondsPart}
-            size={130}
+            size={120}
           />
         </View>
 
         <View style={styles.testTitle}>
-          <AppText style = {styles.testTitleText} variant="body" >
+          <AppText style={styles.title} weight={FontWeight.semiBold}>
             {suiteTitle ?? "MX Training Offline\nPost Test ( July 2026 )"}
           </AppText>
         </View>
@@ -156,31 +187,30 @@ export default function PostTestScreen() {
         <View style={styles.questionCard}>
           <View style={styles.questionBody}>
             <View style={styles.tags}>
-              <AppText variant="caption" style={styles.questionText}>
-                Question {questionIndex + 1} of {questions.length}
-              </AppText>
-              <AppText
-                variant="caption"
-                style={styles.questionType}
-                weight={FontWeight.medium}
-              >
-                {current.question_type === "multi"
-                  ? "Multi - Select"
-                  : "Single Select"}
-              </AppText>
+              <View style={styles.questionTagWrapper}>
+                <AppText style={styles.questionTag} weight={FontWeight.medium}>
+                  Question {questionIndex + 1} of {questions.length}
+                </AppText>
+              </View>
+              <View style={styles.multiTagWrapper}>
+                <AppText style={styles.multiTag} weight={FontWeight.medium}>
+                  {current.question_type === "multi"
+                    ? "Multi – Select"
+                    : "Single Select"}
+                </AppText>
+              </View>
               <View style={styles.unlimitedTag}>
-                <Ionicons name="infinite" size={15} color="#00A859" />
-                <AppText variant="caption" style={styles.unlimitedTagText}>
+                <Ionicons name="infinite" size={13} color="#00A859" />
+                <AppText
+                  style={styles.unlimitedText}
+                  weight={FontWeight.medium}
+                >
                   Unlimited
                 </AppText>
               </View>
             </View>
 
-            <AppText
-              variant="body"
-              weight={FontWeight.semiBold}
-              style={styles.question}
-            >
+            <AppText style={styles.question} weight={FontWeight.bold}>
               {current.question}
             </AppText>
 
@@ -207,12 +237,12 @@ export default function PostTestScreen() {
                       {checked && (
                         <Ionicons
                           name="checkmark"
-                          size={14}
+                          size={13}
                           color={Colors.white}
                         />
                       )}
                     </View>
-                    <AppText variant="bodySmall" style={styles.optionText}>
+                    <AppText style={styles.optionText} weight={FontWeight.medium}>
                       {option.text}
                     </AppText>
                   </Pressable>
@@ -220,16 +250,7 @@ export default function PostTestScreen() {
               })}
             </View>
 
-            {error && (
-              <AppText
-                variant="caption"
-                color={Colors.danger}
-                align="center"
-                style={styles.inlineError}
-              >
-                {error}
-              </AppText>
-            )}
+            {error && <AppText style={styles.inlineError}>{error}</AppText>}
           </View>
 
           <View style={styles.actions}>
@@ -241,11 +262,7 @@ export default function PostTestScreen() {
                 (questionIndex === 0 || !isActive) && styles.disabledButton,
               ]}
             >
-              <AppText
-                variant="label"
-                color={Colors.gray600}
-                weight={FontWeight.semiBold}
-              >
+              <AppText style={styles.previousText} weight={FontWeight.semiBold}>
                 Previous Question
               </AppText>
             </Pressable>
@@ -262,9 +279,9 @@ export default function PostTestScreen() {
                 <ActivityIndicator color={Colors.white} />
               ) : (
                 <AppText
-                  variant="label"
                   color={Colors.white}
                   weight={FontWeight.semiBold}
+                  style={styles.nextText}
                 >
                   {isLastQuestion ? "Submit Test" : "Next Question"}
                 </AppText>
@@ -278,13 +295,18 @@ export default function PostTestScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background},
+  container: { flex: 1, backgroundColor: Colors.background },
   loadingContainer: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
     gap: 12,
     paddingHorizontal: 24,
+  },
+  loadingText: {
+    fontSize: FontSize.label,
+    color: Colors.gray600,
+    textAlign: "center",
   },
   retryButton: {
     backgroundColor: Colors.primary,
@@ -293,110 +315,193 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   inlineError: {
+    color: Colors.danger,
+    fontSize: FontSize.caption,
     marginTop: 8,
+    textAlign: "center",
   },
-  content: { flexGrow: 1, padding: 13, gap: 11, paddingBottom: 28 },
-  timerCard: {
+  header: { backgroundColor: Colors.mainColour1, padding: 9 },
+  headerRow: {
+    height: 30,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  timer: {
+    height: 22,
+    paddingHorizontal: 6,
+    borderRadius: 4,
     backgroundColor: Colors.white,
-    borderRadius: 12,
-    height: 150,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+  },
+  timerText: { color: Colors.primary, fontSize: FontSize.overline },
+  progress: {
+    flex: 1,
+    height: 22,
+    backgroundColor: Colors.white,
+    borderRadius: 4,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 5,
+    gap: 5,
+  },
+  progressText: { fontSize: FontSize.tiny, color: Colors.black },
+  progressTrack: {
+    flex: 1,
+    height: 6,
+    backgroundColor: Colors.gray100,
+    borderRadius: 3,
+    overflow: "hidden",
+  },
+  progressFill: {
+    height: "100%",
+    backgroundColor: Colors.primary,
+    borderRadius: 3,
+  },
+  progressPercent: {
+    fontSize: FontSize.tiny,
+    color: Colors.black,
+    minWidth: 26,
+    textAlign: "right",
+  },
+  headerIcon: {
+    width: 22,
+    height: 22,
+    borderRadius: 3,
+    backgroundColor: Colors.white,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  wifi: {
+    width: 22,
+    height: 22,
+    borderRadius: 3,
+    backgroundColor: "#16A34A",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  scrollView: {
+    flex: 1,
+  },
+  content: {
+    flexGrow: 1,
+    padding: 13,
+    gap: 11,
+    paddingBottom: 16,
+  },
+  timerRow: {
+    backgroundColor: Colors.white,
+    borderRadius: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
     alignItems: "center",
     justifyContent: "center",
     ...createShadow({ x: 0, y: 2, blur: 8, opacity: 0.06, elevation: 2 }),
   },
   testTitle: {
-    paddingVertical: 12,
+    paddingVertical: 14,
     paddingHorizontal: 16,
-    borderRadius: 12,
-    borderColor: "#006AFF",
-    backgroundColor: "#ffffff",
+    borderRadius: 16,
+    backgroundColor: Colors.white,
     ...createShadow({
       x: 0,
-      y: -6,
-      blur: 14,
-      opacity: 0.12,
+      y: 2,
+      blur: 8,
+      opacity: 0.06,
+      elevation: 2,
+      color: "#000000",
+    }),
+  },
+  title: {
+    fontSize: FontSize.body,
+    lineHeight: LineHeight.h2,
+    textAlign: "center",
+    color: "#111827",
+  },
+  questionCard: {
+    flex: 1,
+    justifyContent: "space-between",
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: "#006AFF",
+    overflow: "hidden",
+    backgroundColor: Colors.white,
+    ...createShadow({
+      x: 0,
+      y: 4,
+      blur: 12,
+      opacity: 0.08,
       elevation: 4,
       color: "#000000",
     }),
   },
-  testTitleText : {
-    fontSize: 23, 
-    alignItems: "center",
-    paddingInline: 20,
-  },
-  questionCard: {
-    borderRadius: 12,
-    overflow: "hidden",
-    backgroundColor: "#ffffff",
-    ...createShadow({
-      x: 0,
-      y: -8,
-      blur: 16,
-      opacity: 0.14,
-      elevation: 6,
-      color: "#000000",
-    }),
-  },
-  questionBody: { 
-    padding: 14 },
-    
+  questionBody: { padding: 14 },
   tags: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "flex-start",
-    marginBottom: 10,
-    gap: 9,
-    flexWrap: "wrap",
+    gap: 8,
+    marginBottom: 8,
   },
-  questionText: {
-    fontSize: 10.5,
-    color: "#006AFF",
-    backgroundColor: "#006AFF20",
+  questionTagWrapper: {
+    backgroundColor: "#D1E5FF",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
     borderRadius: 6,
-    paddingVertical: 5,
-    paddingHorizontal: 14,
   },
-  questionType: {
-    color: "#595959",
-    fontSize: FontSize.caption,
-    backgroundColor: "#C5C5C5",
-    paddingVertical: 5,
-    paddingHorizontal: 14,
+  questionTag: {
+    fontSize: FontSize.tiny,
+    lineHeight: LineHeight.overline,
+    color: "#0066FF",
+  },
+  multiTagWrapper: {
+    backgroundColor: "#F1F3F5",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
     borderRadius: 6,
+  },
+  multiTag: {
+    fontSize: FontSize.tiny,
+    lineHeight: LineHeight.overline,
+    color: "#4B5563",
   },
   unlimitedTag: {
     flexDirection: "row",
     alignItems: "center",
     gap: 3,
-    backgroundColor: "#1cb07c24",
-    paddingVertical: 5,
-    paddingHorizontal: 14,
+    backgroundColor: "#D1F2DE",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
     borderRadius: 6,
   },
-  unlimitedTagText: {
+  unlimitedText: {
+    fontSize: FontSize.tiny,
+    lineHeight: LineHeight.overline,
     color: "#00A859",
-    fontSize: 10.5,
-    fontWeight: FontWeight.medium,
   },
   question: {
-    marginBottom: 12,
-    fontSize: FontSize.body,
+    fontSize: 18,
+    lineHeight: LineHeight.body,
+    color: "#000000",
+    marginVertical: 10,
   },
-  options: { gap: 10 },
+  options: { gap: 8 },
   option: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 10,
-    borderRadius: 8,
-    backgroundColor: "#ffffff",
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
     minHeight: 56,
-    borderWidth: 2,
-    borderColor: "#c1c1c1",
-    gap: 18,
+    borderWidth: 1.5,
+    borderColor: "#E2E8F0",
+    gap: 10,
   },
   optionSelected: {
-    backgroundColor: "#DCE8FE",
-    borderColor: Colors.primary,
+    backgroundColor: "#F0F7FF",
+    borderColor: "#006AFF",
   },
   optionDisabled: { opacity: 0.6 },
   checkbox: {
@@ -404,39 +509,52 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 5,
     borderWidth: 1.5,
-    borderColor: Colors.gray400,
+    borderColor: "#CBD5E1",
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: "#FFFFFF",
   },
   checkboxSelected: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
+    backgroundColor: "#006AFF",
+    borderColor: "#006AFF",
   },
-  optionText: { flex: 1, fontSize: 13 },
+  optionText: {
+    fontSize: FontSize.label,
+    lineHeight: LineHeight.label,
+    color: "#000000",
+    flex: 1,
+  },
   actions: {
     flexDirection: "row",
-    gap: 10,
+    gap: 12,
     padding: 14,
-    borderTopWidth: 1,
-    borderTopColor: Colors.gray200,
     backgroundColor: Colors.white,
   },
   previousButton: {
     flex: 1,
-    height: 45,
-    borderRadius: 13,
-    borderWidth: 1.5,
-    borderColor: Colors.gray400,
+    height: 46,
+    borderRadius: 12,
+    borderWidth: 1.8,
+    borderColor: "#006AFF",
+    backgroundColor: Colors.white,
     alignItems: "center",
     justifyContent: "center",
   },
+  previousText: {
+    fontSize: FontSize.label,
+    color: "#006AFF",
+  },
   nextButton: {
     flex: 1,
-    height: 45,
-    borderRadius: 13,
-    backgroundColor: Colors.primary,
+    height: 46,
+    borderRadius: 12,
+    backgroundColor: "#006AFF",
     alignItems: "center",
     justifyContent: "center",
+  },
+  nextText: {
+    fontSize: FontSize.label,
+    color: Colors.white,
   },
   disabledButton: { opacity: 0.5 },
 });
