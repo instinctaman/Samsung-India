@@ -129,6 +129,15 @@ export default function Starter1() {
           <View style={styles.securityFooter}>
             <SecurityFooter />
           </View>
+          <RegisterSheet
+            visible={isRegisterOpen}
+            onClose={closeRegister}
+          />
+          {/* <RegisterBottomSheet
+          ref={bottomSheetRef}
+        /> */}
+        </View>
+        <View style={styles.trainerLoginBar}>
           <Pressable
             style={styles.trainerLogin}
             onPress={() => router.push("/trainer_login")}
@@ -138,13 +147,6 @@ export default function Starter1() {
             </View>
             <AppText style={styles.trainerLoginLabel}>Trainer Login</AppText>
           </Pressable>
-          <RegisterSheet
-            visible={isRegisterOpen}
-            onClose={closeRegister}
-          />
-          {/* <RegisterBottomSheet
-          ref={bottomSheetRef}
-        /> */}
         </View>
       </SafeAreaView>
     </>
@@ -196,8 +198,18 @@ const styles = StyleSheet.create({
   securityFooter: {
     marginTop: 42,
   },
+  trainerLoginBar: {
+    width: "100%",
+    backgroundColor: Colors.white,
+    paddingTop: 34,
+    paddingBottom: 20,
+    alignItems: "center",
+  },
   trainerLogin: {
-    marginTop: 18,
+    position: "absolute",
+    top: -24,
+    left: 0,
+    right: 0,
     alignItems: "center",
     gap: 6,
   },

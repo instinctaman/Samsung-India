@@ -2,6 +2,14 @@ import React, { createContext, useContext, useMemo, useState } from "react";
 
 import { AdminAccount, AdminAuthSession } from "@/api/admin";
 import { AuthSession, Trainee } from "@/api/auth";
+import { USE_MOCK_DATA } from "@/config/dataSource";
+import { DEMO_AUTH_SESSION } from "@/data/mockData";
+
+// On mock data, start already "logged in" as the demo trainee so screens
+// like /session show real values without requiring a register/login round-trip.
+const INITIAL_SESSION: AuthSession | null = USE_MOCK_DATA
+  ? (DEMO_AUTH_SESSION as AuthSession)
+  : null;
 
 type AuthContextValue = {
   trainee: Trainee | null;
@@ -20,7 +28,7 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [session, setSessionState] = useState<AuthSession | null>(null);
+  const [session, setSessionState] = useState<AuthSession | null>(INITIAL_SESSION);
   const [adminSession, setAdminSessionState] = useState<AdminAuthSession | null>(null);
 
   const value = useMemo<AuthContextValue>(

@@ -45,7 +45,7 @@ export default function SessionScreen() {
   const details = [
     ["SUPERVISOR", trainee?.supervisorName || "N/A"],
     ["DESIGNATION", trainee?.designation || "N/A"],
-    ["CITY", trainee?.district || "N/A"],
+    ["DISTRICT", trainee?.district || "N/A"],
     ["COMPANY ID", trainee?.employee_id || "N/A"],
   ];
 

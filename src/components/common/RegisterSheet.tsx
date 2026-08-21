@@ -1,6 +1,5 @@
-import { Pressable, ScrollView, View, StyleSheet } from "react-native";
+import { ScrollView, View, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/theme/colors";
 import { Fonts } from "@/theme/fonts";
 import PersonalDetails from "@/components/registration/PersonalDetails";
@@ -60,19 +59,6 @@ export default function RegisterSheet({
                 <View style={styles.securityFooter}>
                     <SecurityFooter />
                 </View>
-
-                <Pressable
-                    style={styles.trainerLogin}
-                    onPress={() => {
-                        onClose();
-                        router.push("/trainer_login");
-                    }}
-                >
-                    <View style={styles.trainerLoginIcon}>
-                        <Ionicons name="school-outline" size={24} color={Colors.white} />
-                    </View>
-                    <AppText style={styles.trainerLoginLabel}>Trainer Login</AppText>
-                </Pressable>
             </ScrollView>
         </AppModal>
     );
@@ -84,26 +70,6 @@ const styles = StyleSheet.create({
     },
     securityFooter: {
         marginTop: 22,
-    },
-
-    trainerLogin: {
-        marginTop: 18,
-        alignItems: "center",
-        gap: 6,
-    },
-
-    trainerLoginIcon: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
-        backgroundColor: Colors.mainColour1,
-        alignItems: "center",
-        justifyContent: "center",
-    },
-
-    trainerLoginLabel: {
-        fontSize: Fonts.bodySm,
-        color: Colors.mainColour1,
     },
 
     divider: {
