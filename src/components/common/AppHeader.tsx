@@ -1,8 +1,8 @@
 import { View, StyleSheet, Image } from "react-native";
 
-import AppText from "../ui/AppText";
 import { Colors } from "@/theme/colors";
 import { Fonts } from "@/theme/fonts";
+import { Radius } from "@/theme/radius";
 
 export default function AuthHeader() {
     return (
@@ -15,19 +15,6 @@ export default function AuthHeader() {
                     tintColor="#E8F0FF"
                 />
             </View>
-            <AppText
-                weight="500"
-                style={styles.title}
-                color={Colors.white}
-            >
-                Welcome Back
-            </AppText>
-            <AppText
-                color={Colors.white}
-                style={styles.subtitle}
-            >
-                Authenticate to access your session
-            </AppText>
         </View>
     );
 }
@@ -35,29 +22,22 @@ export default function AuthHeader() {
 const styles = StyleSheet.create({
     container: {
         alignItems: "center",
+        justifyContent: "center",
         backgroundColor: Colors.mainColour1,
-        paddingRight: 35,
-        paddingLeft: 35,
+        paddingVertical: 32,
+        borderTopLeftRadius: Radius.xxl,
+        borderTopRightRadius: Radius.xxl,
     },
     iconContainer: {
         borderRadius: 45,
         backgroundColor: "#E8F0FF",
         justifyContent: "center",
         alignItems: "center",
-        marginBottom: 20,
     },
     icon: {
         width: Fonts.profileIconSize,
         height: Fonts.profileIconSize,
         backgroundColor: Colors.mainColour1,
         borderRadius: 45,
-    },
-    title: {
-        marginBottom: 8,
-        fontSize: Fonts.h1,
-    },
-    subtitle: {
-        textAlign: "center",
-        fontSize: Fonts.xs,
     },
 });

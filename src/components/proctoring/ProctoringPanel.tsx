@@ -23,11 +23,11 @@ import {
   VIOLATION_FOOTER_LABELS,
 } from "./violations";
 
-const CHECK_INTERVAL_MS = 500;
+const CHECK_INTERVAL_MS = 400;
 // Give the candidate a moment to settle into frame before checks start —
 // otherwise the very first capture (face still off-center/out of view) fires
 // a false violation the instant the camera turns on.
-const GRACE_PERIOD_MS = 400 ;
+const GRACE_PERIOD_MS = 500 ;
 
 type Props = {
   token: string | null;
@@ -147,17 +147,12 @@ export default function ProctoringPanel({
 
         if (frameBase64) {
           const result = await checkFrameForFaces(token, frameBase64);
-          const faceCount = result.faceCount ?? 1;
 
-          // Determine current frame violation (if any)
-          let currentFrameViolation: SecurityViolationType | null = null;
-          if (faceCount > 1) {
-            currentFrameViolation = SECURITY_VIOLATIONS.MULTIPLE_PEOPLE;
-          } else if (faceCount === 0) {
-            currentFrameViolation = SECURITY_VIOLATIONS.NO_FACE;
-          } else if (result.violation) {
-            currentFrameViolation = result.violation;
-          }
+          // Only the side-look (left/right head turn) violation is surfaced.
+          const currentFrameViolation: SecurityViolationType | null =
+            result.violation === SECURITY_VIOLATIONS.SIDE_LOOK
+              ? result.violation
+              : null;
 
           // ── Immediate Violation Trigger ──────────────────────────────────
           if (currentFrameViolation) {

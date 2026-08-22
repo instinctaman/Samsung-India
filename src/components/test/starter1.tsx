@@ -3,7 +3,6 @@ import { StyleSheet, View, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { Ionicons } from "@expo/vector-icons";
 import AppCard from "@/components/ui/AppCard";
 import AuthHeader from "@/components/common/AppHeader";
 import AppText from "@/components/ui/AppText";
@@ -137,17 +136,6 @@ export default function Starter1() {
           ref={bottomSheetRef}
         /> */}
         </View>
-        <View style={styles.trainerLoginBar}>
-          <Pressable
-            style={styles.trainerLogin}
-            onPress={() => router.push("/trainer_login")}
-          >
-            <View style={styles.trainerLoginIcon}>
-              <Ionicons name="school-outline" size={24} color={Colors.white} />
-            </View>
-            <AppText style={styles.trainerLoginLabel}>Trainer Login</AppText>
-          </Pressable>
-        </View>
       </SafeAreaView>
     </>
   );
@@ -197,32 +185,5 @@ const styles = StyleSheet.create({
   },
   securityFooter: {
     marginTop: 42,
-  },
-  trainerLoginBar: {
-    width: "100%",
-    backgroundColor: Colors.white,
-    paddingTop: 34,
-    paddingBottom: 20,
-    alignItems: "center",
-  },
-  trainerLogin: {
-    position: "absolute",
-    top: -24,
-    left: 0,
-    right: 0,
-    alignItems: "center",
-    gap: 6,
-  },
-  trainerLoginIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: Colors.mainColour1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  trainerLoginLabel: {
-    fontSize: Fonts.bodySm,
-    color: Colors.mainColour1,
   },
 });

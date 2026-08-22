@@ -240,7 +240,9 @@ export function usePostTest(
   const handleCloseViolationModal = () => {
     setViolationModalVisible(false);
     setCurrentViolation(null);
-    lastViolationTimeRef.current = Date.now();
+    // Note: lastViolationTimeRef is intentionally left as-is (not reset to
+    // Date.now()) so the camera resumes noticing side-look movement right
+    // away instead of sitting through another debounce window after close.
   };
 
   // Soft warning: no strike counted, just an early nudge that clears itself.

@@ -1,7 +1,7 @@
 /**
  * Proctoring Engine
- * Provides cross-platform face detection, pose estimation, and security violation
- * checks (No Face, Multiple People, Side-Look, Head-Tilt) for Web and React Native.
+ * Provides cross-platform face detection and Side-Look security violation
+ * checks for Web and React Native.
  */
 
 import jpeg from "jpeg-js";
@@ -108,19 +108,12 @@ export function analyzeImagePixels(
   height: number,
   channels: number = 4,
 ): FaceCheckResult {
-  const skinColCount = new Array(width).fill(0);
-  const skinRowCount = new Array(height).fill(0);
   let totalSkinPixels = 0;
   let sumX = 0;
-  let sumY = 0;
   let minX = width;
   let maxX = 0;
   let minY = height;
   let maxY = 0;
-
-  // Per-row skin pixel counts and centroid for Head Roll calculation
-  const rowSkinCounts = new Array(height).fill(0);
-  const rowSumX = new Array(height).fill(0);
 
   for (let y = 4; y < height - 4; y++) {
     for (let x = 4; x < width - 4; x++) {
@@ -152,13 +145,8 @@ export function analyzeImagePixels(
         cr <= 182;
 
       if (isRgbSkin || isYCbCrSkin) {
-        skinColCount[x]++;
-        skinRowCount[y]++;
-        rowSkinCounts[y]++;
-        rowSumX[y] += x;
         totalSkinPixels++;
         sumX += x;
-        sumY += y;
         if (x < minX) minX = x;
         if (x > maxX) maxX = x;
         if (y < minY) minY = y;
@@ -167,130 +155,17 @@ export function analyzeImagePixels(
     }
   }
 
-  // 1. NO FACE CHECK
+  // Not enough skin pixels to locate a face — nothing to evaluate for side-look.
   const minRequiredSkin = Math.max(35, Math.floor(width * height * 0.012));
   if (totalSkinPixels < minRequiredSkin) {
-    return { faceCount: 0, violation: SECURITY_VIOLATIONS.NO_FACE };
+    return { faceCount: 0, violation: null };
   }
 
-  // 2. MULTIPLE PEOPLE CHECK (Horizontal Peak Detection)
-  const smoothed: number[] = [];
-  for (let i = 0; i < width; i++) {
-    let sum = 0;
-    let count = 0;
-    for (let j = Math.max(0, i - 4); j <= Math.min(width - 1, i + 4); j++) {
-      sum += skinColCount[j];
-      count++;
-    }
-    smoothed.push(sum / count);
-  }
-
-  const peakThreshold = 6;
-  let inPeak = false;
-  let peaks = 0;
-  let peakWidth = 0;
-
-  for (let i = 4; i < width - 4; i++) {
-    if (smoothed[i] > peakThreshold) {
-      if (!inPeak) {
-        inPeak = true;
-        peakWidth = 0;
-      }
-      peakWidth++;
-    } else {
-      if (inPeak) {
-        if (peakWidth >= 10) {
-          peaks++;
-        }
-        inPeak = false;
-      }
-    }
-  }
-  if (inPeak && peakWidth >= 10) {
-    peaks++;
-  }
-
-  if (peaks > 1) {
-    return {
-      faceCount: peaks,
-      violation: SECURITY_VIOLATIONS.MULTIPLE_PEOPLE,
-    };
-  }
-
-  // 3. SINGLE FACE POSE ESTIMATION
   const centroidX = sumX / totalSkinPixels;
-  const centroidY = sumY / totalSkinPixels;
-  const normY = centroidY / height;
-
   const faceBoxWidth = Math.max(maxX - minX, 1);
   const faceBoxHeight = Math.max(maxY - minY, 1);
 
-  // ── A. EXCESSIVE HEAD TILT (HEAD ROLL & PITCH) ──────────────────────────
-  // Calculate top of head horizontal center vs bottom of head horizontal center
-  let topSumX = 0;
-  let topCount = 0;
-  let botSumX = 0;
-  let botCount = 0;
-  const hSegment = faceBoxHeight * 0.3;
-
-  for (let y = minY; y <= maxY; y++) {
-    if (rowSkinCounts[y] > 0) {
-      if (y <= minY + hSegment) {
-        topSumX += rowSumX[y];
-        topCount += rowSkinCounts[y];
-      } else if (y >= maxY - hSegment) {
-        botSumX += rowSumX[y];
-        botCount += rowSkinCounts[y];
-      }
-    }
-  }
-
-  let headRollDisplacement = 0;
-  if (topCount > 0 && botCount > 0) {
-    const topCenterX = topSumX / topCount;
-    const botCenterX = botSumX / botCount;
-    headRollDisplacement = Math.abs(topCenterX - botCenterX) / faceBoxHeight;
-  }
-
-  // Calculate 2nd-order Central Moments for tilt angle
-  let mu20 = 0;
-  let mu02 = 0;
-  let mu11 = 0;
-  for (let y = minY; y <= maxY; y++) {
-    for (let x = minX; x <= maxX; x++) {
-      const idx = (y * width + x) * channels;
-      const r = data[idx];
-      const g = data[idx + 1];
-      const b = data[idx + 2];
-      const isSkin =
-        (r > 60 && g > 28 && b > 15 && r > g && r > b) ||
-        (r > 50 && g > 25 && r - g > 6);
-      if (isSkin) {
-        const dx = x - centroidX;
-        const dy = y - centroidY;
-        mu20 += dx * dx;
-        mu02 += dy * dy;
-        mu11 += dx * dy;
-      }
-    }
-  }
-  const momentCovariance = mu20 + mu02 > 0 ? Math.abs(mu11) / (mu20 + mu02) : 0;
-
-  // Local vertical position (Pitch: looking down/up)
-  const localNormY = (centroidY - minY) / faceBoxHeight;
-
-  const isHeadRollTilt = headRollDisplacement > 0.16 || momentCovariance > 0.15;
-  const isHeadPitchTilt =
-    localNormY < 0.34 || localNormY > 0.66 || normY < 0.22 || normY > 0.78;
-
-  if (isHeadRollTilt || isHeadPitchTilt) {
-    return {
-      faceCount: 1,
-      violation: SECURITY_VIOLATIONS.HEAD_TILT,
-    };
-  }
-
-  // ── B. SIDE FACE / SIDE LOOK (HEAD YAW) ──────────────────────────────────
+  // ── SIDE FACE / SIDE LOOK (HEAD YAW) ──────────────────────────────────
   // Partition face horizontally into 3 columns: Left (0-35%), Middle (35-65%), Right (65-100%)
   const col1End = minX + faceBoxWidth * 0.35;
   const col2End = minX + faceBoxWidth * 0.65;
@@ -402,19 +277,13 @@ export async function detectFacesWithShapeDetection(
     const detectedFaces = await detector.detect(videoEl);
     const count = detectedFaces.length;
 
-    if (count === 0) {
-      return { faceCount: 0, violation: SECURITY_VIOLATIONS.NO_FACE };
-    }
-    if (count > 1) {
-      return {
-        faceCount: count,
-        violation: SECURITY_VIOLATIONS.MULTIPLE_PEOPLE,
-      };
+    if (count !== 1) {
+      return { faceCount: count, violation: null };
     }
 
     const firstFace = detectedFaces[0];
     if (firstFace) {
-      // 1. Facial Landmark Yaw & Tilt Analysis (Eyes & Nose)
+      // 1. Facial Landmark Yaw Analysis (Eyes & Nose)
       if (firstFace.landmarks && firstFace.landmarks.length > 0) {
         const eyes = firstFace.landmarks.filter((l) => l.type === "eye");
         const nose = firstFace.landmarks.find((l) => l.type === "nose");
@@ -424,7 +293,7 @@ export async function detectFacesWithShapeDetection(
           return { faceCount: 1, violation: SECURITY_VIOLATIONS.SIDE_LOOK };
         }
 
-        // Two eyes detected: measure Eye angle for Head Tilt and Nose Yaw for Side Look
+        // Two eyes detected: measure Nose Yaw for Side Look
         if (eyes.length >= 2) {
           const sortedEyes = [...eyes].sort(
             (a, b) => (a.locations[0]?.x ?? 0) - (b.locations[0]?.x ?? 0),
@@ -432,15 +301,6 @@ export async function detectFacesWithShapeDetection(
           const leftEye = sortedEyes[0].locations[0] ?? { x: 0, y: 0 };
           const rightEye = sortedEyes[1].locations[0] ?? { x: 0, y: 0 };
           const eyeSpan = rightEye.x - leftEye.x;
-          const eyeSlope = Math.abs(rightEye.y - leftEye.y);
-
-          // Head Roll / Tilt from eye slope
-          if (eyeSpan > 8 && eyeSlope / eyeSpan > 0.25) {
-            return {
-              faceCount: 1,
-              violation: SECURITY_VIOLATIONS.HEAD_TILT,
-            };
-          }
 
           // Side Look from nose position
           if (nose?.locations?.[0] && eyeSpan > 8) {
@@ -459,9 +319,6 @@ export async function detectFacesWithShapeDetection(
 
       // 2. Bounding Box Analysis
       if (firstFace.boundingBox) {
-        const vh = videoEl.videoHeight || 480;
-        const cy =
-          (firstFace.boundingBox.y + firstFace.boundingBox.height / 2) / vh;
         const aspect =
           firstFace.boundingBox.width /
           Math.max(firstFace.boundingBox.height, 1);
@@ -469,11 +326,6 @@ export async function detectFacesWithShapeDetection(
         // Side-look: narrowed profile (head turned left/right)
         if (aspect < 0.65) {
           return { faceCount: 1, violation: SECURITY_VIOLATIONS.SIDE_LOOK };
-        }
-
-        // Head-tilt: Extreme vertical shift or skewed height
-        if (cy < 0.22 || cy > 0.78 || aspect > 1.55) {
-          return { faceCount: 1, violation: SECURITY_VIOLATIONS.HEAD_TILT };
         }
       }
     }
