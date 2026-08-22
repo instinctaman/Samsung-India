@@ -8,4 +8,5 @@ export { default as ProctoringScreen } from "./ProctoringScreen";
 export { default as PreTestInstructions } from "./PreTestInstructions";
 export { default as ProctoringPanel } from "./ProctoringPanel";
 export { default as SecurityViolationModal } from "./SecurityViolationModal";
+export { default as ProctoringSoftWarning } from "./ProctoringSoftWarning";
 export * from "./violations";

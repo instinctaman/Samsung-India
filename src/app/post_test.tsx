@@ -10,7 +10,13 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import SecurityLockedView from "@/components/assessment/SecurityLockedView";
 import TestSubmittedView from "@/components/assessment/TestSubmittedView";
+import ProctoringPanel from "@/components/proctoring/OnDeviceProctoringPanel";
+import ProctoringScreen from "@/components/proctoring/ProctoringScreen";
+import ProctoringSoftWarning from "@/components/proctoring/ProctoringSoftWarning";
+import SecurityViolationModal from "@/components/proctoring/SecurityViolationModal";
+import { MAX_PROCTORING_WARNINGS } from "@/components/proctoring/violations";
 import AppText from "@/components/ui/AppText";
 import TimeProgress from "@/components/ui/TimeProgress";
 import { usePostTest } from "@/hooks/usePostTest";
@@ -18,12 +24,16 @@ import { Colors } from "@/theme/colors";
 import { createShadow } from "@/theme/shadows";
 
 export default function PostTestScreen() {
-  const { conferenceUid, suiteUid } = useLocalSearchParams<{
+  const { conferenceUid, suiteUid, proctored } = useLocalSearchParams<{
     conferenceUid: string;
     suiteUid: string;
+    proctored?: string;
   }>();
 
   const {
+    token,
+    readyToStart,
+    setReadyToStart,
     questions,
     current,
     questionIndex,
@@ -36,6 +46,11 @@ export default function PostTestScreen() {
     isActive,
     isSubmitting,
     submittedAt,
+    violationCount,
+    currentViolation,
+    violationModalVisible,
+    lockedViolationType,
+    softWarningType,
     totalSeconds,
     remainingSeconds,
     remainingMinutes,
@@ -45,9 +60,17 @@ export default function PostTestScreen() {
     selectOption,
     move,
     handleSubmit,
+    triggerViolation,
+    triggerSoftWarning,
+    handleCloseViolationModal,
     retry,
     handleGoToDashboard,
-  } = usePostTest(conferenceUid, suiteUid);
+    handleSecurityLockedClose,
+  } = usePostTest(conferenceUid, suiteUid, proctored);
+
+  if (!readyToStart) {
+    return <ProctoringScreen onStartTest={() => setReadyToStart(true)} />;
+  }
 
   if (loading) {
     return (
@@ -130,6 +153,34 @@ export default function PostTestScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+      {/* Security Violation Modal (Strikes 1 & 2 only) */}
+      <SecurityViolationModal
+        visible={
+          violationModalVisible &&
+          testStatus === "active" &&
+          violationCount < MAX_PROCTORING_WARNINGS
+        }
+        violationType={currentViolation}
+        strikesRemaining={Math.max(MAX_PROCTORING_WARNINGS - violationCount, 0)}
+        maxStrikes={MAX_PROCTORING_WARNINGS}
+        onClose={handleCloseViolationModal}
+        isTerminal={false}
+      />
+
+      {/* Soft (non-strike) warning — earlier heads-up before a strike lands */}
+      <ProctoringSoftWarning
+        visible={!!softWarningType && testStatus === "active"}
+        violationType={softWarningType}
+      />
+
+      {/* Security Locked Overlay (Post test auto-terminated / locked state) */}
+      {testStatus === "security-locked" && (
+        <SecurityLockedView
+          violationType={lockedViolationType || currentViolation}
+          onClose={handleSecurityLockedClose}
+        />
+      )}
+
       <View style={styles.header}>
         <View style={styles.headerRow}>
           <View style={styles.timer}>
@@ -169,13 +220,26 @@ export default function PostTestScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.timerRow}>
-          <TimeProgress
-            totalMinutes={totalMinutes}
-            remainingMinutes={remainingMinutes}
-            remainingSeconds={remainingSecondsPart}
-            size={120}
-          />
+        <View style={styles.timerProctorRow}>
+          <View style={styles.timerColumn}>
+            <TimeProgress
+              totalMinutes={totalMinutes}
+              remainingMinutes={remainingMinutes}
+              remainingSeconds={remainingSecondsPart}
+              size={120}
+            />
+          </View>
+          <View style={styles.proctorColumn}>
+            <ProctoringPanel
+              token={token}
+              active={isActive}
+              paused={violationModalVisible || testStatus !== "active"}
+              warningsCount={violationCount}
+              latestViolation={currentViolation}
+              onViolation={triggerViolation}
+              onWarning={triggerSoftWarning}
+            />
+          </View>
         </View>
 
         <View style={styles.testTitle}>
@@ -400,6 +464,18 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     ...createShadow({ x: 0, y: 2, blur: 8, opacity: 0.06, elevation: 2 }),
   },
+  timerProctorRow: {
+    backgroundColor: Colors.white,
+    borderRadius: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    ...createShadow({ x: 0, y: 2, blur: 8, opacity: 0.06, elevation: 2 }),
+  },
+  timerColumn: { flex: 1, alignItems: "center", justifyContent: "center" },
+  proctorColumn: { flex: 1, alignItems: "center", justifyContent: "center" },
   testTitle: {
     paddingVertical: 14,
     paddingHorizontal: 16,

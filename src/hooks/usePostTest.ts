@@ -76,6 +76,12 @@ export function usePostTest(
   const terminatingRef = useRef(isSessionLocked(sessionKey));
   const lastViolationTimeRef = useRef(0);
 
+  // Soft (non-strike) warning shown at the earlier WARNING severity tier —
+  // separate from currentViolation/violationModalVisible, which track real strikes.
+  const [softWarningType, setSoftWarningType] =
+    useState<SecurityViolationType | null>(null);
+  const softWarningTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const [questionIndex, setQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string | null>>({});
 
@@ -212,6 +218,11 @@ export function usePostTest(
       if (now - lastViolationTimeRef.current < 1500) return;
       lastViolationTimeRef.current = now;
 
+      // A real strike supersedes any soft warning already on screen for the
+      // same escalating occurrence — don't let both stack visually.
+      if (softWarningTimeoutRef.current) clearTimeout(softWarningTimeoutRef.current);
+      setSoftWarningType(null);
+
       const newCount = recordSessionViolation(sessionKey, violationType);
       setViolationCount(newCount);
       setCurrentViolation(violationType);
@@ -231,6 +242,25 @@ export function usePostTest(
     setCurrentViolation(null);
     lastViolationTimeRef.current = Date.now();
   };
+
+  // Soft warning: no strike counted, just an early nudge that clears itself.
+  const triggerSoftWarning = useCallback(
+    (violationType: SecurityViolationType) => {
+      if (testStatus !== "active" || terminatingRef.current) return;
+      if (softWarningTimeoutRef.current) clearTimeout(softWarningTimeoutRef.current);
+      setSoftWarningType(violationType);
+      softWarningTimeoutRef.current = setTimeout(() => {
+        setSoftWarningType(null);
+      }, 1800);
+    },
+    [testStatus],
+  );
+
+  useEffect(() => {
+    return () => {
+      if (softWarningTimeoutRef.current) clearTimeout(softWarningTimeoutRef.current);
+    };
+  }, []);
 
   // Tab-switch detection (Web)
   useEffect(() => {
@@ -356,6 +386,7 @@ export function usePostTest(
     currentViolation,
     violationModalVisible,
     lockedViolationType,
+    softWarningType,
     totalSeconds,
     remainingSeconds,
     remainingMinutes,
@@ -366,6 +397,7 @@ export function usePostTest(
     move,
     handleSubmit,
     triggerViolation,
+    triggerSoftWarning,
     handleCloseViolationModal,
     retry,
     handleGoToDashboard,
