@@ -244,8 +244,19 @@ export function setSessionFlowState(state: SessionFlowState) {
       att.ranDuration = att.ranDuration ?? "Ran : 45m 3s";
     }
     const quiz = _currentSession.modules.find((m) => m.key === "LIVE_QUIZ");
-    if (quiz && !quiz.isCompleted) {
+    if (quiz) {
       quiz.isLive = true;
+      quiz.isCompleted = false;
+    }
+    const postTest = _currentSession.modules.find((m) => m.key === "STANDARD_TEST");
+    if (postTest) {
+      postTest.isLive = false;
+      postTest.isCompleted = false;
+    }
+    const survey = _currentSession.modules.find((m) => m.key === "SURVEY");
+    if (survey) {
+      survey.isLive = false;
+      survey.isCompleted = false;
     }
   }
 }

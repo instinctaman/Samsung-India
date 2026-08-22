@@ -77,7 +77,7 @@ export default function DashboardHeader({
         <AppText
           style={styles.welcomeName}
           color={Colors.white}
-          weight={FontWeight.bold}
+          weight={FontWeight.medium}
         >
           {name}
         </AppText>
@@ -88,6 +88,7 @@ export default function DashboardHeader({
 
 const styles = StyleSheet.create({
   banner: {
+    margin: 10,
     paddingHorizontal: 14,
     paddingTop: 20,
     paddingBottom: 18,
@@ -101,37 +102,36 @@ const styles = StyleSheet.create({
   avatarWithId: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 30,
+    gap: 14,
   },
   avatarWrapper: {
     position: "relative",
-    width: 52,
-    height: 52,
+    width: 60,
+    height: 60,
   },
   avatarImage: {
-    width: 81,
-    height: 60,
-    borderRadius: 26,
+    width: 64,
+    height: 64,
   },
   avatarOnlineBadge: {
     position: "absolute",
-    bottom: 1,
-    right: 1,
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    bottom: 0,
+    right: 0,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
     backgroundColor: "#22C55E",
-    borderWidth: 2,
+    borderWidth: 2.5,
     borderColor: Colors.mainColour1,
   },
   companyIdContainer: {
     gap: 1,
   },
   companyIdLabel: {
-    fontSize: 7.5,
+    fontSize: 12,
   },
   companyIdValue: {
-    fontSize: 10.5,
+    fontSize: 14,
     letterSpacing: 0.3,
   },
   powerButton: {
@@ -147,13 +147,9 @@ const styles = StyleSheet.create({
     marginTop: 14,
   },
   welcomeGreeting: {
-    fontSize: 12.5,
-    lineHeight: 18,
-    opacity: 0.9,
+    fontSize: 12,
   },
   welcomeName: {
     fontSize: 20,
-    lineHeight: 26,
-    marginTop: 2,
   },
 });

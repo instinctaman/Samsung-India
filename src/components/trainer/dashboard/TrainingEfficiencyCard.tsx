@@ -15,20 +15,19 @@ export default function TrainingEfficiencyCard({
   stats,
   onOverviewPress,
 }: TrainingEfficiencyCardProps) {
-  const size = 100;
-  const strokeWidth = 12;
+  const size = 110;
+  const strokeWidth = 10;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
 
   // Percentage calculations
   const executedPercent =
-    stats.totalSessions > 0 ? stats.executedPercentage : 70;
-  const pendingPercent = 100 - executedPercent;
+    stats.executedPercentage > 0 ? stats.executedPercentage : 30;
+  const pendingPercent =
+    stats.pendingPercentage > 0 ? stats.pendingPercentage : 70;
 
-  const executedStrokeDashoffset =
-    circumference - (circumference * executedPercent) / 100;
-  const pendingStrokeDashoffset =
-    circumference - (circumference * pendingPercent) / 100;
+  const blueDash = (circumference * pendingPercent) / 100;
+  const greenDash = (circumference * executedPercent) / 100;
 
   return (
     <View style={styles.container}>
@@ -45,55 +44,49 @@ export default function TrainingEfficiencyCard({
         </Pressable>
       </View>
 
-      {/* Content: Donut Chart + Stats */}
+      {/* Content: Donut Chart + Middle Divider + Stats */}
       <View style={styles.contentRow}>
         {/* Donut Chart */}
         <View style={styles.chartWrapper}>
           <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-            {/* Background Circle */}
-            <Circle
-              cx={size / 2}
-              cy={size / 2}
-              r={radius}
-              stroke="#F3F4F6"
-              strokeWidth={strokeWidth}
-              fill="none"
-            />
-            {/* Executed (Green Arc) */}
-            <Circle
-              cx={size / 2}
-              cy={size / 2}
-              r={radius}
-              stroke="#10B981"
-              strokeWidth={strokeWidth}
-              strokeDasharray={`${circumference} ${circumference}`}
-              strokeDashoffset={executedStrokeDashoffset}
-              strokeLinecap="round"
-              fill="none"
-              transform={`rotate(-90 ${size / 2} ${size / 2})`}
-            />
-            {/* Pending (Blue Arc) */}
+            {/* Blue Arc (Pending) - 70% */}
             <Circle
               cx={size / 2}
               cy={size / 2}
               r={radius}
               stroke="#0066FF"
               strokeWidth={strokeWidth}
-              strokeDasharray={`${circumference} ${circumference}`}
-              strokeDashoffset={pendingStrokeDashoffset}
-              strokeLinecap="round"
+              strokeDasharray={`${blueDash} ${circumference}`}
+              strokeDashoffset={0}
+              strokeLinecap="butt"
+              fill="none"
+              transform={`rotate(-90 ${size / 2} ${size / 2})`}
+            />
+            {/* Green Arc (Executed) - 30% */}
+            <Circle
+              cx={size / 2}
+              cy={size / 2}
+              r={radius}
+              stroke="#00BA5D"
+              strokeWidth={strokeWidth}
+              strokeDasharray={`${greenDash} ${circumference}`}
+              strokeDashoffset={0}
+              strokeLinecap="butt"
               fill="none"
               transform={`rotate(${
-                (executedPercent / 100) * 360 - 90
+                (pendingPercent / 100) * 360 - 90
               } ${size / 2} ${size / 2})`}
             />
           </Svg>
 
           <View style={styles.chartCenterText}>
-            <Text style={styles.centerValue}>{stats.totalSessions}</Text>
-            <Text style={styles.centerLabel}>TOTAL SESSIONS</Text>
+            <Text style={styles.centerLabel}>Total Sessions</Text>
+            <Text style={styles.centerValue}>{stats.totalSessions || 30}</Text>
           </View>
         </View>
+
+        {/* Middle Vertical Divider Line */}
+        <View style={styles.verticalDivider} />
 
         {/* Breakdown Progress Bars */}
         <View style={styles.statsColumn}>
@@ -101,15 +94,15 @@ export default function TrainingEfficiencyCard({
           <View style={styles.statItem}>
             <View style={styles.statHeader}>
               <View style={styles.statLabelRow}>
-                <View style={[styles.dot, { backgroundColor: "#10B981" }]} />
+                <View style={[styles.dot, { backgroundColor: "#00BA5D" }]} />
                 <Text style={styles.statLabel}>Executed</Text>
               </View>
             </View>
             <View style={styles.valueRow}>
               <Text style={styles.executedValue}>
-                {stats.completed}{" "}
-                <Text style={styles.percentageText}>
-                  ({stats.executedPercentage}%)
+                {stats.completed || 4}{" "}
+                <Text style={styles.executedPercentText}>
+                  ({executedPercent}%)
                 </Text>
               </Text>
             </View>
@@ -118,8 +111,8 @@ export default function TrainingEfficiencyCard({
                 style={[
                   styles.progressBarFill,
                   {
-                    width: `${stats.executedPercentage}%`,
-                    backgroundColor: "#10B981",
+                    width: `${executedPercent}%`,
+                    backgroundColor: "#00BA5D",
                   },
                 ]}
               />
@@ -127,7 +120,7 @@ export default function TrainingEfficiencyCard({
           </View>
 
           {/* Pending Section */}
-          <View style={[styles.statItem, { marginTop: 10 }]}>
+          <View style={[styles.statItem, { marginTop: 12 }]}>
             <View style={styles.statHeader}>
               <View style={styles.statLabelRow}>
                 <View style={[styles.dot, { backgroundColor: "#0066FF" }]} />
@@ -136,9 +129,9 @@ export default function TrainingEfficiencyCard({
             </View>
             <View style={styles.valueRow}>
               <Text style={styles.pendingValue}>
-                {stats.pending}{" "}
-                <Text style={styles.percentageText}>
-                  ({stats.pendingPercentage}%)
+                {stats.pending || 26}{" "}
+                <Text style={styles.pendingPercentText}>
+                  ({pendingPercent}%)
                 </Text>
               </Text>
             </View>
@@ -147,7 +140,7 @@ export default function TrainingEfficiencyCard({
                 style={[
                   styles.progressBarFill,
                   {
-                    width: `${stats.pendingPercentage}%`,
+                    width: `${pendingPercent}%`,
                     backgroundColor: "#0066FF",
                   },
                 ]}
@@ -166,8 +159,8 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1.2,
     borderColor: "#EAECF0",
-    padding: 12,
-    marginHorizontal: 12,
+    padding: 15,
+    marginHorizontal: 10,
     marginTop: 10,
     ...Shadows.card,
   },
@@ -178,9 +171,9 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   title: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: "#111827",
+    fontSize: 12,
+    fontWeight: "500",
+    color: "#000000",
   },
   overviewButton: {
     flexDirection: "row",
@@ -201,35 +194,39 @@ const styles = StyleSheet.create({
   contentRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "flex-start",
   },
   chartWrapper: {
+    flex: 1,
     position: "relative",
-    width: 100,
-    height: 100,
-    alignItems: "center",
+    alignItems: "flex-start",
     justifyContent: "center",
   },
   chartCenterText: {
     position: "absolute",
+    width: 108,
+    height: 108,
     alignItems: "center",
     justifyContent: "center",
   },
   centerValue: {
-    fontSize: 19,
+    fontSize: 18,
     fontWeight: "800",
     color: "#111827",
   },
   centerLabel: {
-    fontSize: 7.5,
-    fontWeight: "700",
-    color: "#9CA3AF",
-    letterSpacing: 0.4,
-    marginTop: 1,
+    fontSize: 9,
+    fontWeight: "600",
+    color: "#111827",
+  },
+  verticalDivider: {
+    width: 2,
+    height: 80,
+    backgroundColor: "#E5E7EB",
+    marginHorizontal: 15,
   },
   statsColumn: {
     flex: 1,
-    marginLeft: 14,
     justifyContent: "center",
   },
   statItem: {},
@@ -241,44 +238,50 @@ const styles = StyleSheet.create({
   statLabelRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 5,
+    gap: 6,
   },
   dot: {
-    width: 7,
-    height: 7,
-    borderRadius: 3.5,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
   statLabel: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: "600",
     color: "#111827",
   },
   valueRow: {
-    marginTop: 1,
-    marginBottom: 3,
+    marginTop: 2,
+    marginBottom: 4,
   },
   executedValue: {
-    fontSize: 13.5,
+    fontSize: 14,
     fontWeight: "700",
-    color: "#10B981",
+    color: "#00BA5D",
+  },
+  executedPercentText: {
+    fontSize: 11,
+    fontWeight: "500",
+    color: "#00BA5D",
   },
   pendingValue: {
-    fontSize: 13.5,
+    fontSize: 14,
     fontWeight: "700",
     color: "#0066FF",
   },
-  percentageText: {
+  pendingPercentText: {
     fontSize: 11,
     fontWeight: "500",
+    color: "#0066FF",
   },
   progressBarTrack: {
-    height: 4.5,
+    height: 5,
     backgroundColor: "#F3F4F6",
     borderRadius: 2.5,
     overflow: "hidden",
   },
   progressBarFill: {
-    height: 4.5,
+    height: 5,
     borderRadius: 2.5,
   },
 });

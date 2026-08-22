@@ -4,12 +4,12 @@
  * and navigation actions.
  */
 
+import { LeaderboardFilterValues } from "@/components/quiz/LeaderboardFilter";
+import { LeaderboardUser } from "@/components/quiz/LeaderboardRow";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import { useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { LeaderboardFilterValues } from "@/components/quiz/LeaderboardFilter";
-import { LeaderboardUser } from "@/components/quiz/LeaderboardRow";
 
 const SAMPLE_LEADERBOARD_NAMES = [
   "Priyanshu Bora",

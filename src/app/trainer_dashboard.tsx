@@ -12,6 +12,10 @@ import { calculateDashboardStats } from "@/components/trainer/dashboard/dashboar
 import QuickActionsCard from "@/components/trainer/dashboard/QuickActionsCard";
 import RecentSessionsCard from "@/components/trainer/dashboard/RecentSessionsCard";
 import SummaryStatsRow from "@/components/trainer/dashboard/SummaryStatsRow";
+import TrainerMoreMenu, {
+  toApiDate,
+  useTrainerNavigate,
+} from "@/components/trainer/dashboard/TrainerMoreMenu";
 import TrainingEfficiencyCard from "@/components/trainer/dashboard/TrainingEfficiencyCard";
 import DateDrop, {
   DatePreset,
@@ -19,12 +23,11 @@ import DateDrop, {
   rangeForPreset,
 } from "@/components/trainer/DateDrop";
 import SidebarMenu from "@/components/trainer/SidebarMenu";
-import TrainerMoreMenu, { toApiDate, useTrainerNavigate } from "@/components/trainer/dashboard/TrainerMoreMenu";
 import TrainingsQuickPanel from "@/components/trainer/TrainingsQuickPanel";
 import AppModal from "@/components/ui/AppModal";
 import { useAuth } from "@/hooks/useAuth";
-import { Colors } from "@/theme/colors";
 import { useTrainerDashboard } from "@/hooks/useTrainerDashboard";
+import { Colors } from "@/theme/colors";
 
 export default function TrainerDashboardScreen() {
   const router = useRouter();
@@ -189,7 +192,11 @@ export default function TrainerDashboardScreen() {
       </SafeAreaView>
 
       {/* Modals & Slide-out Drawers */}
-      <TrainerMoreMenu visible={menuOpen} onClose={closePanels} dateRange={dateRange} />
+      <TrainerMoreMenu
+        visible={menuOpen}
+        onClose={closePanels}
+        dateRange={dateRange}
+      />
 
       <AppModal
         visible={quickActionsOpen}
@@ -372,7 +379,7 @@ const styles = StyleSheet.create({
   twoColumnRow: {
     flexDirection: "row",
     gap: 8,
-    paddingHorizontal: 12,
+    padding: 10,
     marginTop: 10,
   },
   leftPanel: {

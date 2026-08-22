@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import CalenderIcon from "@/assets/images/svg/calender.svg";
 import { Colors } from "@/theme/colors";
 import { Shadows } from "@/theme/shadows";
 import CalendarGrid from "./CalendarGrid";
@@ -141,10 +142,11 @@ export default function Calendar({
           accessibilityRole="button"
           accessibilityLabel="Select Start Date"
         >
-          <Ionicons
-            name="calendar-outline"
-            size={13}
+          <CalenderIcon
+            width={13}
+            height={13}
             color={Colors.mainColour1}
+            stroke={Colors.mainColour1}
           />
           <Text style={styles.dateBoxText}>
             {formatDisplayDate(selectedStart)}
@@ -159,10 +161,11 @@ export default function Calendar({
           accessibilityRole="button"
           accessibilityLabel="Select End Date"
         >
-          <Ionicons
-            name="calendar-outline"
-            size={13}
+          <CalenderIcon
+            width={13}
+            height={13}
             color={Colors.mainColour1}
+            stroke={Colors.mainColour1}
           />
           <Text style={styles.dateBoxText}>
             {formatDisplayDate(selectedEnd)}
@@ -175,7 +178,12 @@ export default function Calendar({
           accessibilityRole="button"
           accessibilityLabel="Filter"
         >
-          <Ionicons name="calendar-outline" size={13} color={Colors.white} />
+          <CalenderIcon
+            width={13}
+            height={13}
+            color={Colors.white}
+            stroke={Colors.white}
+          />
           <Text style={styles.filterButtonText}>Filter</Text>
         </Pressable>
       </View>
@@ -285,9 +293,8 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1.2,
     borderColor: "#EAECF0",
-    padding: 8,
-    marginHorizontal: 12,
-    marginTop: 10,
+    padding: 10,
+    marginHorizontal: 10,
     ...Shadows.card,
   },
   topFilterBar: {

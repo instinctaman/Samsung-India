@@ -1,14 +1,14 @@
+import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ActivityIndicator, Pressable, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
 
 import TestSubmittedView from "@/components/assessment/TestSubmittedView";
 import { SurveyModule } from "@/components/survey";
 import AppText from "@/components/ui/AppText";
+import { useSurvey } from "@/hooks/useSurvey";
 import { Colors } from "@/theme/colors";
 import { FontWeight } from "@/theme/fontWeight";
-import { useSurvey } from "@/hooks/useSurvey";
 
 export default function SurveyScreen() {
   const router = useRouter();

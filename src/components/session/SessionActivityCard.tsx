@@ -4,7 +4,7 @@ import { StyleSheet, View } from "react-native";
 import AppText from "@/components/ui/AppText";
 import { SessionActivityData } from "@/hooks/useTraineeHome";
 import { Colors } from "@/theme/colors";
-import { FontWeight } from "@/theme/typography";
+import { FontSize, FontWeight } from "@/theme/typography";
 import { Radius } from "@/theme/radius";
 import { Shadows } from "@/theme/shadows";
 import RecordedCard from "./RecordedCard";
@@ -142,7 +142,12 @@ export default function SessionActivityCard({
       {/* Meta Row: Duration + Present / Completed Sub-status */}
       <View style={styles.metaRow}>
         <View style={styles.durationPill}>
-          <AppText variant="overline" weight={FontWeight.bold} color="#374151">
+          <AppText
+            variant="overline"
+            weight={FontWeight.bold}
+            color="#374151"
+            style={styles.durationText}
+          >
             {activity.duration}
           </AppText>
         </View>
@@ -321,6 +326,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 4,
+  },
+  durationText: {
+    fontSize: FontSize.overline,
+    textTransform: "lowercase",
   },
 
   presenceInfo: {

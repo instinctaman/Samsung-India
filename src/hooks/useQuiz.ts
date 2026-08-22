@@ -58,35 +58,31 @@ export function useQuiz() {
     }
   }, []);
 
+  // Shared: record the answer + resultType for qIndex and move to result phase.
+  // Called by both the automatic timer expiry and manual Next navigation.
+  const finalizeQuestion = useCallback(
+    (qIndex: number, selectedId: string | null) => {
+      const currentQ = questions[qIndex];
+      if (!currentQ) return;
+      if (selectedId) {
+        const correctId = currentQ.correctAnswer ?? "A";
+        setResultType(selectedId === correctId ? "correct" : "incorrect");
+      } else {
+        setResultType("timeout");
+      }
+      setAnswers((prev) => ({ ...prev, [qIndex]: selectedId }));
+      setPhase("result");
+    },
+    [questions],
+  );
+
   // Automatic evaluation when 30 seconds reach 0
   const handleTimerExpired = useCallback(() => {
     if (isProcessingExpiryRef.current) return;
     isProcessingExpiryRef.current = true;
     clearAutoTimeouts();
-
-    const currentSelected = selectedOptionIdRef.current;
-    const currentQ = questions[questionIndex];
-
-    if (!currentQ) return;
-
-    if (currentSelected) {
-      const correctId = currentQ.correctAnswer ?? "A";
-      const isCorrect = currentSelected === correctId;
-      setResultType(isCorrect ? "correct" : "incorrect");
-      setAnswers((prev) => ({
-        ...prev,
-        [questionIndex]: currentSelected,
-      }));
-    } else {
-      setResultType("timeout");
-      setAnswers((prev) => ({
-        ...prev,
-        [questionIndex]: null,
-      }));
-    }
-
-    setPhase("result");
-  }, [clearAutoTimeouts, questionIndex, questions]);
+    finalizeQuestion(questionIndex, selectedOptionIdRef.current);
+  }, [clearAutoTimeouts, finalizeQuestion, questionIndex]);
 
   const loadQuestions = useCallback(async () => {
     if (!token || !suiteUid) return;
@@ -181,7 +177,7 @@ export function useQuiz() {
       if (questionIndex + 1 < questions.length) {
         setPhase("waiting");
       } else {
-        // After final question (Question 4) completed -> Show Assessment Map
+        // After final question completed -> Show Assessment Map
         setPhase("map");
       }
     }, RESULT_DISPLAY_SECONDS);
@@ -283,51 +279,53 @@ export function useQuiz() {
     });
   };
 
-  // === [TEMPORARY DEV SKIP - REMOVE LATER] ===
-  const skipQuiz = async () => {
+  // Manual Next: active → result (shared finalizeQuestion), result → waiting/map
+  const goToNextPhase = useCallback(() => {
+    if (phase === "active") {
+      // Guard against racing with the countdown timer
+      if (isProcessingExpiryRef.current) return;
+      isProcessingExpiryRef.current = true;
+      clearAutoTimeouts();
+      finalizeQuestion(questionIndex, selectedOptionIdRef.current);
+    } else if (phase === "result") {
+      clearAutoTimeouts();
+      if (questionIndex + 1 < questions.length) {
+        setPhase("waiting");
+      } else {
+        setPhase("map");
+      }
+    }
+  }, [phase, clearAutoTimeouts, finalizeQuestion, questionIndex, questions.length]);
+
+  // Manual Previous: always navigates to the previous question's result phase.
+  // Never reopens the active phase for an already-answered question.
+  const goToPrevPhase = useCallback(() => {
+    if (questionIndex === 0) return;
+    if (phase !== "active" && phase !== "result") return;
+
+    // Stop any running timer (active countdown or result auto-timeout)
+    if (phase === "active") {
+      if (isProcessingExpiryRef.current) return;
+      isProcessingExpiryRef.current = true;
+    }
     clearAutoTimeouts();
-    if (!token || !suiteUid || !conferenceUid) {
-      setResult({
-        totalScore: 3,
-        maxScore: questions.length || 4,
-        percentage: 75,
-        correctCount: 3,
-        totalQuestions: questions.length || 4,
-      });
-      setHasSubmitted(true);
-      setPhase("leaderboard");
-      return;
+
+    const prevIndex = questionIndex - 1;
+    const prevAnswer = answers[prevIndex] ?? null;
+    const prevQ = questions[prevIndex];
+
+    setQuestionIndex(prevIndex);
+    setSelectedOptionId(prevAnswer);
+    selectedOptionIdRef.current = prevAnswer;
+
+    if (prevAnswer) {
+      const correctId = prevQ?.correctAnswer ?? "A";
+      setResultType(prevAnswer === correctId ? "correct" : "incorrect");
+    } else {
+      setResultType("timeout");
     }
-    setSubmitting(true);
-    setSubmitError(null);
-    try {
-      const data = await submitAssessment(
-        token,
-        suiteUid,
-        conferenceUid,
-        questions.map((q) => ({
-          questionId: q.id,
-          selectedOption: q.correctAnswer ?? "A",
-        })),
-      );
-      setResult(data);
-      setHasSubmitted(true);
-      setPhase("leaderboard");
-    } catch {
-      setResult({
-        totalScore: 3,
-        maxScore: questions.length || 4,
-        percentage: 75,
-        correctCount: 3,
-        totalQuestions: questions.length || 4,
-      });
-      setHasSubmitted(true);
-      setPhase("leaderboard");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-  // === [END TEMPORARY DEV SKIP] ===
+    setPhase("result");
+  }, [phase, questionIndex, answers, questions, clearAutoTimeouts]);
 
   return {
     questions,
@@ -349,8 +347,9 @@ export function useQuiz() {
     handleSyncNow,
     openQuestionFromMap,
     advanceToNextQuestion,
+    goToNextPhase,
+    goToPrevPhase,
     finishQuiz,
-    skipQuiz,
     setPhase,
     handleContinueAfterResults,
     handleViewAllRankings,

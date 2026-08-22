@@ -12,10 +12,16 @@ import { DefaultTheme, Stack, ThemeProvider, usePathname } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import * as SystemUI from "expo-system-ui";
 import { useEffect } from "react";
-import { Platform, StyleSheet, View } from "react-native";
+import { LogBox, Platform, StyleSheet, View } from "react-native";
 
 import { AnimatedSplashOverlay } from "@/components/animated-icon";
 import { AuthProvider } from "@/hooks/useAuth";
+
+LogBox.ignoreLogs([
+  "Expo CLI and the android client are out of sync",
+  "Expo CLI and the iOS client are out of sync",
+  "out of sync. Reload to reconnect",
+]);
 
 SplashScreen.preventAutoHideAsync();
 

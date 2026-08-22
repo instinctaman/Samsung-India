@@ -2,10 +2,8 @@ import { ReactNode } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import HomeIcon from "@/assets/images/svg/home.svg";
 import { Colors } from "@/theme/colors";
 import { Shadows } from "@/theme/shadows";
-import { JSX } from "react/jsx-runtime";
 
 export type DashboardTab = "home" | "plan" | "profile" | "more";
 
@@ -28,10 +26,10 @@ export default function DashboardBottomNav({
       key: "home",
       label: "Home",
       icon: (active) => (
-        <HomeIcon
-          width={21}
-          height={21}
-          stroke={active ? Colors.mainColour1 : "#6B7280"}
+        <Ionicons
+          name={active ? "home" : "home-outline"}
+          size={21}
+          color={active ? Colors.mainColour1 : "#6B7280"}
         />
       ),
     },

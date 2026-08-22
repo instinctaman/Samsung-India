@@ -19,6 +19,7 @@ import {
 } from "react-native-safe-area-context";
 
 import { ApiError, uploadTraineePhoto } from "@/api/auth";
+import { setSessionFlowState } from "@/api/session";
 import Calendar from "@/assets/images/svg/calender2.svg";
 import EditProfileSheet from "@/components/common/EditProfileSheet";
 import TraineeBottomNavigation from "@/components/session/TraineeBottomNavigation";
@@ -121,7 +122,14 @@ export default function ProfileScreen() {
 
   const handleTabSelect = (tab: "rank" | "home" | "profile") => {
     if (tab === "home") {
-      router.replace("/session_detail");
+      setSessionFlowState("ATTENDANCE_RECORDED");
+      router.replace({
+        pathname: "/session_detail",
+        params: {
+          flow: "ATTENDANCE_RECORDED",
+          attendance: "completed",
+        },
+      });
     } else if (tab === "rank") {
       router.replace({
         pathname: "/session_detail",

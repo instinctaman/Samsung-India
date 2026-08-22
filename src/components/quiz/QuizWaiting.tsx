@@ -12,6 +12,7 @@ import {
 import Bell from "@/assets/images/svg/bell.svg";
 import Clock from "@/assets/images/svg/clock.svg";
 import Eye from "@/assets/images/svg/eye.svg";
+import People from "@/assets/images/svg/people.svg";
 import Refresh from "@/assets/images/svg/Refresh cw.svg";
 
 import AppText from "@/components/ui/AppText";
@@ -64,11 +65,7 @@ export default function QuizWaiting({
       {/* Upper/Center Hero Section */}
       <View style={styles.heroSection}>
         <View style={styles.trainerIcon}>
-          <Ionicons
-            name="people"
-            size={Fonts.profileIconSize}
-            color={Colors.headerBlue}
-          />
+          <People width={105} height={88} />
         </View>
 
         <View style={styles.titleWrapper}>

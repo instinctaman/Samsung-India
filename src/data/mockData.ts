@@ -27,7 +27,7 @@ export const DEMO_TRAINEE = {
   gender: "male" as string | null,
   designation: "Sales Associate" as string | null,
   employee_id: "EMP-20240001" as string | null,
-  supervisorName: "Priya Sharma" as string | null,
+  supervisorName: "Tushar" as string | null,
   state: "delhi" as string | null,
   district: "new_delhi" as string | null,
   profilePhoto: null as string | null,
@@ -177,7 +177,7 @@ function _makeDemoTrainee(
     trainerId: "demo-trainer-001",
     trainerName: "Demo Trainer",
     supervisorId: "demo-supervisor-001",
-    supervisorName: "Priya Sharma",
+    supervisorName: "Tushar",
     supervisorDesignation: "Regional Manager",
     joinedOn: "2026-07-25",
     jobStatus: "Active",
@@ -321,7 +321,7 @@ export const DEMO_ADMIN_TRAINER = {
 };
 export const DEMO_ADMIN_ADMIN = {
   username: "admin",
-  name: "Priya Sharma",
+  name: "Tushar",
   role: "admin",
 };
 
@@ -478,7 +478,7 @@ type DemoAgendaItem = {
 export const DEMO_AGENDA: DemoAgendaItem[] = [
   {
     conferenceUid: "CONF2608R7",
-    title: "Classroom Training – Thane",
+    title: "Sales Training Program",
     trainerName: "Akash Kumar Jayaswal",
     conferenceDate: TODAY_STR,
     conferenceTime: "09:00",
@@ -499,7 +499,7 @@ export const DEMO_AGENDA: DemoAgendaItem[] = [
   },
   {
     conferenceUid: "CONF2608R16",
-    title: "Classroom Training – Andheri",
+    title: "Product Knowledge",
     trainerName: "Eric Keki Patel",
     conferenceDate: TODAY_STR,
     conferenceTime: "09:00",

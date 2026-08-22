@@ -57,8 +57,8 @@ export default function SummaryStatsRow({ stats }: SummaryStatsRowProps) {
 const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
-    gap: 6,
-    paddingHorizontal: 12,
+    gap: 10,
+    paddingHorizontal: 10,
     marginTop: 10,
   },
 });

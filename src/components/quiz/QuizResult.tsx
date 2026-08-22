@@ -27,6 +27,7 @@ export default function QuizResult({
 
   return (
     <ScrollView
+      style={styles.scrollView}
       contentContainerStyle={styles.scrollContent}
       showsVerticalScrollIndicator={false}
     >
@@ -48,6 +49,9 @@ export default function QuizResult({
 }
 
 const styles = StyleSheet.create({
+  scrollView: {
+    flex: 1,
+  },
   scrollContent: {
     flexGrow: 1,
     width: "100%",
