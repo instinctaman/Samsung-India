@@ -11,10 +11,9 @@ import {
 
 import AppText from "./AppText";
 import { Colors } from "@/theme/colors";
-import { Fonts } from "@/theme/fonts";
-import { FontWeight } from "@/theme/fontWeight";
 import { Radius } from "@/theme/radius";
 import { Spacing } from "@/theme/spacing";
+import { FontWeight } from "@/theme/typography";
 
 type AppButtonProps = {
   title: string;
@@ -65,7 +64,12 @@ export default function AppButton({
         <View style={styles.content}>
           {leftIcon}
 
-          <AppText style={[styles.text, textStyle]}>
+          <AppText
+            variant="body"
+            weight={FontWeight.medium}
+            color={Colors.white}
+            style={[styles.text, textStyle]}
+          >
             {title}
           </AppText>
 
@@ -95,8 +99,6 @@ const styles = StyleSheet.create({
 
   text: {
     color: Colors.white,
-    fontSize: Fonts.bodyLg,
-    fontWeight: FontWeight.medium,
   },
   content: {
     flexDirection: "row",

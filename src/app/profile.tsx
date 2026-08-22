@@ -1,3 +1,7 @@
+import { Ionicons } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
+import { useRouter } from "expo-router";
+import { StatusBar } from "expo-status-bar";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
@@ -9,29 +13,31 @@ import {
   StyleSheet,
   View,
 } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { StatusBar } from "expo-status-bar";
-import { useRouter } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
-import * as ImagePicker from "expo-image-picker";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 
+import { ApiError, uploadTraineePhoto } from "@/api/auth";
+import { setSessionFlowState } from "@/api/session";
 import Calendar from "@/assets/images/svg/calender2.svg";
-import AppText from "@/components/ui/AppText";
-import TraineeBottomNavigation from "@/components/session/TraineeBottomNavigation";
 import EditProfileSheet from "@/components/common/EditProfileSheet";
+import TraineeBottomNavigation from "@/components/session/TraineeBottomNavigation";
+import AppText from "@/components/ui/AppText";
 import { STATES } from "@/data/states";
+import { useAuth } from "@/hooks/useAuth";
 import { Colors } from "@/theme/colors";
 import { FontWeight } from "@/theme/fontWeight";
 import { createShadow } from "@/theme/shadows";
-import { useAuth } from "@/hooks/useAuth";
-import { ApiError, uploadTraineePhoto } from "@/api/auth";
 
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 const DEFAULT_AVATAR: ImageSourcePropType = require("@/assets/images/user_img/default_male.png");
 
 function locationLabel(state: string | null, district: string | null) {
   const stateEntry = STATES.find((item) => item.value === state);
-  const districtEntry = stateEntry?.cities.find((city) => city.value === district);
+  const districtEntry = stateEntry?.cities.find(
+    (city) => city.value === district,
+  );
   const parts = [districtEntry?.label, stateEntry?.label].filter(Boolean);
   return parts.length ? parts.join(", ") : "--";
 }
@@ -57,7 +63,10 @@ export default function ProfileScreen() {
   const handlePickPhoto = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert("Permission needed", "Allow photo library access to set a profile picture.");
+      Alert.alert(
+        "Permission needed",
+        "Allow photo library access to set a profile picture.",
+      );
       return;
     }
 
@@ -71,7 +80,10 @@ export default function ProfileScreen() {
 
     const asset = result.assets[0];
     if (asset.fileSize && asset.fileSize > MAX_PHOTO_BYTES) {
-      Alert.alert("Image too large", "Please choose an image smaller than 5MB.");
+      Alert.alert(
+        "Image too large",
+        "Please choose an image smaller than 5MB.",
+      );
       return;
     }
     if (!token) return;
@@ -80,15 +92,29 @@ export default function ProfileScreen() {
     try {
       const extension = asset.uri.split(".").pop()?.toLowerCase() || "jpg";
       const type =
-        asset.mimeType ?? (extension === "png" ? "image/png" : extension === "webp" ? "image/webp" : "image/jpeg");
+        asset.mimeType ??
+        (extension === "png"
+          ? "image/png"
+          : extension === "webp"
+            ? "image/webp"
+            : "image/jpeg");
       const updated = await uploadTraineePhoto(token, {
         uri: asset.uri,
         name: `profile.${extension}`,
         type,
       });
-      setSession({ access_token: token, token_type: "bearer", trainee: updated });
+      setSession({
+        access_token: token,
+        token_type: "bearer",
+        trainee: updated,
+      });
     } catch (err) {
-      Alert.alert("Upload failed", err instanceof ApiError ? err.message : "Something went wrong. Please try again.");
+      Alert.alert(
+        "Upload failed",
+        err instanceof ApiError
+          ? err.message
+          : "Something went wrong. Please try again.",
+      );
     } finally {
       setUploading(false);
     }
@@ -96,7 +122,14 @@ export default function ProfileScreen() {
 
   const handleTabSelect = (tab: "rank" | "home" | "profile") => {
     if (tab === "home") {
-      router.replace("/session_detail");
+      setSessionFlowState("ATTENDANCE_RECORDED");
+      router.replace({
+        pathname: "/session_detail",
+        params: {
+          flow: "ATTENDANCE_RECORDED",
+          attendance: "completed",
+        },
+      });
     } else if (tab === "rank") {
       router.replace({
         pathname: "/session_detail",
@@ -132,7 +165,9 @@ export default function ProfileScreen() {
       label: "Work Zone",
       value:
         trainee?.workZone ||
-        (trainee?.state ? locationLabel(trainee.state, trainee.district) : "SOUTH"),
+        (trainee?.state
+          ? locationLabel(trainee.state, trainee.district)
+          : "SOUTH"),
     },
   ];
 
@@ -201,7 +236,7 @@ export default function ProfileScreen() {
                 color={Colors.white}
                 weight={FontWeight.bold}
               >
-                {trainee?.name || "Anshu Pandey"}
+                {trainee?.name || "Tushar Prajapati"}
               </AppText>
               <AppText style={styles.userRole} color={Colors.white}>
                 {trainee?.designation || "SEC"}
@@ -253,7 +288,10 @@ export default function ProfileScreen() {
               accessibilityLabel="Edit personal details"
             >
               <Ionicons name="pencil-sharp" size={11} color="#6B7280" />
-              <AppText style={styles.editButtonText} weight={FontWeight.semiBold}>
+              <AppText
+                style={styles.editButtonText}
+                weight={FontWeight.semiBold}
+              >
                 EDIT
               </AppText>
             </Pressable>
@@ -294,7 +332,10 @@ export default function ProfileScreen() {
               accessibilityLabel="Edit organization details"
             >
               <Ionicons name="pencil-sharp" size={11} color="#6B7280" />
-              <AppText style={styles.editButtonText} weight={FontWeight.semiBold}>
+              <AppText
+                style={styles.editButtonText}
+                weight={FontWeight.semiBold}
+              >
                 EDIT
               </AppText>
             </Pressable>
@@ -322,11 +363,7 @@ export default function ProfileScreen() {
 
         {/* Security & Verification Notice */}
         <View style={styles.securityBanner}>
-          <Ionicons
-            name="shield-checkmark-outline"
-            size={24}
-            color="#0066FF"
-          />
+          <Ionicons name="shield-checkmark-outline" size={24} color="#0066FF" />
           <View style={styles.securityTextColumn}>
             <AppText style={styles.securityTitle} weight={FontWeight.bold}>
               Secure & Verified
@@ -454,6 +491,7 @@ const styles = StyleSheet.create({
 
   // Main Scrollable Area
   scrollContent: {
+    flexGrow: 1,
     paddingHorizontal: 16,
     paddingTop: 16,
     paddingBottom: 24,

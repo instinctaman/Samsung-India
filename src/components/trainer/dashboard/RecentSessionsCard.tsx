@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import CalendarIcon from "@/assets/images/svg/calender.svg";
 import { TrainingAgendaItem } from "@/api/training";
 import { Colors } from "@/theme/colors";
 import { Shadows } from "@/theme/shadows";
@@ -82,10 +83,11 @@ export default function RecentSessionsCard({
                       { borderColor: iconBorder, backgroundColor: iconBg },
                     ]}
                   >
-                    <Ionicons
-                      name="calendar-outline"
-                      size={14}
+                    <CalendarIcon
+                      width={14}
+                      height={14}
                       color={iconColor}
+                      stroke={iconColor}
                     />
                   </View>
 
@@ -146,7 +148,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   title: {
-    fontSize: 10.5,
+    fontSize: 11,
     fontWeight: "700",
     color: "#111827",
   },
@@ -159,12 +161,12 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
   },
   viewAllText: {
-    fontSize: 7.1,
+    fontSize: 8,
     color: "#4B5563",
     fontWeight: "500",
   },
   list: {
-    gap: 2,
+    gap: 5,
   },
   divider: {
     height: 1,
@@ -191,12 +193,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sessionTitle: {
-    fontSize: 8,
+    fontSize: 10,
     fontWeight: "700",
     color: "#111827",
   },
   sessionDateTime: {
-    fontSize: 7,
+    fontSize: 9,
     color: "#6B7280",
     marginTop: 1,
   },

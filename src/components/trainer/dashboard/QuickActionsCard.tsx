@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   actionsList: {
-    gap: 4,
+    gap: 10,
   },
   actionRow: {
     flexDirection: "row",
@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   actionText: {
-    fontSize: 7.5,
+    fontSize: 10,
     fontWeight: "600",
     color: "#1F2937",
     flex: 1,

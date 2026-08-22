@@ -4,8 +4,6 @@
  * validation, submission, and timer duration tracking.
  */
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useAuth } from "@/hooks/useAuth";
 import {
   ApiError,
   AssessmentQuestion,
@@ -13,6 +11,8 @@ import {
   submitAssessment,
 } from "@/api/assessment";
 import { SurveyAnswers, SurveyQuestion } from "@/components/survey";
+import { useAuth } from "@/hooks/useAuth";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 const FREE_TEXT_TYPES = new Set(["short_answer", "paragraph", "text"]);
 

@@ -1,3 +1,4 @@
+import { FontSize, FontWeight, LineHeight } from "@/theme/typography";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams } from "expo-router";
 import {
@@ -9,31 +10,20 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import SecurityLockedView from "@/components/assessment/SecurityLockedView";
 import TestSubmittedView from "@/components/assessment/TestSubmittedView";
-import ProctoringPanel from "@/components/proctoring/ProctoringPanel";
-import ProctoringScreen from "@/components/proctoring/ProctoringScreen";
-import SecurityViolationModal from "@/components/proctoring/SecurityViolationModal";
-import { MAX_PROCTORING_WARNINGS } from "@/components/proctoring/violations";
 import AppText from "@/components/ui/AppText";
 import TimeProgress from "@/components/ui/TimeProgress";
-import { Colors } from "@/theme/colors";
-import { FontWeight } from "@/theme/fontWeight";
-import { Fonts } from "@/theme/fonts";
-import { createShadow } from "@/theme/shadows";
 import { usePostTest } from "@/hooks/usePostTest";
+import { Colors } from "@/theme/colors";
+import { createShadow } from "@/theme/shadows";
 
 export default function PostTestScreen() {
-  const { conferenceUid, suiteUid, proctored } = useLocalSearchParams<{
+  const { conferenceUid, suiteUid } = useLocalSearchParams<{
     conferenceUid: string;
     suiteUid: string;
-    proctored?: string;
   }>();
 
   const {
-    token,
-    readyToStart,
-    setReadyToStart,
     questions,
     current,
     questionIndex,
@@ -46,10 +36,6 @@ export default function PostTestScreen() {
     isActive,
     isSubmitting,
     submittedAt,
-    violationCount,
-    currentViolation,
-    violationModalVisible,
-    lockedViolationType,
     totalSeconds,
     remainingSeconds,
     remainingMinutes,
@@ -59,16 +45,9 @@ export default function PostTestScreen() {
     selectOption,
     move,
     handleSubmit,
-    triggerViolation,
-    handleCloseViolationModal,
     retry,
     handleGoToDashboard,
-    handleSecurityLockedClose,
-  } = usePostTest(conferenceUid, suiteUid, proctored);
-
-  if (!readyToStart) {
-    return <ProctoringScreen onStartTest={() => setReadyToStart(true)} />;
-  }
+  } = usePostTest(conferenceUid, suiteUid);
 
   if (loading) {
     return (
@@ -151,28 +130,6 @@ export default function PostTestScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
-      {/* Security Violation Modal (Strikes 1 & 2 only) */}
-      <SecurityViolationModal
-        visible={
-          violationModalVisible &&
-          testStatus === "active" &&
-          violationCount < MAX_PROCTORING_WARNINGS
-        }
-        violationType={currentViolation}
-        strikesRemaining={Math.max(MAX_PROCTORING_WARNINGS - violationCount, 0)}
-        maxStrikes={MAX_PROCTORING_WARNINGS}
-        onClose={handleCloseViolationModal}
-        isTerminal={false}
-      />
-
-      {/* Security Locked Overlay (Post test auto-terminated / locked state) */}
-      {testStatus === "security-locked" && (
-        <SecurityLockedView
-          violationType={lockedViolationType || currentViolation}
-          onClose={handleSecurityLockedClose}
-        />
-      )}
-
       <View style={styles.header}>
         <View style={styles.headerRow}>
           <View style={styles.timer}>
@@ -208,28 +165,17 @@ export default function PostTestScreen() {
       </View>
 
       <ScrollView
+        style={styles.scrollView}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.timerProctorRow}>
-          <View style={styles.timerColumn}>
-            <TimeProgress
-              totalMinutes={totalMinutes}
-              remainingMinutes={remainingMinutes}
-              remainingSeconds={remainingSecondsPart}
-              size={120}
-            />
-          </View>
-          <View style={styles.proctorColumn}>
-            <ProctoringPanel
-              token={token}
-              active={isActive}
-              paused={violationModalVisible || testStatus !== "active"}
-              warningsCount={violationCount}
-              latestViolation={currentViolation}
-              onViolation={triggerViolation}
-            />
-          </View>
+        <View style={styles.timerRow}>
+          <TimeProgress
+            totalMinutes={totalMinutes}
+            remainingMinutes={remainingMinutes}
+            remainingSeconds={remainingSecondsPart}
+            size={120}
+          />
         </View>
 
         <View style={styles.testTitle}>
@@ -241,14 +187,18 @@ export default function PostTestScreen() {
         <View style={styles.questionCard}>
           <View style={styles.questionBody}>
             <View style={styles.tags}>
-              <AppText style={styles.questionTag} weight={FontWeight.medium}>
-                Question {questionIndex + 1} of {questions.length}
-              </AppText>
-              <AppText style={styles.multiTag} weight={FontWeight.medium}>
-                {current.question_type === "multi"
-                  ? "Multi - Select"
-                  : "Single Select"}
-              </AppText>
+              <View style={styles.questionTagWrapper}>
+                <AppText style={styles.questionTag} weight={FontWeight.medium}>
+                  Question {questionIndex + 1} of {questions.length}
+                </AppText>
+              </View>
+              <View style={styles.multiTagWrapper}>
+                <AppText style={styles.multiTag} weight={FontWeight.medium}>
+                  {current.question_type === "multi"
+                    ? "Multi – Select"
+                    : "Single Select"}
+                </AppText>
+              </View>
               <View style={styles.unlimitedTag}>
                 <Ionicons name="infinite" size={13} color="#00A859" />
                 <AppText
@@ -260,7 +210,7 @@ export default function PostTestScreen() {
               </View>
             </View>
 
-            <AppText style={styles.question} weight={FontWeight.semiBold}>
+            <AppText style={styles.question} weight={FontWeight.bold}>
               {current.question}
             </AppText>
 
@@ -287,12 +237,14 @@ export default function PostTestScreen() {
                       {checked && (
                         <Ionicons
                           name="checkmark"
-                          size={14}
+                          size={13}
                           color={Colors.white}
                         />
                       )}
                     </View>
-                    <AppText style={styles.optionText}>{option.text}</AppText>
+                    <AppText style={styles.optionText} weight={FontWeight.medium}>
+                      {option.text}
+                    </AppText>
                   </Pressable>
                 );
               })}
@@ -310,7 +262,9 @@ export default function PostTestScreen() {
                 (questionIndex === 0 || !isActive) && styles.disabledButton,
               ]}
             >
-              <AppText style={styles.previousText}>Previous Question</AppText>
+              <AppText style={styles.previousText} weight={FontWeight.semiBold}>
+                Previous Question
+              </AppText>
             </Pressable>
 
             <Pressable
@@ -350,7 +304,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   loadingText: {
-    fontSize: Fonts.body,
+    fontSize: FontSize.label,
     color: Colors.gray600,
     textAlign: "center",
   },
@@ -362,7 +316,7 @@ const styles = StyleSheet.create({
   },
   inlineError: {
     color: Colors.danger,
-    fontSize: Fonts.bodySm,
+    fontSize: FontSize.caption,
     marginTop: 8,
     textAlign: "center",
   },
@@ -382,7 +336,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 3,
   },
-  timerText: { color: Colors.primary, fontSize: Fonts.caption },
+  timerText: { color: Colors.primary, fontSize: FontSize.overline },
   progress: {
     flex: 1,
     height: 22,
@@ -393,7 +347,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
     gap: 5,
   },
-  progressText: { fontSize: Fonts.overline, color: Colors.black },
+  progressText: { fontSize: FontSize.tiny, color: Colors.black },
   progressTrack: {
     flex: 1,
     height: 6,
@@ -407,7 +361,7 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   progressPercent: {
-    fontSize: Fonts.overline,
+    fontSize: FontSize.tiny,
     color: Colors.black,
     minWidth: 26,
     textAlign: "right",
@@ -428,53 +382,58 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  content: { padding: 13, gap: 11, paddingBottom: 28 },
-  timerProctorRow: {
+  scrollView: {
+    flex: 1,
+  },
+  content: {
+    flexGrow: 1,
+    padding: 13,
+    gap: 11,
+    paddingBottom: 16,
+  },
+  timerRow: {
     backgroundColor: Colors.white,
     borderRadius: 16,
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    flexDirection: "row",
+    paddingVertical: 10,
+    paddingHorizontal: 10,
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "center",
     ...createShadow({ x: 0, y: 2, blur: 8, opacity: 0.06, elevation: 2 }),
   },
-  timerColumn: { flex: 1, alignItems: "center", justifyContent: "center" },
-  proctorColumn: { flex: 1, alignItems: "center", justifyContent: "center" },
   testTitle: {
-    paddingVertical: 12,
+    paddingVertical: 14,
     paddingHorizontal: 16,
-    borderRadius: 24,
-    borderWidth: 2,
-    borderColor: "#006AFF",
-    backgroundColor: "#EBF4FE",
+    borderRadius: 16,
+    backgroundColor: Colors.white,
     ...createShadow({
       x: 0,
-      y: -6,
-      blur: 14,
-      opacity: 0.12,
-      elevation: 4,
+      y: 2,
+      blur: 8,
+      opacity: 0.06,
+      elevation: 2,
       color: "#000000",
     }),
   },
   title: {
-    fontSize: Fonts.body,
-    lineHeight: 22,
+    fontSize: FontSize.body,
+    lineHeight: LineHeight.h2,
     textAlign: "center",
-    color: Colors.black,
+    color: "#111827",
   },
   questionCard: {
-    borderRadius: 24,
+    flex: 1,
+    justifyContent: "space-between",
+    borderRadius: 20,
     borderWidth: 2,
     borderColor: "#006AFF",
     overflow: "hidden",
-    backgroundColor: "#EBF4FE",
+    backgroundColor: Colors.white,
     ...createShadow({
       x: 0,
-      y: -8,
-      blur: 16,
-      opacity: 0.14,
-      elevation: 6,
+      y: 4,
+      blur: 12,
+      opacity: 0.08,
+      elevation: 4,
       color: "#000000",
     }),
   },
@@ -482,79 +441,120 @@ const styles = StyleSheet.create({
   tags: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    gap: 8,
     marginBottom: 8,
   },
-  questionTag: { fontSize: Fonts.caption, color: Colors.black },
-  multiTag: { fontSize: Fonts.caption, color: Colors.primary },
-  unlimitedTag: { flexDirection: "row", alignItems: "center", gap: 3 },
-  unlimitedText: { fontSize: Fonts.caption, color: "#00A859" },
+  questionTagWrapper: {
+    backgroundColor: "#D1E5FF",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  questionTag: {
+    fontSize: FontSize.tiny,
+    lineHeight: LineHeight.overline,
+    color: "#0066FF",
+  },
+  multiTagWrapper: {
+    backgroundColor: "#F1F3F5",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  multiTag: {
+    fontSize: FontSize.tiny,
+    lineHeight: LineHeight.overline,
+    color: "#4B5563",
+  },
+  unlimitedTag: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    backgroundColor: "#D1F2DE",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  unlimitedText: {
+    fontSize: FontSize.tiny,
+    lineHeight: LineHeight.overline,
+    color: "#00A859",
+  },
   question: {
-    fontSize: Fonts.body,
-    lineHeight: 22,
-    color: Colors.black,
-    marginBottom: 12,
+    fontSize: 18,
+    lineHeight: LineHeight.body,
+    color: "#000000",
+    marginVertical: 10,
   },
   options: { gap: 8 },
   option: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 10,
-    borderRadius: 14,
-    backgroundColor: "#EFF4FF",
-    borderWidth: 1,
-    borderColor: "#DBEAFE",
-    gap: 9,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
+    minHeight: 56,
+    borderWidth: 1.5,
+    borderColor: "#E2E8F0",
+    gap: 10,
   },
   optionSelected: {
-    backgroundColor: "#DCE8FE",
-    borderColor: Colors.primary,
+    backgroundColor: "#F0F7FF",
+    borderColor: "#006AFF",
   },
   optionDisabled: { opacity: 0.6 },
   checkbox: {
     width: 20,
     height: 20,
-    borderRadius: 10,
+    borderRadius: 5,
     borderWidth: 1.5,
-    borderColor: Colors.gray400,
+    borderColor: "#CBD5E1",
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: "#FFFFFF",
   },
   checkboxSelected: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
+    backgroundColor: "#006AFF",
+    borderColor: "#006AFF",
   },
-  optionText: { fontSize: Fonts.bodySm, color: Colors.black, flex: 1 },
+  optionText: {
+    fontSize: FontSize.label,
+    lineHeight: LineHeight.label,
+    color: "#000000",
+    flex: 1,
+  },
   actions: {
     flexDirection: "row",
-    gap: 10,
+    gap: 12,
     padding: 14,
-    borderTopWidth: 1,
-    borderTopColor: Colors.gray200,
     backgroundColor: Colors.white,
   },
   previousButton: {
     flex: 1,
-    height: 44,
+    height: 46,
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.gray400,
+    borderWidth: 1.8,
+    borderColor: "#006AFF",
+    backgroundColor: Colors.white,
     alignItems: "center",
     justifyContent: "center",
   },
   previousText: {
-    fontSize: Fonts.bodySm,
-    fontWeight: "600",
-    color: Colors.gray600,
+    fontSize: FontSize.label,
+    color: "#006AFF",
   },
   nextButton: {
     flex: 1,
-    height: 44,
+    height: 46,
     borderRadius: 12,
-    backgroundColor: Colors.primary,
+    backgroundColor: "#006AFF",
     alignItems: "center",
     justifyContent: "center",
   },
-  nextText: { fontSize: Fonts.bodySm },
+  nextText: {
+    fontSize: FontSize.label,
+    color: Colors.white,
+  },
   disabledButton: { opacity: 0.5 },
 });

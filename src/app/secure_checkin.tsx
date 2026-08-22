@@ -294,10 +294,10 @@ export default function SecureCheckInScreen() {
         });
       }}
       onHome={() => {
-        setAttendanceState("ATTENDANCE_RECORDED");
+        setSessionFlowState("CAMERA_VERIFIED");
         router.replace({
           pathname: "/session_detail",
-          params: { attendance: "completed", checkIn: "verified" },
+          params: { flow: "CAMERA_VERIFIED", checkIn: "verified" },
         });
       }}
     />

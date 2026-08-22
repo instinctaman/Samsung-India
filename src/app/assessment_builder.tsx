@@ -539,7 +539,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   headerTitle: { fontSize: Fonts.h3 },
-  content: { padding: 16, gap: 14, paddingBottom: 80 },
+  content: { flexGrow: 1, padding: 16, gap: 14, paddingBottom: 80 },
   loadingContainer: { flex: 1, alignItems: "center", justifyContent: "center" },
   card: {
     backgroundColor: Colors.white,

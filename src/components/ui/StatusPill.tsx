@@ -2,8 +2,7 @@ import { StyleSheet, View } from "react-native";
 
 import AppText from "@/components/ui/AppText";
 import { Colors } from "@/theme/colors";
-import { FontWeight } from "@/theme/fontWeight";
-import { Fonts } from "@/theme/fonts";
+import { FontWeight } from "@/theme/typography";
 import { Radius } from "@/theme/radius";
 
 export type StatusTone = "success" | "warning" | "danger" | "neutral";
@@ -25,7 +24,13 @@ const TONE_TEXT: Record<StatusTone, string> = {
 export function StatusPill({ label, tone }: { label: string; tone: StatusTone }) {
   return (
     <View style={[styles.pill, { backgroundColor: TONE_BACKGROUND[tone] }]}>
-      <AppText style={styles.text} color={TONE_TEXT[tone]} weight={FontWeight.semiBold} numberOfLines={1}>
+      <AppText
+        variant="overline"
+        color={TONE_TEXT[tone]}
+        weight={FontWeight.semiBold}
+        align="center"
+        numberOfLines={1}
+      >
         {label}
       </AppText>
     </View>
@@ -41,5 +46,4 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 4,
   },
-  text: { fontSize: Fonts.overline, textAlign: "center" },
 });

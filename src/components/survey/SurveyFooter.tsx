@@ -1,4 +1,3 @@
-import React from "react";
 import {
   ActivityIndicator,
   Platform,
@@ -66,17 +65,15 @@ export default function SurveyFooter({
 
 const styles = StyleSheet.create({
   footerWrapper: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
     paddingHorizontal: 16,
-    paddingTop: 10,
-    paddingBottom: Platform.OS === "ios" ? 28 : 16,
-    backgroundColor: "rgba(235, 243, 251, 0.92)",
+    paddingTop: 12,
+    paddingBottom: 14,
+    backgroundColor: "#EBF3FB",
+    borderTopWidth: 1,
+    borderTopColor: "rgba(0, 106, 255, 0.08)",
   },
   button: {
-    height: 48,
+    height: 50,
     borderRadius: 12,
     backgroundColor: "#006AFF",
     alignItems: "center",

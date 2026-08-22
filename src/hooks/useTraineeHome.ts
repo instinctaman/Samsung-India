@@ -60,7 +60,8 @@ export function useTraineeHome() {
   const [error, setError] = useState<string | null>(null);
   const [historyVisible, setHistoryVisible] = useState(false);
   const [violationLockedVisible, setViolationLockedVisible] = useState(
-    () => params.violation === "locked" || params.postTest === "security_locked",
+    () =>
+      params.violation === "locked" || params.postTest === "security_locked",
   );
   const [notAssigned, setNotAssigned] = useState(false);
   const [activeTab, setActiveTab] = useState<TraineeTab>("home");
@@ -96,7 +97,13 @@ export function useTraineeHome() {
                 ranDuration: m.ranDuration ?? "Ran : 45m 3s",
               };
             }
-            if (m.key === "LIVE_QUIZ" && !m.isCompleted && !params.quiz && !params.postTest && !params.survey) {
+            if (
+              m.key === "LIVE_QUIZ" &&
+              !m.isCompleted &&
+              !params.quiz &&
+              !params.postTest &&
+              !params.survey
+            ) {
               return {
                 ...m,
                 isLive: true,
@@ -271,7 +278,6 @@ export function useTraineeHome() {
         setSession(data);
         setNotAssigned(false);
       } catch (err) {
-
         if (err instanceof ApiError && err.status === 404) {
           setSession(null);
           setNotAssigned(true);
@@ -303,7 +309,10 @@ export function useTraineeHome() {
   useFocusEffect(
     useCallback(() => {
       setActiveTab("home");
-      if (params.violation === "locked" || params.postTest === "security_locked") {
+      if (
+        params.violation === "locked" ||
+        params.postTest === "security_locked"
+      ) {
         setViolationLockedVisible(true);
       }
       loadSession();
@@ -334,10 +343,10 @@ export function useTraineeHome() {
     params.survey === "completed"
       ? "ATTENDANCE_RECORDED"
       : params.flow === "CAMERA_VERIFIED" ||
-        params.checkIn === "verified" ||
-        session?.flowState === "CAMERA_VERIFIED"
-      ? "CAMERA_VERIFIED"
-      : session?.flowState || getSessionFlowState() || "SECURE_CHECKIN";
+          params.checkIn === "verified" ||
+          session?.flowState === "CAMERA_VERIFIED"
+        ? "CAMERA_VERIFIED"
+        : session?.flowState || getSessionFlowState() || "SECURE_CHECKIN";
 
   const activities: SessionActivityData[] = (session?.modules ?? []).map(
     (module) => {
@@ -348,8 +357,7 @@ export function useTraineeHome() {
       const isLiveModule = isAttendance
         ? currentFlow !== "ATTENDANCE_RECORDED"
         : currentFlow === "ATTENDANCE_RECORDED"
-          ? module.isLive ||
-            (module.key === "LIVE_QUIZ" && !module.isCompleted)
+          ? module.isLive || (module.key === "LIVE_QUIZ" && !module.isCompleted)
           : false;
 
       return {
@@ -365,11 +373,11 @@ export function useTraineeHome() {
         isMissed: module.isMissed,
         isLocked: (module as { isLocked?: boolean }).isLocked ?? false,
         completedAt: isAttendanceCompleted
-          ? module.completedAt ?? "10:25"
+          ? (module.completedAt ?? "10:25")
           : module.completedAt,
         score: module.score,
         ranDuration: isAttendanceCompleted
-          ? module.ranDuration ?? "Ran : 45m 3s"
+          ? (module.ranDuration ?? "Ran : 45m 3s")
           : module.ranDuration,
         geoFencing: isAttendance ? session?.attendanceGeoFencing : undefined,
         securityCheckInCompleted: isAttendance
@@ -462,7 +470,7 @@ export function useTraineeHome() {
     }
 
     router.push({
-      pathname: "/post_test_proctoring",
+      pathname: "/post_test",
       params: {
         conferenceUid: session.conferenceUid,
         suiteUid: standardTest.assessmentSuiteUid,
@@ -495,6 +503,14 @@ export function useTraineeHome() {
     } else if (tab === "profile") {
       router.push("/profile");
     } else if (tab === "home") {
+      setSessionFlowState("ATTENDANCE_RECORDED");
+      router.replace({
+        pathname: "/session_detail",
+        params: {
+          flow: "ATTENDANCE_RECORDED",
+          attendance: "completed",
+        },
+      });
       loadSession("refresh");
     }
   };

@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
+import { StatusBar } from "expo-status-bar";
 import {
   ActivityIndicator,
   Pressable,
@@ -8,21 +9,20 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { StatusBar } from "expo-status-bar";
 
-import AppText from "@/components/ui/AppText";
 import {
-  QuizLiveHeader,
-  QuizTimer,
-  QuizQuestionCard,
-  QuizResult,
-  QuizWaiting,
   AssessmentMap,
   QuizLeaderboard,
+  QuizLiveHeader,
+  QuizQuestionCard,
+  QuizResult,
+  QuizTimer,
+  QuizWaiting,
 } from "@/components/quiz";
-import { Colors } from "@/theme/colors";
-import { FontWeight } from "@/theme/fontWeight";
+import AppText from "@/components/ui/AppText";
 import { useQuiz } from "@/hooks/useQuiz";
+import { Colors } from "@/theme/colors";
+import { FontSize, FontWeight } from "@/theme/typography";
 
 export default function QuizScreen() {
   const {
@@ -43,8 +43,9 @@ export default function QuizScreen() {
     handleSelectOption,
     handleSyncNow,
     openQuestionFromMap,
+    goToNextPhase,
+    goToPrevPhase,
     finishQuiz,
-    skipQuiz,
     setPhase,
     handleContinueAfterResults,
     handleViewAllRankings,
@@ -89,106 +90,146 @@ export default function QuizScreen() {
 
       {/* Main Full-Height Body Area */}
       <View style={styles.body}>
-        {/* 1. Quiz Leaderboard / Results Screen */}
-        {phase === "leaderboard" && result ? (
-          <QuizLeaderboard
-            result={result}
-            onContinue={handleContinueAfterResults}
-            onViewAllRankings={handleViewAllRankings}
-          />
-        ) : /* 2. Assessment Map Screen */
-        phase === "map" ? (
-          <AssessmentMap
-            totalQuestions={questions.length}
-            answers={answers}
-            currentIndex={questionIndex}
-            onSelectQuestion={openQuestionFromMap}
-            onReviewQuestions={() => setPhase("active")}
-            onSubmit={finishQuiz}
-            submitting={submitting}
-            onSync={handleSyncNow}
-          />
-        ) : /* 3. Result State (Correct / Incorrect / Time's Up) */
-        phase === "result" && question ? (
-          <QuizResult
-            type={resultType}
-            question={{
-              id: question.id,
-              question: question.question,
-              options: question.options,
-              currentQuestion: questionIndex + 1,
-              totalQuestions: questions.length,
-              correctAnswer: question.correctAnswer,
-              explanation: question.explanation,
-            }}
-            selectedOptionId={selectedOptionId}
-            correctOptionId={question.correctAnswer}
-            explanation={question.explanation}
-          />
-        ) : /* 4. Waiting for Trainer Screen (Between questions) */
-        phase === "waiting" ? (
-          <QuizWaiting
-            onSyncNow={handleSyncNow}
-            nextQuestionNumber={questionIndex + 2}
-            message={`Look at the main screen.\nQuestion ${
-              questionIndex + 2 <= questions.length ? questionIndex + 2 : ""
-            } will begin shortly!`}
-          />
-        ) : (
-          /* 5. Active Answering Question Screen (Full Height) */
-          <ScrollView
-            style={styles.scrollView}
-            contentContainerStyle={styles.content}
-            showsVerticalScrollIndicator={false}
-          >
-            <View style={styles.activeTopSection}>
-              {/* Circular Countdown Timer Block */}
-              <View style={styles.timerContainer}>
-                <QuizTimer remainingSeconds={seconds} />
+        {/* Phase Content — takes all available space above the nav bar */}
+        <View style={styles.phaseContent}>
+          {/* 1. Quiz Leaderboard / Results Screen */}
+          {phase === "leaderboard" && result ? (
+            <QuizLeaderboard
+              result={result}
+              onContinue={handleContinueAfterResults}
+              onViewAllRankings={handleViewAllRankings}
+            />
+          ) : /* 2. Assessment Map Screen */
+          phase === "map" ? (
+            <AssessmentMap
+              totalQuestions={questions.length}
+              answers={answers}
+              currentIndex={questionIndex}
+              onSelectQuestion={openQuestionFromMap}
+              onReviewQuestions={() => setPhase("active")}
+              onSubmit={finishQuiz}
+              submitting={submitting}
+              onSync={handleSyncNow}
+            />
+          ) : /* 3. Result State (Correct / Incorrect / Time's Up) */
+          phase === "result" && question ? (
+            <QuizResult
+              type={resultType}
+              question={{
+                id: question.id,
+                question: question.question,
+                options: question.options,
+                currentQuestion: questionIndex + 1,
+                totalQuestions: questions.length,
+                correctAnswer: question.correctAnswer,
+                explanation: question.explanation,
+              }}
+              selectedOptionId={selectedOptionId}
+              correctOptionId={question.correctAnswer}
+              explanation={question.explanation}
+            />
+          ) : /* 4. Waiting for Trainer Screen (Between questions) */
+          phase === "waiting" ? (
+            <QuizWaiting
+              onSyncNow={handleSyncNow}
+              nextQuestionNumber={questionIndex + 2}
+              message={`Look at the main screen.\nQuestion ${
+                questionIndex + 2 <= questions.length ? questionIndex + 2 : ""
+              } will begin shortly!`}
+            />
+          ) : (
+            /* 5. Active Answering Question Screen (Full Height) */
+            <ScrollView
+              style={styles.scrollView}
+              contentContainerStyle={styles.content}
+              showsVerticalScrollIndicator={false}
+            >
+              <View style={styles.activeTopSection}>
+                {/* Circular Countdown Timer Block */}
+                <View style={styles.timerContainer}>
+                  <QuizTimer remainingSeconds={seconds} />
+                </View>
+
+                {/* Dynamic Question Card with Colored Options */}
+                {question && (
+                  <QuizQuestionCard
+                    question={{
+                      id: question.id,
+                      question: question.question,
+                      options: question.options,
+                      currentQuestion: questionIndex + 1,
+                      totalQuestions: questions.length,
+                      correctAnswer: question.correctAnswer,
+                      explanation: question.explanation,
+                    }}
+                    selectedOptionId={selectedOptionId}
+                    onSelectOption={handleSelectOption}
+                    disabled={false}
+                    isResultMode={false}
+                  />
+                )}
+
+                {submitError && (
+                  <AppText style={styles.inlineError}>{submitError}</AppText>
+                )}
               </View>
+            </ScrollView>
+          )}
+        </View>
 
-              {/* Dynamic Question Card with Colored Options */}
-
-              {question && (
-                <QuizQuestionCard
-                  question={{
-                    id: question.id,
-                    question: question.question,
-                    options: question.options,
-                    currentQuestion: questionIndex + 1,
-                    totalQuestions: questions.length,
-                    correctAnswer: question.correctAnswer,
-                    explanation: question.explanation,
-                  }}
-                  selectedOptionId={selectedOptionId}
-                  onSelectOption={handleSelectOption}
-                  disabled={false}
-                  isResultMode={false}
-                />
-              )}
-
-              {/* === [TEMPORARY DEV SKIP BUTTON - REMOVE LATER] === */}
-              <Pressable
-                style={styles.devSkipButton}
-                onPress={skipQuiz}
-                accessibilityRole="button"
-                accessibilityLabel="Skip Test (Testing Mode)"
+        {/* Previous / Next Navigation Bar — shown on active and result phases only */}
+        {(phase === "active" || phase === "result") && (
+          <View style={styles.navBar}>
+            {/* Previous — outlined, disabled on Q1 */}
+            <Pressable
+              style={[
+                styles.prevBtn,
+                questionIndex === 0 && styles.prevBtnDisabled,
+              ]}
+              onPress={goToPrevPhase}
+              disabled={questionIndex === 0}
+              accessibilityRole="button"
+              accessibilityLabel="Previous question"
+            >
+              <Ionicons
+                name="arrow-back"
+                size={15}
+                color={questionIndex === 0 ? Colors.gray400 : Colors.headerBlue}
+              />
+              <AppText
+                style={[
+                  styles.prevBtnText,
+                  questionIndex === 0 && styles.prevBtnTextDisabled,
+                ]}
+                weight={FontWeight.bold}
               >
-                <Ionicons name="play-forward" size={13} color="#D97706" />
-                <AppText
-                  style={styles.devSkipButtonText}
-                  weight={FontWeight.bold}
-                >
-                  Skip Test (Testing)
-                </AppText>
-              </Pressable>
-              {/* === [END TEMPORARY DEV SKIP BUTTON] === */}
+                Previous
+              </AppText>
+            </Pressable>
 
-              {submitError && (
-                <AppText style={styles.inlineError}>{submitError}</AppText>
-              )}
+            {/* Dot-step progress indicator */}
+            <View style={styles.dotRow}>
+              {questions.map((_, i) => (
+                <View
+                  key={i}
+                  style={[styles.dot, i === questionIndex && styles.dotActive]}
+                />
+              ))}
             </View>
-          </ScrollView>
+
+            {/* Next — solid primary */}
+            <Pressable
+              style={styles.nextBtn}
+              onPress={goToNextPhase}
+              accessibilityRole="button"
+              accessibilityLabel="Next question"
+            >
+              <AppText style={styles.nextBtnText} weight={FontWeight.bold}>
+                Next
+              </AppText>
+              <Ionicons name="arrow-forward" size={15} color={Colors.white} />
+            </Pressable>
+          </View>
         )}
       </View>
     </SafeAreaView>
@@ -198,24 +239,18 @@ export default function QuizScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    height: "100%",
-    minHeight: "100%",
     backgroundColor: Colors.background,
   },
   body: {
     flex: 1,
-    height: "100%",
     minHeight: 0,
     backgroundColor: Colors.background,
   },
   scrollView: {
     flex: 1,
-    height: "100%",
   },
   loadingContainer: {
     flex: 1,
-    height: "100%",
-    minHeight: "100%",
     alignItems: "center",
     justifyContent: "center",
     gap: 12,
@@ -223,7 +258,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   loadingText: {
-    fontSize: 14,
+    fontSize: FontSize.label,
     color: Colors.gray600,
     textAlign: "center",
   },
@@ -235,22 +270,18 @@ const styles = StyleSheet.create({
   },
   inlineError: {
     color: Colors.danger,
-    fontSize: 13,
+    fontSize: FontSize.caption,
     marginTop: 8,
     textAlign: "center",
   },
   content: {
     flexGrow: 1,
-    width: "100%",
-    maxWidth: "100%",
     paddingHorizontal: 16,
     paddingTop: 4,
     paddingBottom: 16,
   },
   activeTopSection: {
     flex: 1,
-    width: "100%",
-    maxWidth: "100%",
     justifyContent: "space-between",
   },
   timerContainer: {
@@ -260,27 +291,82 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
 
-  /* === [TEMPORARY DEV SKIP BUTTON STYLES - REMOVE LATER] === */
-  devSkipButton: {
+  /* Phase content wrapper — takes all flex space so navBar stays at bottom */
+  phaseContent: {
+    flex: 1,
+    minHeight: 0,
+  },
+
+  /* ── Navigation Bar ── */
+  navBar: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: Colors.white,
+    borderTopWidth: 1,
+    borderTopColor: Colors.gray200,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 8,
+  },
+
+  /* Previous — outlined secondary */
+  prevBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 24,
+    borderWidth: 1.5,
+    borderColor: Colors.headerBlue,
+    backgroundColor: Colors.white,
+  },
+  prevBtnDisabled: {
+    borderColor: Colors.gray200,
+    backgroundColor: Colors.gray100,
+  },
+  prevBtnText: {
+    fontSize: 13,
+    color: Colors.headerBlue,
+  },
+  prevBtnTextDisabled: {
+    color: Colors.gray400,
+  },
+
+  /* Dot-step progress indicator */
+  dotRow: {
+    flexDirection: "row",
+    alignItems: "center",
     gap: 6,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    backgroundColor: "#FEF3C7",
-    borderWidth: 1,
-    borderColor: "#FCD34D",
-    borderRadius: 10,
-    marginTop: 12,
-    alignSelf: "center",
   },
-  devSkipButtonText: {
-    fontSize: 12,
-    color: "#B45309",
+  dot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: Colors.gray200,
   },
-  /* === [END TEMPORARY DEV SKIP BUTTON STYLES] === */
+  dotActive: {
+    width: 18,
+    backgroundColor: Colors.headerBlue,
+  },
+
+  /* Next — solid primary */
+  nextBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    borderRadius: 24,
+    backgroundColor: Colors.headerBlue,
+  },
+  nextBtnText: {
+    fontSize: 13,
+    color: Colors.white,
+  },
 });
-
-
-

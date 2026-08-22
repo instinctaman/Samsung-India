@@ -1,4 +1,3 @@
-import React from "react";
 import { ScrollView, StyleSheet } from "react-native";
 
 import QuizQuestionCard, { QuizQuestionData } from "./QuizQuestionCard";
@@ -28,15 +27,12 @@ export default function QuizResult({
 
   return (
     <ScrollView
+      style={styles.scrollView}
       contentContainerStyle={styles.scrollContent}
       showsVerticalScrollIndicator={false}
     >
       {/* Result Hero Header (Correct / Incorrect / Time's Up) */}
-      <QuizResultHero
-        type={type}
-        title={heroTitle}
-        subtitle={heroSubtitle}
-      />
+      <QuizResultHero type={type} title={heroTitle} subtitle={heroSubtitle} />
 
       {/* Question Card in Result State */}
       <QuizQuestionCard
@@ -53,6 +49,9 @@ export default function QuizResult({
 }
 
 const styles = StyleSheet.create({
+  scrollView: {
+    flex: 1,
+  },
   scrollContent: {
     flexGrow: 1,
     width: "100%",

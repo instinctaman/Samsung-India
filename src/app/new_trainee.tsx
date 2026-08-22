@@ -73,5 +73,5 @@ const styles = StyleSheet.create({
   headerTextGroup: { flex: 1 },
   headerTitle: { fontSize: Fonts.h3 },
   headerSubtitle: { fontSize: Fonts.bodySm, marginTop: 2 },
-  content: { padding: 16, paddingTop: 4, gap: 14 },
+  content: { flexGrow: 1, padding: 16, paddingTop: 4, paddingBottom: 32, gap: 14 },
 });

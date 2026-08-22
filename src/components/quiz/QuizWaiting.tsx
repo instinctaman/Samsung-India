@@ -12,6 +12,7 @@ import {
 import Bell from "@/assets/images/svg/bell.svg";
 import Clock from "@/assets/images/svg/clock.svg";
 import Eye from "@/assets/images/svg/eye.svg";
+import People from "@/assets/images/svg/people.svg";
 import Refresh from "@/assets/images/svg/Refresh cw.svg";
 
 import AppText from "@/components/ui/AppText";
@@ -64,11 +65,7 @@ export default function QuizWaiting({
       {/* Upper/Center Hero Section */}
       <View style={styles.heroSection}>
         <View style={styles.trainerIcon}>
-          <Ionicons
-            name="people"
-            size={Fonts.profileIconSize}
-            color={Colors.headerBlue}
-          />
+          <People width={105} height={88} />
         </View>
 
         <View style={styles.titleWrapper}>
@@ -217,8 +214,9 @@ const styles = StyleSheet.create({
     flex: 1,
     width: "100%",
     alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 8,
+    justifyContent: "flex-end",
+    gap: 10,
+    paddingBottom: 50,
   },
   trainerIcon: {
     width: 172,
@@ -233,7 +231,6 @@ const styles = StyleSheet.create({
   },
   titleWrapper: {
     alignItems: "center",
-    marginTop: 16,
   },
   title: {
     fontSize: 30,
@@ -245,7 +242,6 @@ const styles = StyleSheet.create({
     borderRadius: 2,
     overflow: "hidden",
     backgroundColor: Colors.gray200,
-    marginTop: 10,
   },
   progressFill: {
     width: 22,
@@ -258,7 +254,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 19,
     color: Colors.gray600,
-    marginTop: 10,
     paddingHorizontal: 16,
   },
   bottomSection: {
@@ -268,6 +263,8 @@ const styles = StyleSheet.create({
   },
   infoCard: {
     width: "100%",
+    minHeight: 160,
+    alignItems: "center",
     backgroundColor: Colors.white,
     borderRadius: 16,
     paddingVertical: 14,
@@ -299,7 +296,7 @@ const styles = StyleSheet.create({
     height: QUIZ_WAITING_ICON_SIZE,
   },
   infoTitle: {
-    fontSize: 12,
+    fontSize: 11,
     marginTop: 8,
   },
   infoText: {

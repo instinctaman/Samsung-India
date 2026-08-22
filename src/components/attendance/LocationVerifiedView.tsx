@@ -6,9 +6,12 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 
+import CalendarIcon from "@/assets/images/svg/calender2.svg";
+import ClockIcon from "@/assets/images/svg/clock.svg";
+import LocationIcon from "@/assets/images/svg/location.svg";
 import AppText from "@/components/ui/AppText";
 import { Colors } from "@/theme/colors";
-import { FontWeight } from "@/theme/fontWeight";
+import { FontWeight } from "@/theme/typography";
 import { createShadow } from "@/theme/shadows";
 
 export type LocationVerifiedInfo = {
@@ -26,7 +29,10 @@ type Props = {
   onContinue: () => void;
 };
 
-export default function LocationVerifiedView({ info, onContinue }: Props) {
+export default function LocationVerifiedView({
+  info,
+  onContinue,
+}: Props) {
   const insets = useSafeAreaInsets();
 
   const formattedTime =
@@ -44,22 +50,22 @@ export default function LocationVerifiedView({ info, onContinue }: Props) {
     {
       label: "Session",
       value: info.sessionTitle,
-      icon: "calendar-outline" as const,
+      renderIcon: () => <CalendarIcon width={22} height={22} color="#1CB07D" />,
     },
     {
       label: "Session Time",
       value: info.sessionTime,
-      icon: "time-outline" as const,
+      renderIcon: () => <ClockIcon width={22} height={22} color="#1CB07D" />,
     },
     {
       label: "Date",
       value: info.date,
-      icon: "calendar-outline" as const,
+      renderIcon: () => <CalendarIcon width={22} height={22} color="#1CB07D" />,
     },
     {
       label: "Location",
       value: info.location,
-      icon: "location-outline" as const,
+      renderIcon: () => <LocationIcon width={20} height={24} color="#1CB07D" />,
     },
   ];
 
@@ -67,7 +73,6 @@ export default function LocationVerifiedView({ info, onContinue }: Props) {
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <View style={[styles.statusBarBackground, { height: insets.top }]} />
       <StatusBar style="light" animated />
-
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -89,16 +94,28 @@ export default function LocationVerifiedView({ info, onContinue }: Props) {
           </View>
 
           {/* Heading & Verification Meta */}
-          <AppText style={styles.title} weight={FontWeight.bold}>
+          <AppText
+            color={Colors.white}
+            weight={FontWeight.semiBold}
+            align="center"
+            style={styles.title}
+          >
             LOCATION VERIFIED
           </AppText>
-          <AppText style={styles.subtitle}>{subtitleText}</AppText>
+          <AppText
+            color="rgba(255, 255, 255, 0.95)"
+            weight={FontWeight.medium}
+            align="center"
+            style={styles.subtitle}
+          >
+            {subtitleText}
+          </AppText>
 
           {/* Center Pill Divider */}
           <View style={styles.pillDivider} />
         </View>
 
-        {/* Content Section: Full Height Card + Button directly under card */}
+        {/* Content Section: Full Height Card + Action directly underneath */}
         <View style={styles.content}>
           <View style={styles.detailsCard}>
             {rows.map((row, index) => (
@@ -110,12 +127,19 @@ export default function LocationVerifiedView({ info, onContinue }: Props) {
                 ]}
               >
                 <View style={styles.detailIcon}>
-                  <Ionicons name={row.icon} size={27} color={Colors.success} />
+                  {row.renderIcon()}
                 </View>
                 <View style={styles.detailTextColumn}>
-                  <AppText style={styles.detailLabel}>{row.label}</AppText>
+                  <AppText
+                    style={styles.detailLabel}
+                    color={Colors.gray600}
+                    weight={FontWeight.regular}
+                  >
+                    {row.label}
+                  </AppText>
                   <AppText
                     style={styles.detailValue}
+                    color="#111827"
                     weight={FontWeight.medium}
                   >
                     {row.value}
@@ -125,7 +149,7 @@ export default function LocationVerifiedView({ info, onContinue }: Props) {
             ))}
           </View>
 
-          {/* Green "Great, Continue" Primary Button directly under the card */}
+          {/* Primary Action Button */}
           <Pressable
             style={styles.continueButton}
             onPress={onContinue}
@@ -133,9 +157,9 @@ export default function LocationVerifiedView({ info, onContinue }: Props) {
             accessibilityLabel="Great, Continue"
           >
             <AppText
+              style={styles.continueButtonText}
               color={Colors.white}
-              style={styles.continueText}
-              weight={FontWeight.bold}
+              weight={FontWeight.medium}
             >
               Great, Continue
             </AppText>
@@ -160,7 +184,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: 32,
+    justifyContent: "space-between",
   },
 
   // Top Green Area
@@ -170,8 +194,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.success,
     borderBottomLeftRadius: 40,
     borderBottomRightRadius: 40,
-    paddingTop: 30,
-    paddingBottom: 270,
+    paddingTop: 24,
+    paddingBottom: 250,
     paddingHorizontal: 20,
   },
   radarWrapper: {
@@ -214,19 +238,14 @@ const styles = StyleSheet.create({
     ...createShadow({ x: 0, y: 3, blur: 6, opacity: 0.08, elevation: 2 }),
   },
 
-  // Typography
   title: {
     marginTop: 18,
-    fontSize: 24,
-    color: Colors.white,
     letterSpacing: 0.5,
-    textAlign: "center",
+    fontSize: 29,
   },
   subtitle: {
     marginTop: 4,
-    fontSize: 14,
-    color: "rgba(255, 255, 255, 0.95)",
-    textAlign: "center",
+    fontSize: 15,
   },
   pillDivider: {
     width: 60,
@@ -242,51 +261,52 @@ const styles = StyleSheet.create({
     maxWidth: 480,
     alignSelf: "center",
     paddingHorizontal: 20,
-    marginTop: -245,
+    marginTop: -210,
+    flex: 1,
+    justifyContent: "space-between",
+    paddingBottom: 24,
   },
   detailsCard: {
     width: "100%",
-    height: 295,
+    flex: 1,
     backgroundColor: Colors.white,
-    borderRadius: 24,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    justifyContent: "space-around",
+    borderRadius: 27,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    justifyContent: "space-between",
     ...createShadow({ x: 0, y: 8, blur: 20, opacity: 0.09, elevation: 5 }),
   },
   detailRow: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
-    paddingVertical: 4,
+    gap: 16,
+    paddingVertical: 10,
   },
   detailBorder: {
     borderBottomWidth: 1,
     borderBottomColor: Colors.gray200,
   },
   detailIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
+    width: 44,
+    height: 44,
+    borderRadius: 11,
     backgroundColor: "#D8F8EB",
     alignItems: "center",
     justifyContent: "center",
   },
   detailTextColumn: {
     flex: 1,
-    gap: 1,
+    gap: 3,
   },
   detailLabel: {
-    fontSize: 12,
-    color: Colors.gray600,
+    fontSize: 11.5,
   },
   detailValue: {
     fontSize: 14,
-    color: "#111827",
   },
 
-  // Actions directly under card
+  // Bottom Action directly under card
   continueButton: {
     width: "100%",
     height: 52,
@@ -297,8 +317,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     ...createShadow({ x: 0, y: 4, blur: 10, opacity: 0.12, elevation: 3 }),
   },
-  continueText: {
+  continueButtonText: {
     fontSize: 18,
-    fontWeight: "700",
   },
 });

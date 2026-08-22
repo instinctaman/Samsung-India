@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   StyleSheet,
   TextInput,
@@ -9,9 +9,8 @@ import { Ionicons } from "@expo/vector-icons";
 
 import AppText from "./AppText";
 import { Colors } from "@/theme/colors";
-import { Fonts } from "@/theme/fonts";
 import { FontFamily } from "@/theme/fontFamily";
-import { FontWeight } from "@/theme/fontWeight";
+import { FontSize, FontWeight } from "@/theme/typography";
 import { Radius } from "@/theme/radius";
 import { Spacing } from "@/theme/spacing";
 
@@ -28,11 +27,10 @@ export default function AppInput({
   style,
   ...props
 }: AppInputProps) {
-  const [focused, setFocused] = useState(false);
   return (
     <View style={styles.container}>
       {label && (
-        <AppText style={styles.label} weight={FontWeight.medium}>
+        <AppText variant="label" weight={FontWeight.medium} color={Colors.black} style={styles.label}>
           {label}
         </AppText>
       )}
@@ -40,8 +38,6 @@ export default function AppInput({
       <View style={styles.inputRow}>
         {icon && <Ionicons name={icon} size={16} color={Colors.gray600} style={styles.icon} />}
         <TextInput
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
           style={[styles.input, icon && styles.inputWithIcon, props.editable === false && styles.inputDisabled, style]}
           placeholderTextColor={Colors.gray400}
           {...props}
@@ -49,7 +45,7 @@ export default function AppInput({
       </View>
 
       {caption && (
-        <AppText style={styles.caption}>
+        <AppText variant="overline" color={Colors.gray600} style={styles.caption}>
           {caption}
         </AppText>
       )}
@@ -63,8 +59,6 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.lg,
   },
   label: {
-    fontSize: Fonts.body,
-    color: Colors.black,
     marginBottom: Spacing.sm,
   },
 
@@ -86,7 +80,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.gray200,
     borderRadius: Radius.xl,
     paddingHorizontal: Spacing.lg,
-    fontSize: Fonts.xs,
+    fontSize: FontSize.bodySmall,
     backgroundColor: Colors.white,
     fontFamily: FontFamily.regular,
     includeFontPadding: false,
@@ -102,8 +96,6 @@ const styles = StyleSheet.create({
   },
 
   caption: {
-    fontSize: Fonts.overline,
-    color: Colors.gray600,
     marginTop: Spacing.sm,
   },
 });

@@ -7,8 +7,9 @@ import AppText from "@/components/ui/AppText";
 import ScreenBanner from "@/components/ui/ScreenBanner";
 import AccessGrantedView from "@/components/attendance/AccessGrantedView";
 import { Colors } from "@/theme/colors";
-import { FontWeight } from "@/theme/fontWeight";
 import { Fonts } from "@/theme/fonts";
+import { FontWeight } from "@/theme/typography";
+import { setSessionFlowState } from "@/api/session";
 import { useAttendance } from "@/hooks/useAttendance";
 
 export default function AttendanceScreen() {
@@ -120,7 +121,13 @@ export default function AttendanceScreen() {
         },
       ]}
       onContinue={handleNavigateToSession}
-      onHome={handleNavigateToSession}
+      onHome={() => {
+        setSessionFlowState("CAMERA_VERIFIED");
+        router.replace({
+          pathname: "/session_detail",
+          params: { flow: "CAMERA_VERIFIED", checkIn: "verified" },
+        });
+      }}
     />
   );
 }

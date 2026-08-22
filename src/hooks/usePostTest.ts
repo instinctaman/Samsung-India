@@ -5,10 +5,6 @@
  * and strict proctoring/violation state machines.
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { AppState, Platform } from "react-native";
-import { useRouter } from "expo-router";
-import { useAuth } from "@/hooks/useAuth";
 import {
   ApiError,
   AssessmentQuestion,
@@ -27,6 +23,10 @@ import {
   SECURITY_VIOLATIONS,
   SecurityViolationType,
 } from "@/components/proctoring/violations";
+import { useAuth } from "@/hooks/useAuth";
+import { useRouter } from "expo-router";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { AppState, Platform } from "react-native";
 
 const DEFAULT_TEST_MINUTES = 30;
 

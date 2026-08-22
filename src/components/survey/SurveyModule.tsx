@@ -1,15 +1,15 @@
-import React, { useState } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { useState } from "react";
+import { ScrollView, StyleSheet, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import AppText from "@/components/ui/AppText";
 import { Colors } from "@/theme/colors";
 import { FontWeight } from "@/theme/fontWeight";
-import { SurveyAnswers, SurveyQuestion } from "./types";
 import SurveyFooter from "./SurveyFooter";
 import SurveyHeader from "./SurveyHeader";
 import SurveyQuestionCard from "./SurveyQuestionCard";
+import { SurveyAnswers, SurveyQuestion } from "./types";
 
 export type SurveyModuleProps = {
   questions: SurveyQuestion[];
@@ -73,11 +73,15 @@ export default function SurveyModule({
     onAnswerChange(id, val);
   };
 
+  const insets = useSafeAreaInsets();
+
   return (
-    <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <ScrollView
+        style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         {/* Header Summary Card */}
         <SurveyHeader
@@ -112,19 +116,16 @@ export default function SurveyModule({
             hasError={unansweredIds.includes(question.id)}
           />
         ))}
-
-        {/* Spacer for Fixed Bottom Footer */}
-        <View style={styles.bottomSpacer} />
       </ScrollView>
 
-      {/* Sticky Floating Footer */}
+      {/* Docked Footer — sits above bottom safe area */}
       <SurveyFooter
         title="Continue"
         onContinue={handleContinue}
         loading={submitting}
         disabled={submitting}
       />
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -133,11 +134,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#EBF3FB",
   },
+  scrollView: {
+    flex: 1,
+  },
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 16,
     paddingTop: 12,
-    paddingBottom: 24,
+    paddingBottom: 16,
   },
   alertBanner: {
     flexDirection: "row",
@@ -153,8 +157,5 @@ const styles = StyleSheet.create({
     fontSize: 12.5,
     flex: 1,
     lineHeight: 17,
-  },
-  bottomSpacer: {
-    height: 80,
   },
 });

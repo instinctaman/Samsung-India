@@ -13,7 +13,6 @@ import {
 
 import {
   RecentSessionsModal,
-  SecurityLockedModal,
   SessionNotification,
   SessionTimeline,
   TraineeBottomNavigation,
@@ -23,7 +22,6 @@ import {
 import AppText from "@/components/ui/AppText";
 import { useTraineeHome } from "@/hooks/useTraineeHome";
 import { Colors } from "@/theme/colors";
-import { Fonts } from "@/theme/fonts";
 
 export default function SessionDetailScreen() {
   const insets = useSafeAreaInsets();
@@ -39,8 +37,6 @@ export default function SessionDetailScreen() {
     activeTab,
     historyVisible,
     setHistoryVisible,
-    violationLockedVisible,
-    setViolationLockedVisible,
     loadSession,
     handleMarkAttendance,
     handleEnterLiveQuiz,
@@ -60,8 +56,7 @@ export default function SessionDetailScreen() {
         <TrainingSessionHeader
           onLogout={handleLogout}
           onHistoryPress={() => setHistoryVisible(true)}
-
-          userName={trainee?.name ?? "Anshu Pandey"}
+          userName={trainee?.name ?? "Tushar Prajapati"}
           gender={trainee?.gender}
           profilePhoto={trainee?.profilePhoto}
           isOnline={true}
@@ -87,14 +82,18 @@ export default function SessionDetailScreen() {
             </View>
           ) : error ? (
             <View style={styles.centered}>
-              <AppText style={styles.errorText}>{error}</AppText>
+              <AppText variant="body" color={Colors.gray600} align="center">
+                {error}
+              </AppText>
               <Pressable
                 style={styles.retryButton}
                 onPress={() => loadSession()}
                 accessibilityRole="button"
                 accessibilityLabel="Retry loading session"
               >
-                <AppText color={Colors.white}>Retry</AppText>
+                <AppText variant="label" color={Colors.white}>
+                  Retry
+                </AppText>
               </Pressable>
             </View>
           ) : session && !session.started ? (
@@ -137,12 +136,6 @@ export default function SessionDetailScreen() {
         onClose={() => setHistoryVisible(false)}
         token={token}
       />
-
-      {/* Locked Security Violation Modal */}
-      <SecurityLockedModal
-        visible={violationLockedVisible}
-        onClose={() => setViolationLockedVisible(false)}
-      />
     </>
   );
 }
@@ -170,11 +163,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 12,
     paddingHorizontal: 24,
-  },
-  errorText: {
-    fontSize: Fonts.body,
-    color: Colors.gray600,
-    textAlign: "center",
   },
   retryButton: {
     backgroundColor: Colors.headerBlue,

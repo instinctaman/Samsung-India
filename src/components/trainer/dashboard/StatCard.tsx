@@ -49,6 +49,7 @@ const styles = StyleSheet.create({
     borderColor: "#EAECF0",
     paddingVertical: 10,
     paddingHorizontal: 2,
+    gap: 4,
     alignItems: "center",
     justifyContent: "center",
     ...Shadows.card,

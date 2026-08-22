@@ -791,7 +791,7 @@ const styles = StyleSheet.create({
   headerTextGroup: { flex: 1 },
   headerTitle: { fontSize: Fonts.h3 },
   headerSubtitle: { fontSize: Fonts.bodySm, marginTop: 2 },
-  content: { padding: 16, paddingTop: 4, gap: 14 },
+  content: { flexGrow: 1, padding: 16, paddingTop: 4, paddingBottom: 40, gap: 14 },
   card: { padding: 16 },
   sectionTitle: { fontSize: Fonts.bodyLg, marginBottom: 12 },
   row: { flexDirection: "row", gap: 12 },

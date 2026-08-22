@@ -194,6 +194,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.headerBlue,
   },
   scrollContent: {
+    flexGrow: 1,
     paddingHorizontal: 16,
     paddingTop: 8,
     paddingBottom: 36,

@@ -24,10 +24,9 @@ const TimeProgress = ({
   const remaining = Math.max(remainingMinutes * 60 + remainingSeconds, 0);
   const progress = Math.min(Math.max(remaining / totalSeconds, 0), 1);
 
-  // Geometry: Slender arc rotated anticlockwise (140deg to 12deg)
   const cx = size / 2;
-  const cy = 48;
-  const radius = 38;
+  const cy = size / 2 - 2;
+  const radius = 46;
 
   const startAngle = (140 * Math.PI) / 180;
   const endAngle = (12 * Math.PI) / 180;
@@ -45,8 +44,8 @@ const TimeProgress = ({
   const dashOffset = totalArcLength * (1 - progress);
 
   return (
-    <View style={[styles.container, { width: size, height: 86 }]}>
-      <Svg width={size} height={86} style={styles.svg}>
+    <View style={[styles.container, { width: size, height: size }]}>
+      <Svg width={size} height={size} style={styles.svg}>
         <Defs>
           <LinearGradient id="timerExactGrad" x1="0%" y1="100%" x2="100%" y2="15%">
             <Stop offset="0%" stopColor="#FF382E" stopOpacity="1" />
@@ -138,7 +137,6 @@ const styles = StyleSheet.create({
   content: {
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 2,
   },
   clockIconWrapper: {
     width: 17,
