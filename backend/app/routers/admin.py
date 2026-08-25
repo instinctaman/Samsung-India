@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.core.rate_limit import rate_limit
 from app.core.security import create_access_token, verify_password
 from app.database.database import get_db
 from app.models.admin import Admin
@@ -10,7 +11,11 @@ from app.schemas.admin import AdminAuthSession, AdminLoginRequest, AdminOut
 router = APIRouter(prefix="/admin", tags=["admin"])
 
 
-@router.post("/login", response_model=AdminAuthSession)
+@router.post(
+    "/login",
+    response_model=AdminAuthSession,
+    dependencies=[Depends(rate_limit(max_attempts=5, window_seconds=300))],
+)
 def login(payload: AdminLoginRequest, db: Session = Depends(get_db)):
     unauthorized = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,

@@ -12,7 +12,8 @@
       "infoPlist": {
         "LSApplicationQueriesSchemes": [
           "whatsapp"
-        ]
+        ],
+        "NSCameraUsageDescription": "Allow $(PRODUCT_NAME) to access your camera for live AI proctoring during assessments."
       }
     },
     "android": {
@@ -47,15 +48,6 @@
         }
       ],
       "expo-font",
-      [
-        "expo-camera",
-        {
-          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera for live AI proctoring during assessments.",
-          "microphonePermission": false,
-          "recordAudioAndroid": false,
-          "barcodeScannerEnabled": false
-        }
-      ],
       [
         "expo-image-picker",
         {

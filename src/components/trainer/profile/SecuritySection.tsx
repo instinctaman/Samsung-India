@@ -36,6 +36,7 @@ export function SecuritySection({ form }: { form: TrainerProfileForm }) {
       onToggleEdit={() => (isEditing ? saveSection("security") : toggleEdit("security"))}
     >
       <AppInput
+        compact
         label="Password *"
         placeholder="Password"
         value={profile.password}
@@ -43,8 +44,9 @@ export function SecuritySection({ form }: { form: TrainerProfileForm }) {
         secureTextEntry
         onChangeText={(v) => setField("password", v)}
       />
-      <AppInput label="Username" value={profile.username} editable={false} />
+      <AppInput compact label="Username" value={profile.username} editable={false} />
       <AppInput
+        compact
         label="Remarks"
         value={profile.remarks}
         editable={isEditing}

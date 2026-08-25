@@ -32,6 +32,7 @@ export function DocumentsSection({ form }: { form: TrainerProfileForm }) {
       onToggleEdit={() => (isEditing ? saveSection("documents") : toggleEdit("documents"))}
     >
       <AppInput
+        compact
         label="Aadhar Number"
         placeholder="Enter 12 Digit Aadhar Number"
         value={profile.aadharNumber}
@@ -40,14 +41,21 @@ export function DocumentsSection({ form }: { form: TrainerProfileForm }) {
         onChangeText={(v) => setField("aadharNumber", v)}
       />
       <FileFieldLabel label="Aadhar (File)" />
-      <AppInput value={profile.aadharFile} editable={isEditing} onChangeText={(v) => setField("aadharFile", v)} />
+      <AppInput
+        compact
+        value={profile.aadharFile}
+        editable={isEditing}
+        onChangeText={(v) => setField("aadharFile", v)}
+      />
       <FileFieldLabel label="Profile Picture" />
       <AppInput
+        compact
         value={profile.profilePicture}
         editable={isEditing}
         onChangeText={(v) => setField("profilePicture", v)}
       />
       <AppInput
+        compact
         label="About"
         value={profile.about}
         editable={isEditing}
@@ -56,9 +64,10 @@ export function DocumentsSection({ form }: { form: TrainerProfileForm }) {
         onChangeText={(v) => setField("about", v)}
       />
       <FileFieldLabel label="Resume" />
-      <AppInput value={profile.resume} editable={isEditing} onChangeText={(v) => setField("resume", v)} />
+      <AppInput compact value={profile.resume} editable={isEditing} onChangeText={(v) => setField("resume", v)} />
       <FileFieldLabel label="Other Document" />
       <AppInput
+        compact
         value={profile.otherDocument}
         editable={isEditing}
         onChangeText={(v) => setField("otherDocument", v)}

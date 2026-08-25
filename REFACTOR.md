@@ -80,5 +80,21 @@ From the full-codebase audit (2026-08-17):
 - This app runs entirely on frontend mock data (`src/data/mockData.ts` +
   `src/api/mockService.ts`). Don't reconnect `src/api/*` to a real backend
   without an explicit ask.
-- Backend and database code are off-limits for edits entirely — diagnose and
-  explain, don't execute changes there.
+- Backend code edits now require an explicit ask per area of work (as of
+  2026-08-24) — no longer a blanket "diagnose only" rule. **Database schema
+  and data are still off-limits** (no migrations, no direct DB writes,
+  no editing `database_dump.sql` / seed data) unless separately asked.
+  Current backend work in progress: security hardening (CORS lockdown,
+  login rate-limiting, `.env.example`) — done. Not yet asked for: schema/
+  migrations, fixing the missing `/admin/trainees` endpoint, tests/CI.
+- **Schema mismatch (confirmed 2026-08-24)**: the backend's SQLAlchemy
+  models and `backend/.env`'s `DB_NAME` target `tecsoui_tops_aman` (see
+  `database_dump.sql` at repo root, 52 tables) — but the user confirmed
+  the *actual live production database* is `mmtbtwob_tops` (31 tables,
+  simpler/flatter, e.g. no `conference_activity_log`, `finance_*`,
+  `supplier_*`/`agency_*` sub-tables; has `accounts`/`venue` instead).
+  `tecsoui_tops_aman` was a draft/future redesign, not what's deployed.
+  The backend currently would NOT work against the real DB as-is. A
+  schema-export of the live DB (`mmtbtwob_tops.sql`, gitignored, not
+  committed) exists locally if needed for reference. Realigning models to
+  the real schema has not been started — ask before touching this.

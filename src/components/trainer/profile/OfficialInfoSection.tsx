@@ -26,19 +26,28 @@ export function OfficialInfoSection({ form }: { form: TrainerProfileForm }) {
       onToggleEdit={() => (isEditing ? saveSection("official") : toggleEdit("official"))}
     >
       <AppInput
+        compact
         label="Job Status"
         value={profile.jobStatus}
         editable={isEditing}
         onChangeText={(v) => setField("jobStatus", v)}
       />
       <AppInput
+        compact
         label="Joined On"
         value={profile.joinedOn}
         editable={isEditing}
         onChangeText={(v) => setField("joinedOn", v)}
       />
-      <AppInput label="Role" value={profile.role} editable={isEditing} onChangeText={(v) => setField("role", v)} />
       <AppInput
+        compact
+        label="Role"
+        value={profile.role}
+        editable={isEditing}
+        onChangeText={(v) => setField("role", v)}
+      />
+      <AppInput
+        compact
         label="Designation"
         value={profile.designation}
         editable={isEditing}
@@ -46,6 +55,7 @@ export function OfficialInfoSection({ form }: { form: TrainerProfileForm }) {
       />
       {TEXT_FIELDS.map((field) => (
         <AppInput
+          compact
           key={field.key}
           label={field.label}
           placeholder={field.placeholder}

@@ -60,4 +60,5 @@ export const Shadows = {
     elevation: 8,
   }),
   footer: createShadow({ x: 0, y: -2, blur: 6, opacity: 0.08, elevation: 7 }),
+  webContainer: createShadow({ x: 0, y: 0, blur: 24, opacity: 0.08, elevation: 4 }),
 } as const;

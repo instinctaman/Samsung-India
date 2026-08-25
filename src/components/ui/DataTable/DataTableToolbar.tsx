@@ -3,17 +3,20 @@ import { useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
+  ScrollView,
   StyleSheet,
   TextInput,
   View,
 } from "react-native";
 
+import AppModal from "@/components/ui/AppModal";
 import AppText from "@/components/ui/AppText";
 import { Colors } from "@/theme/colors";
 import { Fonts } from "@/theme/fonts";
 import { FontWeight } from "@/theme/fontWeight";
 import { Radius } from "@/theme/radius";
 import { Shadows } from "@/theme/shadows";
+import { Spacing } from "@/theme/spacing";
 import { DataTablePageSize, ExportAction } from "./types";
 
 type ToolbarColumn = { key: string; header: string };
@@ -170,32 +173,6 @@ export default function DataTableToolbar({
               color={Colors.gray600}
             />
           </Pressable>
-          {openMenu === "columns" && (
-            <View style={[styles.dropdownPanel, styles.dropdownPanelRight]}>
-              {columns.map((column) => {
-                const hidden = hiddenColumns.has(column.key);
-                return (
-                  <Pressable
-                    key={column.key}
-                    style={styles.dropdownItem}
-                    onPress={() => onToggleColumn(column.key)}
-                  >
-                    <Ionicons
-                      name={hidden ? "square-outline" : "checkbox"}
-                      size={16}
-                      color={hidden ? Colors.gray400 : Colors.mainColour1}
-                    />
-                    <AppText
-                      style={styles.dropdownItemText}
-                      color={hidden ? Colors.gray600 : Colors.black}
-                    >
-                      {column.header}
-                    </AppText>
-                  </Pressable>
-                );
-              })}
-            </View>
-          )}
         </View>
 
         <View style={styles.searchBox}>
@@ -209,6 +186,40 @@ export default function DataTableToolbar({
           />
         </View>
       </View>
+
+      <AppModal
+        visible={openMenu === "columns"}
+        onClose={() => setOpenMenu(null)}
+        position="bottom"
+        title="Column Visibility"
+        showCloseButton
+        contentStyle={styles.columnSheet}
+      >
+        <ScrollView style={styles.columnScroll} showsVerticalScrollIndicator keyboardShouldPersistTaps="handled">
+          {columns.map((column) => {
+            const hidden = hiddenColumns.has(column.key);
+            return (
+              <Pressable
+                key={column.key}
+                style={styles.columnRow}
+                onPress={() => onToggleColumn(column.key)}
+              >
+                <Ionicons
+                  name={hidden ? "square-outline" : "checkbox"}
+                  size={16}
+                  color={hidden ? Colors.gray400 : Colors.mainColour1}
+                />
+                <AppText
+                  style={styles.columnRowText}
+                  color={hidden ? Colors.gray600 : Colors.black}
+                >
+                  {column.header}
+                </AppText>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      </AppModal>
     </View>
   );
 }
@@ -312,7 +323,17 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     ...Shadows.raised,
   },
-  dropdownPanelRight: { left: undefined, right: 0 },
+  columnSheet: { paddingHorizontal: Spacing.lg, paddingBottom: Spacing.xl, paddingTop: Spacing.sm },
+  columnScroll: { maxHeight: 320 },
+  columnRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingVertical: 13,
+    paddingHorizontal: Spacing.md,
+    borderRadius: Radius.lg,
+  },
+  columnRowText: { fontSize: Fonts.body },
   dropdownItem: {
     flexDirection: "row",
     alignItems: "center",

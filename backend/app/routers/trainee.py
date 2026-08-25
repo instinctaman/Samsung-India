@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.core.media import ALLOWED_IMAGE_CONTENT_TYPES, MAX_UPLOAD_BYTES, media_subdir
+from app.core.rate_limit import rate_limit
 from app.core.security import create_access_token, get_current_trainee
 from app.database.database import get_db
 from app.models.trainee import Trainee
@@ -40,7 +41,11 @@ def register_trainee(payload: TraineeRegister, db: Session = Depends(get_db)):
     return trainee
 
 
-@router.post("/login", response_model=TokenResponse)
+@router.post(
+    "/login",
+    response_model=TokenResponse,
+    dependencies=[Depends(rate_limit(max_attempts=5, window_seconds=300))],
+)
 def login_trainee(payload: TraineeLogin, db: Session = Depends(get_db)):
     trainee = db.query(Trainee).filter(Trainee.phone == payload.phone).first()
     if not trainee:

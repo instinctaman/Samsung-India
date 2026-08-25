@@ -1,6 +1,7 @@
 import { Text, View, StyleSheet } from "react-native";
 
 import { AuditLogEntry } from "@/api/training";
+import { Colors } from "@/theme/colors";
 import { formatElapsed } from "./executionFlowUtils";
 
 type AuditLogTableProps = {
@@ -51,7 +52,7 @@ const styles = StyleSheet.create({
   table: { borderRadius: 8, overflow: "hidden" },
   tableHeaderRow: {
     flexDirection: "row",
-    backgroundColor: "#F9FAFB",
+    backgroundColor: Colors.gray50,
     paddingVertical: 7,
     paddingHorizontal: 6,
     borderRadius: 6,

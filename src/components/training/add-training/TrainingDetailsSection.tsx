@@ -26,10 +26,11 @@ export function TrainingDetailsSection({ form }: { form: AddTrainingForm }) {
         <Switch value={form.isResidential} onValueChange={form.setIsResidential} trackColor={{ true: Colors.mainColour1 }} />
       </Pressable>
 
-      <DateTimeField label="Training Date *" value={form.conferenceDate} mode="date" onChange={form.setConferenceDate} />
-      <DateTimeField label="Start Time *" value={form.conferenceTime} mode="time" onChange={form.setConferenceTime} />
+      <DateTimeField compact label="Training Date *" value={form.conferenceDate} mode="date" onChange={form.setConferenceDate} />
+      <DateTimeField compact label="Start Time *" value={form.conferenceTime} mode="time" onChange={form.setConferenceTime} />
       <SearchableSelect
         label="Training Hub"
+        compact
         placeholder="Select Hub"
         icon="business-outline"
         value={form.trainingHub}
@@ -38,6 +39,7 @@ export function TrainingDetailsSection({ form }: { form: AddTrainingForm }) {
       />
       <SearchableSelect
         label="Audience"
+        compact
         placeholder="Select Audience"
         icon="school-outline"
         value={form.audience}
@@ -46,6 +48,7 @@ export function TrainingDetailsSection({ form }: { form: AddTrainingForm }) {
       />
       <SearchableSelect
         label="Session Type"
+        compact
         placeholder="Select Session Type"
         icon="person-outline"
         value={form.sessionType}
@@ -54,6 +57,7 @@ export function TrainingDetailsSection({ form }: { form: AddTrainingForm }) {
       />
       <SearchableSelect
         label="Training Type"
+        compact
         placeholder="Select Training Type"
         icon="wifi-outline"
         value={form.trainingType}
@@ -61,6 +65,7 @@ export function TrainingDetailsSection({ form }: { form: AddTrainingForm }) {
         onSelect={(option) => form.setTrainingType(option.value)}
       />
       <AppInput
+        compact
         label="Batch Size"
         placeholder="Enter Batch Size"
         icon="people-outline"

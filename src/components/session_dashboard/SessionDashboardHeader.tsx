@@ -11,12 +11,14 @@ type SessionDashboardHeaderProps = {
   conferenceUid: string;
   timestamp?: string;
   isClosed?: boolean;
+  hasStarted?: boolean;
   loading?: boolean;
   onBack: () => void;
   onCopyLink: () => void;
   onShowQR: () => void;
   onRefresh: () => void;
   onReport: () => void;
+  onStartSession: () => void;
   onEndSession: () => void;
 };
 
@@ -24,12 +26,14 @@ export default function SessionDashboardHeader({
   conferenceUid,
   timestamp = "Generated: 29 July 2026, 11:09 AM",
   isClosed = false,
+  hasStarted = true,
   loading = false,
   onBack,
   onCopyLink,
   onShowQR,
   onRefresh,
   onReport,
+  onStartSession,
   onEndSession,
 }: SessionDashboardHeaderProps) {
   const insets = useSafeAreaInsets();
@@ -120,7 +124,7 @@ export default function SessionDashboardHeader({
             </Pressable>
           </View>
 
-          {/* Right Side: End Session Red Button / Session Closed indicator */}
+          {/* Right Side: Start/End Session Button / Session Closed indicator */}
           {loading ? (
             <View style={[styles.endSessionBtn, styles.sessionLoadingBtn]}>
               <Text style={[styles.endSessionBtnText, styles.sessionLoadingBtnText]}>Loading...</Text>
@@ -129,6 +133,16 @@ export default function SessionDashboardHeader({
             <View style={[styles.endSessionBtn, styles.sessionClosedBtn]}>
               <Text style={styles.endSessionBtnText}>Session Closed</Text>
             </View>
+          ) : !hasStarted ? (
+            <Pressable
+              style={[styles.endSessionBtn, styles.startSessionBtn]}
+              onPress={onStartSession}
+              accessibilityRole="button"
+              accessibilityLabel="Start Session"
+            >
+              <Ionicons name="play" size={12} color={Colors.white} />
+              <Text style={styles.endSessionBtnText}>Start Session</Text>
+            </Pressable>
           ) : (
             <Pressable
               style={styles.endSessionBtn}
@@ -281,6 +295,9 @@ const styles = StyleSheet.create({
   },
   sessionClosedBtn: {
     backgroundColor: "#111827",
+  },
+  startSessionBtn: {
+    backgroundColor: Colors.success,
   },
   sessionLoadingBtn: {
     backgroundColor: "#E5E7EB",

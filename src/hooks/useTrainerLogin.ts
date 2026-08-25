@@ -14,8 +14,6 @@ export function useTrainerLogin(initialReason?: string) {
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
   const [notice, setNotice] = useState<string | null>(
     initialReason === "session_expired"
       ? "Your session expired. Please log in again."
@@ -57,10 +55,6 @@ export function useTrainerLogin(initialReason?: string) {
     setUsername,
     password,
     setPassword,
-    showPassword,
-    setShowPassword,
-    rememberMe,
-    setRememberMe,
     notice,
     loading,
     handleLogin,

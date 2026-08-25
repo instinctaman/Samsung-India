@@ -7,7 +7,6 @@
  * Mutable module-level state persists within a single app session (resets on restart).
  */
 
-import { SecurityViolationType } from "@/components/proctoring/violations";
 import {
   DEMO_ADMIN_SESSION_ADMIN,
   DEMO_ADMIN_SESSION_TRAINER,
@@ -28,13 +27,6 @@ import {
   DEMO_REGISTERED_TRAINEES,
   NewTraineeRecord,
 } from "@/data/mockData";
-import {
-  analyzeImagePixels,
-  decodeBase64ToBytes,
-  detectFacesWithShapeDetection,
-  detectFacesWithWebCanvas,
-  parseJpeg,
-} from "@/utils/proctoringEngine";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const delay = (ms = 650) => new Promise<void>((r) => setTimeout(r, ms));
@@ -368,60 +360,6 @@ export async function secureCheckIn(
     att.ranDuration = "Ran : 45m 3s";
   }
   return { status: "Present", markedOn: nowStr(), distanceMeters: 42 };
-}
-
-// ─── Proctoring ───────────────────────────────────────────────────────────────
-export async function checkFrameForFaces(
-  _token: string,
-  imageBase64: string,
-): Promise<{ faceCount: number; violation?: SecurityViolationType | null }> {
-  // If frame data is completely empty/invalid, there's nothing to evaluate
-  if (!imageBase64 || imageBase64.length < 50) {
-    return { faceCount: 0, violation: null };
-  }
-
-  // 1. Web environment: Native ShapeDetection or Canvas Analysis
-  if (typeof window !== "undefined" && typeof document !== "undefined") {
-    try {
-      const videoEl = document.querySelector("video");
-      if (videoEl && videoEl.readyState >= 2) {
-        const shapeResult = await detectFacesWithShapeDetection(videoEl);
-        if (shapeResult) {
-          return shapeResult;
-        }
-      }
-    } catch {
-      // Fall through to Canvas analysis
-    }
-
-    try {
-      const canvasResult = await detectFacesWithWebCanvas(imageBase64);
-      return canvasResult;
-    } catch {
-      return { faceCount: 1, violation: null };
-    }
-  }
-
-  // 2. Native environment (React Native / iOS / Android)
-  try {
-    const bytes = decodeBase64ToBytes(imageBase64);
-    if (bytes.length > 50) {
-      const parsed = parseJpeg(bytes);
-      if (parsed && parsed.data.length > 0) {
-        const result = analyzeImagePixels(
-          parsed.data,
-          parsed.width,
-          parsed.height,
-          3,
-        );
-        return result;
-      }
-    }
-  } catch {
-    // Fallback if parsing fails
-  }
-
-  return { faceCount: 1, violation: null };
 }
 
 // ─── Assessment Questions & Submit ────────────────────────────────────────────

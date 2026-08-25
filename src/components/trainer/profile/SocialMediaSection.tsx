@@ -26,6 +26,7 @@ export function SocialMediaSection({ form }: { form: TrainerProfileForm }) {
     >
       {FIELDS.map((field) => (
         <AppInput
+          compact
           key={field.key}
           label={field.label}
           placeholder={field.placeholder}

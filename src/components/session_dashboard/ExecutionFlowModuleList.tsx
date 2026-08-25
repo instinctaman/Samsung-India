@@ -8,12 +8,14 @@ type ExecutionFlowModuleListProps = {
   modules: ExecutionFlowItem[];
   onRestart?: (moduleKey: string) => void;
   onViewTopPerformers?: (moduleKey: string) => void;
+  hasStarted?: boolean;
 };
 
 export default function ExecutionFlowModuleList({
   modules,
   onRestart,
   onViewTopPerformers,
+  hasStarted = true,
 }: ExecutionFlowModuleListProps) {
   if (modules.length === 0) {
     return <Text style={styles.empty}>No modules configured for this session.</Text>;
@@ -23,8 +25,8 @@ export default function ExecutionFlowModuleList({
     <View style={styles.list}>
       {modules.map((item) => {
         const visual = getModuleVisual(item.moduleKey);
-        const status = getExecutionStatusPresentation(item.status);
-        const elapsed = getElapsedDisplay(item);
+        const status = getExecutionStatusPresentation(hasStarted ? item.status : "Pending");
+        const elapsed = hasStarted ? getElapsedDisplay(item) : null;
 
         return (
           <View key={item.moduleKey} style={styles.row}>
@@ -45,14 +47,14 @@ export default function ExecutionFlowModuleList({
               </View>
             </View>
 
-            {item.status === "Completed" && (
+            {hasStarted && item.status === "Completed" && (
               <Pressable style={styles.actionBtn} onPress={() => onRestart?.(item.moduleKey)}>
                 <Ionicons name="refresh" size={12} color="#4B5563" />
                 <Text style={styles.actionText}>Restart</Text>
               </Pressable>
             )}
 
-            {item.status === "Running" && (
+            {hasStarted && item.status === "Running" && (
               <View style={styles.actionRow}>
                 <Pressable style={styles.actionBtnOutline} onPress={() => onViewTopPerformers?.(item.moduleKey)}>
                   <Ionicons name="stats-chart" size={12} color="#2563EB" />

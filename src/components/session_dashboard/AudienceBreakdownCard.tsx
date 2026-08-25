@@ -19,17 +19,27 @@ type AudienceBreakdownCardProps = {
   assigned?: number;
   unassigned?: number;
   fresh?: number;
+  hasStarted?: boolean;
 };
 
 export default function AudienceBreakdownCard({
-  totalAudience = 22,
-  present = 19,
-  notMarked = 2,
-  absent = 1,
-  assigned = 10,
-  unassigned = 5,
-  fresh = 4,
+  totalAudience: totalAudienceProp = 22,
+  present: presentProp = 19,
+  notMarked: notMarkedProp = 2,
+  absent: absentProp = 1,
+  assigned: assignedProp = 10,
+  unassigned: unassignedProp = 5,
+  fresh: freshProp = 4,
+  hasStarted = true,
 }: AudienceBreakdownCardProps) {
+  const totalAudience = hasStarted ? totalAudienceProp : 0;
+  const present = hasStarted ? presentProp : 0;
+  const notMarked = hasStarted ? notMarkedProp : 0;
+  const absent = hasStarted ? absentProp : 0;
+  const assigned = hasStarted ? assignedProp : 0;
+  const unassigned = hasStarted ? unassignedProp : 0;
+  const fresh = hasStarted ? freshProp : 0;
+
   return (
     <View style={styles.card}>
       {/* Header */}
@@ -219,7 +229,7 @@ const styles = StyleSheet.create({
     borderColor: "#F87171",
   },
   neutralCard: {
-    backgroundColor: "#F9FAFB",
+    backgroundColor: Colors.gray50,
     borderColor: "#E5E7EB",
   },
   iconBox: {

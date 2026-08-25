@@ -44,5 +44,9 @@ example
 /ios
 /android
 
+# local-only DB schema exports
+mmtbtwob_tops.sql
 
-REFACTOR.md 
+
+*.md 
+*.claude

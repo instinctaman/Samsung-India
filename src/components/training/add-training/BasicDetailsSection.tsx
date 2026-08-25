@@ -14,6 +14,7 @@ export function BasicDetailsSection({ form }: { form: AddTrainingForm }) {
       <SearchableSelect
         label="Zone"
         required
+        compact
         placeholder="Select Zone"
         icon="location-outline"
         value={form.zone}
@@ -26,6 +27,7 @@ export function BasicDetailsSection({ form }: { form: AddTrainingForm }) {
       <SearchableSelect
         label="Region"
         required
+        compact
         placeholder={form.zone ? "Select Region" : "Select Zone First"}
         icon="globe-outline"
         value={form.region}
@@ -36,6 +38,7 @@ export function BasicDetailsSection({ form }: { form: AddTrainingForm }) {
       <SearchableSelect
         label="Company"
         required
+        compact
         placeholder="Select Company"
         icon="business-outline"
         value={form.company}
@@ -45,6 +48,7 @@ export function BasicDetailsSection({ form }: { form: AddTrainingForm }) {
       <SearchableSelect
         label="Requested By"
         required
+        compact
         placeholder={form.company ? "Select Requester" : "Select Company First"}
         icon="person-outline"
         value={form.requestedByOption}
@@ -53,7 +57,7 @@ export function BasicDetailsSection({ form }: { form: AddTrainingForm }) {
         disabled={!form.company}
       />
       {form.requestedByOption === "Other" && (
-        <AppInput placeholder="Enter Name" value={form.requestedByOther} onChangeText={form.setRequestedByOther} />
+        <AppInput compact placeholder="Enter Name" value={form.requestedByOther} onChangeText={form.setRequestedByOther} />
       )}
     </AppCard>
   );

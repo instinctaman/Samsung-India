@@ -256,7 +256,7 @@ const styles = StyleSheet.create({
   },
   summaryBox: {
     flex: 1,
-    backgroundColor: "#F9FAFB",
+    backgroundColor: Colors.gray50,
     borderWidth: 1,
     borderColor: "#E5E7EB",
     borderRadius: 10,
@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
   questionRow: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#F9FAFB",
+    backgroundColor: Colors.gray50,
     borderWidth: 1,
     borderColor: "#E5E7EB",
     borderRadius: 10,

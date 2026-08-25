@@ -1,9 +1,9 @@
-import React from "react";
 import { StyleSheet, View } from "react-native";
 
 import AppText from "@/components/ui/AppText";
 import { Colors } from "@/theme/colors";
 import { FontWeight } from "@/theme/fontWeight";
+import { formatLeaderboardName } from "./formatLeaderboardName";
 
 export type LeaderboardUser = {
   name: string;
@@ -14,43 +14,27 @@ export type LeaderboardUser = {
 
 export type LeaderboardRowProps = {
   user: LeaderboardUser;
+  position: number;
 };
 
-function formatName(name: string): string {
-  if (!name) return "";
-  if (name.toUpperCase() === "YOU") return "You";
-  return name
-    .toLowerCase()
-    .split(" ")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
-}
-
-export default function LeaderboardRow({ user }: LeaderboardRowProps) {
+export default function LeaderboardRow({ user, position }: LeaderboardRowProps) {
   const isYou = Boolean(user.isYou || user.name.toUpperCase() === "YOU");
-  const displayName = formatName(user.name);
+  const displayName = formatLeaderboardName(user.name);
 
   return (
     <View style={[styles.row, isYou && styles.youRow]}>
-      {/* Avatar Placeholder */}
-      <View style={[styles.avatar, isYou && styles.youAvatar]} />
+      <View style={[styles.avatar, isYou && styles.youAvatar]}>
+        <AppText style={styles.positionText} color={isYou ? Colors.headerBlue : "#475569"} weight={FontWeight.bold}>
+          {position}
+        </AppText>
+      </View>
 
-      {/* Trainee Name */}
-      <AppText
-        style={[styles.name, isYou && styles.youName]}
-        weight={isYou ? FontWeight.bold : FontWeight.semiBold}
-        numberOfLines={1}
-      >
+      <AppText style={[styles.name, isYou && styles.youName]} weight={isYou ? FontWeight.bold : FontWeight.semiBold} numberOfLines={1}>
         {displayName}
       </AppText>
 
-      {/* Score & Accuracy */}
       <View style={styles.scoreContainer}>
-        <AppText
-          style={styles.scoreText}
-          color={Colors.headerBlue}
-          weight={FontWeight.bold}
-        >
+        <AppText style={styles.scoreText} color={Colors.headerBlue} weight={FontWeight.bold}>
           {user.score}
         </AppText>
         <AppText style={styles.accuracyText}> ({user.accuracy})</AppText>
@@ -63,7 +47,7 @@ const styles = StyleSheet.create({
   row: {
     height: 48,
     borderWidth: 1,
-    borderColor: "#E2E8F0",
+    borderColor: Colors.slate200,
     borderRadius: 10,
     paddingHorizontal: 12,
     flexDirection: "row",
@@ -81,9 +65,14 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     backgroundColor: "#DBEAFE",
     marginRight: 12,
+    alignItems: "center",
+    justifyContent: "center",
   },
   youAvatar: {
     backgroundColor: "#C2DCFF",
+  },
+  positionText: {
+    fontSize: 13,
   },
   name: {
     flex: 1,

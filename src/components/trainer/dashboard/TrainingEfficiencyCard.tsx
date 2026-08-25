@@ -1,5 +1,4 @@
-import { Ionicons } from "@expo/vector-icons";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import Svg, { Circle } from "react-native-svg";
 
 import { Colors } from "@/theme/colors";
@@ -8,12 +7,10 @@ import { DashboardStats } from "./dashboardUtils";
 
 type TrainingEfficiencyCardProps = {
   stats: DashboardStats;
-  onOverviewPress?: () => void;
 };
 
 export default function TrainingEfficiencyCard({
   stats,
-  onOverviewPress,
 }: TrainingEfficiencyCardProps) {
   const size = 110;
   const strokeWidth = 10;
@@ -34,14 +31,6 @@ export default function TrainingEfficiencyCard({
       {/* Header */}
       <View style={styles.headerRow}>
         <Text style={styles.title}>Training Efficiency</Text>
-        <Pressable
-          style={styles.overviewButton}
-          onPress={onOverviewPress}
-          hitSlop={6}
-        >
-          <Text style={styles.overviewText}>Overview</Text>
-          <Ionicons name="chevron-down" size={11} color="#4B5563" />
-        </Pressable>
       </View>
 
       {/* Content: Donut Chart + Middle Divider + Stats */}
@@ -80,8 +69,10 @@ export default function TrainingEfficiencyCard({
           </Svg>
 
           <View style={styles.chartCenterText}>
-            <Text style={styles.centerLabel}>Total Sessions</Text>
+            
             <Text style={styles.centerValue}>{stats.totalSessions || 30}</Text>
+            <Text style={styles.centerLabel}>Total</Text>
+            <Text style={styles.centerLabel}> Sessions</Text>
           </View>
         </View>
 
@@ -174,22 +165,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "500",
     color: "#000000",
-  },
-  overviewButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 3,
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
-    borderRadius: 6,
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-    backgroundColor: Colors.white,
-  },
-  overviewText: {
-    fontSize: 10,
-    color: "#374151",
-    fontWeight: "500",
   },
   contentRow: {
     flexDirection: "row",

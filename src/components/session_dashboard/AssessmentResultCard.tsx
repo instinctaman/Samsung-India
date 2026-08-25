@@ -9,13 +9,18 @@ type AssessmentResultCardProps = {
   passCount?: number;
   failCount?: number;
   passRate?: number;
+  hasStarted?: boolean;
 };
 
 export default function AssessmentResultCard({
-  passCount = 14,
-  failCount = 4,
-  passRate = 82,
+  passCount: passCountProp = 14,
+  failCount: failCountProp = 4,
+  passRate: passRateProp = 82,
+  hasStarted = true,
 }: AssessmentResultCardProps) {
+  const passCount = hasStarted ? passCountProp : 0;
+  const failCount = hasStarted ? failCountProp : 0;
+  const passRate = hasStarted ? passRateProp : 0;
   const size = 96;
   const strokeWidth = 11;
   const radius = (size - strokeWidth) / 2;
@@ -47,35 +52,41 @@ export default function AssessmentResultCard({
               fill="none"
             />
             {/* Green Segment */}
-            <Circle
-              cx={size / 2}
-              cy={size / 2}
-              r={radius}
-              stroke="#10B981"
-              strokeWidth={strokeWidth}
-              strokeDasharray={`${greenLength} ${circumference}`}
-              strokeDashoffset={0}
-              strokeLinecap="round"
-              fill="none"
-              transform={`rotate(45 ${size / 2} ${size / 2})`}
-            />
+            {hasStarted && (
+              <Circle
+                cx={size / 2}
+                cy={size / 2}
+                r={radius}
+                stroke="#10B981"
+                strokeWidth={strokeWidth}
+                strokeDasharray={`${greenLength} ${circumference}`}
+                strokeDashoffset={0}
+                strokeLinecap="round"
+                fill="none"
+                transform={`rotate(45 ${size / 2} ${size / 2})`}
+              />
+            )}
             {/* Blue Segment */}
-            <Circle
-              cx={size / 2}
-              cy={size / 2}
-              r={radius}
-              stroke="#0066FF"
-              strokeWidth={strokeWidth}
-              strokeDasharray={`${blueLength} ${circumference}`}
-              strokeDashoffset={0}
-              strokeLinecap="round"
-              fill="none"
-              transform={`rotate(-90 ${size / 2} ${size / 2})`}
-            />
+            {hasStarted && (
+              <Circle
+                cx={size / 2}
+                cy={size / 2}
+                r={radius}
+                stroke="#0066FF"
+                strokeWidth={strokeWidth}
+                strokeDasharray={`${blueLength} ${circumference}`}
+                strokeDashoffset={0}
+                strokeLinecap="round"
+                fill="none"
+                transform={`rotate(-90 ${size / 2} ${size / 2})`}
+              />
+            )}
           </Svg>
 
           <View style={styles.chartCenter}>
-            <Text style={styles.chartCenterText}>100% PASS</Text>
+            <Text style={styles.chartCenterText}>
+              {hasStarted ? "100% PASS" : "0%"}
+            </Text>
           </View>
         </View>
 

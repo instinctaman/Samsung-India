@@ -20,6 +20,10 @@ import Pagination from "./Pagination";
 import { DataTableColumn, DataTablePageSize, DataTableToolbarVariant, ExportAction } from "./types";
 
 const DEFAULT_PAGE_SIZE_OPTIONS: DataTablePageSize[] = [10, 25, 50, 100, "all"];
+// Row-slot count to fall back on for an empty table when pageSize is "all" (no
+// natural page length to match), so the empty state's height still matches a
+// typical filled page instead of collapsing to just the header row.
+const FALLBACK_EMPTY_ROW_COUNT = 10;
 
 function cellValue<T>(column: DataTableColumn<T>, row: T) {
   return column.searchValue ? column.searchValue(row) : column.exportValue ? column.exportValue(row, 0) : "";
@@ -49,7 +53,7 @@ export default function DataTable<T>({
   searchPlaceholder = "Search...",
   pageSizeOptions = DEFAULT_PAGE_SIZE_OPTIONS,
   defaultPageSize = 10,
-  emptyLabel = "No data available.",
+  emptyLabel = "No results available.",
   toolbarVariant = "full",
   headerBackgroundColor,
   headerTextColor,
@@ -190,8 +194,13 @@ export default function DataTable<T>({
         </View>
 
         <View style={styles.tableBox}>
-          <ScrollView horizontal showsHorizontalScrollIndicator>
-            <View>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator
+            style={styles.tableScroll}
+            contentContainerStyle={styles.tableScrollContent}
+          >
+            <View style={styles.tableInner}>
               <View style={[styles.headerRow, headerBackgroundColor ? { backgroundColor: headerBackgroundColor } : null]}>
                 {visibleColumns.map((column) => {
                   const isSortable = column.sortable !== false;
@@ -217,12 +226,12 @@ export default function DataTable<T>({
                 })}
               </View>
 
-              {pagedData.length === 0 ? (
-                <View style={styles.emptyRow}>
-                  <AppText style={styles.emptyText} color={Colors.gray600}>{emptyLabel}</AppText>
-                </View>
-              ) : (
-                pagedData.map((row, localIndex) => {
+              {/* Row-slot count is pinned to pageSize (or a fallback for "all") and
+                  padded with blank filler rows regardless of whether there's real
+                  data, so an empty table renders the exact same height as a filled
+                  one instead of collapsing to just the header row. */}
+              <View style={styles.rowsArea}>
+                {pagedData.map((row, localIndex) => {
                   const absoluteIndex = (pageSize === "all" ? 0 : (currentPage - 1) * pageSize) + localIndex;
                   return (
                     <View key={keyExtractor(row, absoluteIndex)} style={styles.bodyRow}>
@@ -239,8 +248,28 @@ export default function DataTable<T>({
                       ))}
                     </View>
                   );
-                })
-              )}
+                })}
+
+                {Array.from({
+                  length: Math.max(
+                    0,
+                    (pageSize === "all" ? FALLBACK_EMPTY_ROW_COUNT : pageSize) - pagedData.length
+                  ),
+                }).map((_, index) => (
+                  <View key={`filler-${index}`} style={styles.bodyRow}>
+                    {visibleColumns.map((column) => (
+                      <View key={column.key} style={[styles.bodyCell, { width: column.minWidth ?? 110 }]} />
+                    ))}
+                  </View>
+                ))}
+
+                {pagedData.length === 0 && (
+                  <View style={styles.emptyOverlay} pointerEvents="none">
+                    <Ionicons name="file-tray-outline" size={28} color={Colors.gray200} />
+                    <AppText style={styles.emptyText} color={Colors.gray600}>{emptyLabel}</AppText>
+                  </View>
+                )}
+              </View>
             </View>
           </ScrollView>
         </View>
@@ -261,8 +290,9 @@ export default function DataTable<T>({
 }
 
 const styles = StyleSheet.create({
-  container: {},
+  container: { flex: 1 },
   panelCard: {
+    flex: 1,
     backgroundColor: Colors.white,
     borderRadius: Radius.xl,
     ...Shadows.card,
@@ -289,6 +319,7 @@ const styles = StyleSheet.create({
   },
   downloadBtnText: { fontSize: Fonts.bodySm ,flexShrink: 1,alignSelf: "center",justifyContent: "center" },
   tableBox: {
+    flex: 1,
     marginHorizontal: 10,
     marginBottom: 12,
     borderWidth: 1,
@@ -297,11 +328,14 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   paginationWrap: {
-    padding: 12,
+    padding: 10,
     paddingTop: 10,
     borderTopWidth: 1,
     borderTopColor: Colors.gray100,
   },
+  tableScroll: { flex: 1 },
+  tableScrollContent: { flexGrow: 1 },
+  tableInner: { flex: 1 },
   headerRow: {
     flexDirection: "row",
     backgroundColor: "rgba(198, 198, 198, 0.2)",
@@ -333,6 +367,16 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
   },
   bodyCellText: { fontSize: Fonts.overline, textAlign: "center" },
-  emptyRow: { padding: 24, alignItems: "center" },
+  rowsArea: { position: "relative" },
+  emptyOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
   emptyText: { fontSize: Fonts.bodySm },
 });

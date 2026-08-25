@@ -60,8 +60,8 @@ export function SessionFlowSection({ form }: { form: AddTrainingForm }) {
             <AppText style={styles.plainModuleTitle} weight={FontWeight.semiBold}>ATTENDANCE</AppText>
           </View>
           <View style={styles.plainModuleHeaderDivider} />
-          <DateTimeField label="Check-In Opens" value={form.checkInOpens} mode="time" onChange={form.setCheckInOpens} plain />
-          <DateTimeField label="Check-Out Opens" value={form.checkOutCloses} mode="time" onChange={form.setCheckOutCloses} plain />
+          <DateTimeField compact label="Check-In Opens" value={form.checkInOpens} mode="time" onChange={form.setCheckInOpens} plain />
+          <DateTimeField compact label="Check-Out Opens" value={form.checkOutCloses} mode="time" onChange={form.setCheckOutCloses} plain />
           <Pressable style={styles.checkboxRow} onPress={() => form.setGeoFencing((v) => !v)}>
             <View style={[styles.checkbox, form.geoFencing && styles.checkboxChecked]}>
               {form.geoFencing && <Ionicons name="checkmark" size={12} color={Colors.white} />}
@@ -94,6 +94,7 @@ function ModuleCard({ moduleKey: key, form }: { moduleKey: ModuleKey; form: AddT
 
       <SearchableSelect
         label="Category"
+        compact
         placeholder="Select Category..."
         value={moduleState.category ?? ""}
         options={form.categoryOptions}
@@ -105,6 +106,7 @@ function ModuleCard({ moduleKey: key, form }: { moduleKey: ModuleKey; form: AddT
         <View style={styles.half}>
           <SearchableSelect
             label="Select Question Set"
+            compact
             placeholder={moduleState.category ? "Select Test" : "Select Category First"}
             value={moduleState.assessmentSuiteUid ?? ""}
             options={form.questionSetOptionsFor(moduleState.category)}
@@ -130,6 +132,7 @@ function ModuleCard({ moduleKey: key, form }: { moduleKey: ModuleKey; form: AddT
             )}
           </View>
           <AppInput
+            compact
             placeholder="Number of questions"
             keyboardType="number-pad"
             value={moduleState.questionCount}
@@ -141,6 +144,7 @@ function ModuleCard({ moduleKey: key, form }: { moduleKey: ModuleKey; form: AddT
       <View style={styles.row}>
         <View style={styles.half}>
           <DateTimeField
+            compact
             label="Start Time"
             value={moduleState.startTime ?? ""}
             mode="time"
@@ -150,6 +154,7 @@ function ModuleCard({ moduleKey: key, form }: { moduleKey: ModuleKey; form: AddT
         </View>
         <View style={styles.half}>
           <DateTimeField
+            compact
             label="End Time"
             value={moduleState.endTime ?? ""}
             mode="time"
@@ -166,6 +171,7 @@ function ModuleCard({ moduleKey: key, form }: { moduleKey: ModuleKey; form: AddT
       </Pressable>
       <AppText style={styles.fieldLabel} weight={FontWeight.medium}>Unlock Condition</AppText>
       <SearchableSelect
+        compact
         value={moduleState.unlockCondition ?? "Automatic"}
         options={UNLOCK_CONDITIONS.map((u) => ({ label: u, value: u }))}
         onSelect={(option) => form.updateModule(key, { unlockCondition: option.value })}

@@ -90,9 +90,7 @@ export default function Starter1() {
       <SafeAreaView style={styles.container}>
         <View style={styles.content}>
           <AppCard style={styles.headert}>
-            <View style={styles.header}>
-              <AuthHeader />
-            </View>
+            <AuthHeader />
             <View style={styles.body}>
               <AppInput
                 label="Company ID / Phone No"
@@ -148,13 +146,6 @@ const styles = StyleSheet.create({
   },
   headert: {
     width: "95%",
-  },
-  header: {
-    backgroundColor: Colors.mainColour1,
-    paddingVertical: 35,
-    borderTopLeftRadius: 22,
-    borderTopRightRadius: 22,
-    alignItems: "center",
   },
   body: {
     padding: 20,

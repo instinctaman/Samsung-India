@@ -35,7 +35,7 @@ export default function RoleLoginCard({ icon, tone, title, subtitle, onPress }: 
         <AppText variant="label" color={accent}>
           {title}
         </AppText>
-        <AppText variant="caption" color={Colors.gray600}>
+        <AppText variant="tiny" color={Colors.gray600}>
           {subtitle}
         </AppText>
       </View>

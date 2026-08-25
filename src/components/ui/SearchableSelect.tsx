@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
+import { Pressable, ScrollView, StyleProp, StyleSheet, TextInput, View, ViewStyle } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 import AppText from "@/components/ui/AppText";
@@ -24,6 +24,7 @@ type SearchableSelectProps = {
   disabled?: boolean;
   // Smaller height/padding for tight layouts like the sessions filter panel.
   compact?: boolean;
+  containerStyle?: StyleProp<ViewStyle>;
 };
 
 export function SearchableSelect({
@@ -37,6 +38,7 @@ export function SearchableSelect({
   icon,
   disabled,
   compact = false,
+  containerStyle,
 }: SearchableSelectProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -48,7 +50,7 @@ export function SearchableSelect({
   );
 
   return (
-    <View style={styles.field}>
+    <View style={[styles.field, containerStyle]}>
       {label && (
         <AppText style={styles.fieldLabel} weight={FontWeight.medium}>
           {label}
@@ -126,6 +128,8 @@ type SearchableMultiSelectProps = {
   values: string[];
   options: string[];
   onChange: (values: string[]) => void;
+  // Smaller height/padding for tight layouts like dense multi-field forms.
+  compact?: boolean;
 };
 
 export function SearchableMultiSelect({
@@ -135,6 +139,7 @@ export function SearchableMultiSelect({
   values,
   options,
   onChange,
+  compact = false,
 }: SearchableMultiSelectProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -156,16 +161,16 @@ export function SearchableMultiSelect({
         </AppText>
       )}
       <Pressable
-        style={styles.trigger}
+        style={[styles.trigger, compact && styles.triggerCompact]}
         onPress={() => {
           setQuery("");
           setOpen(true);
         }}
       >
-        <AppText style={styles.triggerText} color={values.length ? Colors.black : Colors.gray400} numberOfLines={1}>
+        <AppText style={[styles.triggerText, compact && styles.triggerTextCompact]} color={values.length ? Colors.black : Colors.gray400} numberOfLines={1}>
           {values.length ? values.join(", ") : placeholder}
         </AppText>
-        <Ionicons name="chevron-down" size={16} color={Colors.gray600} />
+        <Ionicons name="chevron-down" size={compact ? 14 : 16} color={Colors.gray600} />
       </Pressable>
 
       {values.length > 0 && (

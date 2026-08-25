@@ -4,6 +4,7 @@ import AppText from "@/components/ui/AppText";
 import { Colors } from "@/theme/colors";
 import { FontWeight } from "@/theme/fontWeight";
 import { createShadow } from "@/theme/shadows";
+import { getOptionBorder, ResultBadge } from "./quiz-option";
 
 export type OptionLetter = "A" | "B" | "C" | "D" | string;
 
@@ -12,30 +13,11 @@ export type QuizOptionItem = {
   text: string;
 };
 
-export const OPTION_THEMES: Record<
-  string,
-  { color: string; bg: string; border: string }
-> = {
-  A: {
-    color: "#00A859",
-    bg: "#E8F8EF",
-    border: "#00A859",
-  },
-  B: {
-    color: "#006AFF",
-    bg: "#EAF2FF",
-    border: "#006AFF",
-  },
-  C: {
-    color: "#EAB308",
-    bg: "#FEF9C3",
-    border: "#FACC15",
-  },
-  D: {
-    color: "#EF4444",
-    bg: "#FEE2E2",
-    border: "#EF4444",
-  },
+export const OPTION_THEMES: Record<string, { color: string; bg: string; border: string }> = {
+  A: { color: "#00A859", bg: "#E8F8EF", border: "#00A859" },
+  B: { color: "#006AFF", bg: "#EAF2FF", border: "#006AFF" },
+  C: { color: "#EAB308", bg: "#FEF9C3", border: "#FACC15" },
+  D: { color: "#EF4444", bg: "#FEE2E2", border: "#EF4444" },
 };
 
 export type QuizOptionProps = {
@@ -57,36 +39,11 @@ export default function QuizOption({
   isResultMode = false,
   badge = null,
 }: QuizOptionProps) {
-  const theme = OPTION_THEMES[letter.toUpperCase()] ?? {
-    color: Colors.headerBlue,
-    bg: "#EAF2FF",
-    border: Colors.headerBlue,
-  };
+  const theme = OPTION_THEMES[letter.toUpperCase()] ?? { color: Colors.headerBlue, bg: "#EAF2FF", border: Colors.headerBlue };
 
   const isCorrect = badge === "correct";
   const isYourAnswer = badge === "yourAnswer";
-
-  const borderColor = isResultMode
-    ? isCorrect
-      ? "#00A859"
-      : isYourAnswer
-        ? "#EF4444"
-        : "#E5E7EB"
-    : isSelected
-      ? theme.border
-      : theme.border;
-
-  const borderWidth = isResultMode
-    ? isCorrect || isYourAnswer
-      ? 1.5
-      : 1
-    : 1.5;
-
-  const borderBottomWidth = isResultMode
-    ? isCorrect || isYourAnswer
-      ? 3.5
-      : 1
-    : 3.5;
+  const { borderColor, borderWidth, borderBottomWidth } = getOptionBorder({ isResultMode, isCorrect, isYourAnswer, theme });
 
   return (
     <Pressable
@@ -98,14 +55,7 @@ export default function QuizOption({
           borderColor,
           borderWidth,
           borderBottomWidth,
-          ...createShadow({
-            x: 0,
-            y: 3,
-            blur: 3,
-            color: borderColor,
-            opacity: 0.25,
-            elevation: 3,
-          }),
+          ...createShadow({ x: 0, y: 3, blur: 3, color: borderColor, opacity: 0.25, elevation: 3 }),
         },
         !isResultMode && isSelected && { backgroundColor: theme.bg },
         pressed && !disabled && styles.pressed,
@@ -115,42 +65,17 @@ export default function QuizOption({
       accessibilityLabel={`Option ${letter}: ${text}`}
       accessibilityState={{ selected: isSelected, disabled }}
     >
-      {/* Circular Letter Badge */}
       <View style={[styles.letterBadge, { backgroundColor: theme.color }]}>
-        <AppText
-          style={styles.letterText}
-          color={Colors.white}
-          weight={FontWeight.bold}
-        >
+        <AppText style={styles.letterText} color={Colors.white} weight={FontWeight.bold}>
           {letter}
         </AppText>
       </View>
 
-      {/* Answer Text */}
-      <AppText
-        style={styles.optionText}
-        color={Colors.black}
-        weight={FontWeight.medium}
-      >
+      <AppText style={styles.optionText} color={Colors.black} weight={FontWeight.medium}>
         {text}
       </AppText>
 
-      {/* Result Status Badges */}
-      {isCorrect && (
-        <View style={styles.correctBadge}>
-          <AppText style={styles.correctBadgeText} weight={FontWeight.bold}>
-            Correct Answer
-          </AppText>
-        </View>
-      )}
-
-      {isYourAnswer && (
-        <View style={styles.yourAnswerBadge}>
-          <AppText style={styles.yourAnswerBadgeText} weight={FontWeight.bold}>
-            Your Answer
-          </AppText>
-        </View>
-      )}
+      <ResultBadge isCorrect={isCorrect} isYourAnswer={isYourAnswer} />
     </Pressable>
   );
 }
@@ -192,30 +117,5 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     fontSize: 13,
     lineHeight: 19,
-  },
-
-  correctBadge: {
-    backgroundColor: "#D4F4E4",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    flexShrink: 0,
-  },
-  correctBadgeText: {
-    fontSize: 10,
-    color: "#047857",
-    letterSpacing: 0.1,
-  },
-  yourAnswerBadge: {
-    backgroundColor: "#FEE2E2",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    flexShrink: 0,
-  },
-  yourAnswerBadgeText: {
-    fontSize: 10,
-    color: "#DC2626",
-    letterSpacing: 0.1,
   },
 });

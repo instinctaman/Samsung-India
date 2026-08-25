@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
+from app.core.config import settings
 from app.core.media import MEDIA_ROOT
 from app.database.database import Base, engine
 
@@ -25,11 +26,12 @@ app = FastAPI(
 MEDIA_ROOT.mkdir(parents=True, exist_ok=True)
 app.mount("/media", StaticFiles(directory=MEDIA_ROOT), name="media")
 
-# Dev-only: the Expo app is served from a different origin (Metro/web).
-# Tighten this to specific origins before shipping to production.
+# Origins allowed to call this API from a browser (native app requests are
+# unaffected - see ALLOWED_ORIGINS in core/config.py). Configure via the
+# ALLOWED_ORIGINS env var; defaults to common local Expo web dev ports.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.allowed_origins_list,
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],

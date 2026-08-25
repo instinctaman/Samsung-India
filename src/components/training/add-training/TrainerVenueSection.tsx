@@ -15,6 +15,7 @@ export function TrainerVenueSection({ form }: { form: AddTrainingForm }) {
       <SearchableSelect
         label="Trainer ID"
         required
+        compact
         placeholder="Select Trainer"
         icon="person-circle-outline"
         value={form.trainerId}
@@ -25,6 +26,7 @@ export function TrainerVenueSection({ form }: { form: AddTrainingForm }) {
         }}
       />
       <AppInput
+        compact
         label="Trainer Name"
         placeholder="Auto-fetched name"
         value={form.trainerName}
@@ -33,6 +35,7 @@ export function TrainerVenueSection({ form }: { form: AddTrainingForm }) {
       <SearchableSelect
         label="State"
         required
+        compact
         placeholder="Select State"
         icon="map-outline"
         value={form.stateValue}
@@ -46,6 +49,7 @@ export function TrainerVenueSection({ form }: { form: AddTrainingForm }) {
       <SearchableSelect
         label="District"
         required
+        compact
         placeholder={form.stateValue ? "Select District" : "Select State First"}
         icon="location-outline"
         value={form.district}
@@ -58,6 +62,7 @@ export function TrainerVenueSection({ form }: { form: AddTrainingForm }) {
       />
       <SearchableSelect
         label="Venue"
+        compact
         placeholder={form.district ? "Select Venue" : "Select District First"}
         icon="location-outline"
         value={form.venue}

@@ -11,13 +11,17 @@ type SessionHeroesCardProps = {
   // itself is closed (i.e. opened via "Report"); otherwise shows the
   // original still-locked placeholder state.
   isSessionClosed?: boolean;
+  hasStarted?: boolean;
 };
 
 export default function SessionHeroesCard({
   onSelectQuizHero,
   onSelectTestHero,
   isSessionClosed = false,
+  hasStarted = true,
 }: SessionHeroesCardProps) {
+  const isStandby = !hasStarted && !isSessionClosed;
+
   return (
     <View style={styles.container}>
       <Text style={styles.sectionTitle}>SESSION HEROES</Text>
@@ -36,12 +40,20 @@ export default function SessionHeroesCard({
             <View>
               <Text style={styles.heroTitle}>LIVE QUIZ HERO</Text>
               <View style={styles.badgesRow}>
-                <View style={styles.redDotBadge}>
-                  <View style={styles.redDot} />
-                  <Text style={styles.redBadgeText}>200 TEST</Text>
-                </View>
+                {isStandby ? (
+                  <View style={styles.darkBadge}>
+                    <Text style={styles.darkBadgeText}>Standby</Text>
+                  </View>
+                ) : (
+                  <View style={styles.redDotBadge}>
+                    <View style={styles.redDot} />
+                    <Text style={styles.redBadgeText}>200 TEST</Text>
+                  </View>
+                )}
                 <View style={styles.greyBadge}>
-                  <Text style={styles.greyBadgeText}>COMPLETED</Text>
+                  <Text style={styles.greyBadgeText}>
+                    {isStandby ? "0/0 Completed" : "COMPLETED"}
+                  </Text>
                 </View>
               </View>
             </View>
@@ -53,19 +65,19 @@ export default function SessionHeroesCard({
         <View style={styles.metricsRow}>
           <View style={styles.metricItem}>
             <Text style={styles.metricLabel}>Modules</Text>
-            <Text style={styles.metricValue}>01</Text>
+            <Text style={styles.metricValue}>{isStandby ? "0" : "01"}</Text>
           </View>
           <View style={styles.metricItem}>
             <Text style={styles.metricLabel}>Participants</Text>
-            <Text style={styles.metricValue}>22</Text>
+            <Text style={styles.metricValue}>{isStandby ? "0" : "22"}</Text>
           </View>
           <View style={styles.metricItem}>
             <Text style={styles.metricLabel}>Average</Text>
-            <Text style={styles.metricValue}>14</Text>
+            <Text style={styles.metricValue}>{isStandby ? "-" : "14"}</Text>
           </View>
           <View style={styles.metricItem}>
             <Text style={styles.metricLabel}>Best</Text>
-            <Text style={styles.metricValue}>30</Text>
+            <Text style={styles.metricValue}>{isStandby ? "-" : "30"}</Text>
           </View>
         </View>
       </Pressable>
@@ -85,10 +97,14 @@ export default function SessionHeroesCard({
               <Text style={styles.heroTitle}>Test Module Hero</Text>
               <View style={styles.badgesRow}>
                 <View style={styles.darkBadge}>
-                  <Text style={styles.darkBadgeText}>{isSessionClosed ? "Standby" : "LOCKED"}</Text>
+                  <Text style={styles.darkBadgeText}>
+                    {isSessionClosed || isStandby ? "Standby" : "LOCKED"}
+                  </Text>
                 </View>
                 <View style={styles.greyBadge}>
-                  <Text style={styles.greyBadgeText}>{isSessionClosed ? "0/1 Completed" : "COMPLETED"}</Text>
+                  <Text style={styles.greyBadgeText}>
+                    {isSessionClosed || isStandby ? "0/1 Completed" : "COMPLETED"}
+                  </Text>
                 </View>
               </View>
             </View>
@@ -100,19 +116,25 @@ export default function SessionHeroesCard({
         <View style={styles.metricsRow}>
           <View style={styles.metricItem}>
             <Text style={styles.metricLabel}>Modules</Text>
-            <Text style={styles.metricValue}>01</Text>
+            <Text style={styles.metricValue}>{isStandby ? "1" : "01"}</Text>
           </View>
           <View style={styles.metricItem}>
             <Text style={styles.metricLabel}>Participants</Text>
-            <Text style={styles.metricValue}>{isSessionClosed ? "20" : "-"}</Text>
+            <Text style={styles.metricValue}>
+              {isStandby ? "0" : isSessionClosed ? "20" : "-"}
+            </Text>
           </View>
           <View style={styles.metricItem}>
             <Text style={styles.metricLabel}>Average</Text>
-            <Text style={styles.metricValue}>{isSessionClosed ? "18" : "-"}</Text>
+            <Text style={styles.metricValue}>
+              {isStandby ? "-" : isSessionClosed ? "18" : "-"}
+            </Text>
           </View>
           <View style={styles.metricItem}>
             <Text style={styles.metricLabel}>Best</Text>
-            <Text style={styles.metricValue}>{isSessionClosed ? "28" : "-"}</Text>
+            <Text style={styles.metricValue}>
+              {isStandby ? "-" : isSessionClosed ? "28" : "-"}
+            </Text>
           </View>
         </View>
       </Pressable>
@@ -223,7 +245,7 @@ const styles = StyleSheet.create({
   metricsRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    backgroundColor: "#F9FAFB",
+    backgroundColor: Colors.gray50,
     borderRadius: 10,
     paddingVertical: 8,
     paddingHorizontal: 8,

@@ -8,6 +8,7 @@ import {
   Pressable,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import ModalHeader from "./ModalHeader";
 import { styles } from "./styles";
@@ -37,6 +38,7 @@ export default function AppModal({
   containerStyle,
   contentStyle,
 }: AppModalProps) {
+  const insets = useSafeAreaInsets();
   const [isMounted, setIsMounted] = useState(visible);
 
   if (visible && !isMounted) {
@@ -181,6 +183,9 @@ export default function AppModal({
               />
             )}
             {children}
+            {/* Clears the device's gesture/nav bar so bottom-sheet content
+                (e.g. the last row of a long list) is never obscured by it. */}
+            {position === "bottom" && <View style={{ height: insets.bottom }} />}
           </Animated.View>
         </KeyboardAvoidingView>
       </View>

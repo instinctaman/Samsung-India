@@ -10,7 +10,8 @@ import { Ionicons } from "@expo/vector-icons";
 import AppText from "./AppText";
 import { Colors } from "@/theme/colors";
 import { FontFamily } from "@/theme/fontFamily";
-import { FontSize, FontWeight } from "@/theme/typography";
+import { Fonts } from "@/theme/fonts";
+import { FontWeight } from "@/theme/typography";
 import { Radius } from "@/theme/radius";
 import { Spacing } from "@/theme/spacing";
 
@@ -18,27 +19,36 @@ interface AppInputProps extends TextInputProps {
   label?: string;
   caption?: string;
   icon?: keyof typeof Ionicons.glyphMap;
+  // Smaller height/padding for tight layouts like dense multi-field forms.
+  compact?: boolean;
 }
 
 export default function AppInput({
   label,
   caption,
   icon,
+  compact = false,
   style,
   ...props
 }: AppInputProps) {
   return (
     <View style={styles.container}>
       {label && (
-        <AppText variant="label" weight={FontWeight.medium} color={Colors.black} style={styles.label}>
+        <AppText size={Fonts.body} weight={FontWeight.medium} color={Colors.black} style={styles.label}>
           {label}
         </AppText>
       )}
 
       <View style={styles.inputRow}>
-        {icon && <Ionicons name={icon} size={16} color={Colors.gray600} style={styles.icon} />}
+        {icon && <Ionicons name={icon} size={compact ? 14 : 16} color={Colors.gray600} style={styles.icon} />}
         <TextInput
-          style={[styles.input, icon && styles.inputWithIcon, props.editable === false && styles.inputDisabled, style]}
+          style={[
+            styles.input,
+            compact && styles.inputCompact,
+            icon && styles.inputWithIcon,
+            props.editable === false && styles.inputDisabled,
+            style,
+          ]}
           placeholderTextColor={Colors.gray400}
           {...props}
         />
@@ -80,10 +90,16 @@ const styles = StyleSheet.create({
     borderColor: Colors.gray200,
     borderRadius: Radius.xl,
     paddingHorizontal: Spacing.lg,
-    fontSize: FontSize.bodySmall,
+    fontSize: Fonts.body,
     backgroundColor: Colors.white,
     fontFamily: FontFamily.regular,
     includeFontPadding: false,
+  },
+
+  inputCompact: {
+    height: 38,
+    paddingHorizontal: Spacing.md,
+    fontSize: Fonts.xs,
   },
 
   inputWithIcon: {

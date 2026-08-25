@@ -65,7 +65,6 @@ export default function RecentSessionsCard({
 
           const isCompleted =
             index === 0 || session.conferenceStatus === "Completed";
-          const iconBorder = isCompleted ? "#A7F3D0" : "#BFDBFE";
           const iconColor = isCompleted ? "#10B981" : "#0066FF";
           const iconBg = isCompleted ? "#ECFDF5" : "#EFF6FF";
 
@@ -78,10 +77,7 @@ export default function RecentSessionsCard({
               >
                 <View style={styles.itemContent}>
                   <View
-                    style={[
-                      styles.calendarBox,
-                      { borderColor: iconBorder, backgroundColor: iconBg },
-                    ]}
+                    style={[styles.calendarBox, { backgroundColor: iconBg }]}
                   >
                     <CalendarIcon
                       width={14}
@@ -185,7 +181,6 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 8,
-    borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
   },

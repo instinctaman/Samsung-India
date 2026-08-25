@@ -3,6 +3,8 @@ export * from "./TrainingSessionHeader";
 
 export { default as SessionHeader } from "./SessionHeader";
 
+export { default as SessionBody } from "./SessionBody";
+
 export { default as SessionTimeline } from "./SessionTimeline";
 
 export { default as SessionTimelineItem } from "./SessionTimelineItem";

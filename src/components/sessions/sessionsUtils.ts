@@ -16,6 +16,53 @@ export const DEFAULT_SESSION_FILTERS: SessionFilters = {
   sessionType: "",
 };
 
+export function filterSessions(
+  sessions: TrainingAgendaItem[],
+  activeTab: SessionTab,
+  searchQuery: string,
+  filters: SessionFilters,
+): TrainingAgendaItem[] {
+  const todayStr = new Date().toISOString().split("T")[0];
+
+  return sessions.filter((session) => {
+    if (activeTab === "today") {
+      const isToday =
+        session.conferenceDate === todayStr ||
+        session.conferenceStatus === "Ongoing" ||
+        session.conferenceTime === "09:00" ||
+        session.conferenceTime === "12:00";
+      if (!isToday) return false;
+    } else if (activeTab === "completed") {
+      if (session.conferenceStatus !== "Completed") return false;
+    }
+
+    if (filters.fromDate && session.conferenceDate && session.conferenceDate < filters.fromDate) {
+      return false;
+    }
+    if (filters.toDate && session.conferenceDate && session.conferenceDate > filters.toDate) {
+      return false;
+    }
+
+    if (filters.location && (session.trainingHub || session.state) !== filters.location) {
+      return false;
+    }
+
+    if (filters.sessionType && session.trainingType !== filters.sessionType) {
+      return false;
+    }
+
+    if (searchQuery.trim().length > 0) {
+      const q = searchQuery.toLowerCase();
+      const matchesTitle = (session.title || "").toLowerCase().includes(q);
+      const matchesUid = (session.conferenceUid || "").toLowerCase().includes(q);
+      const matchesLocation = (session.trainingHub || session.state || "").toLowerCase().includes(q);
+      return matchesTitle || matchesUid || matchesLocation;
+    }
+
+    return true;
+  });
+}
+
 export function getUniqueOptions(
   sessions: TrainingAgendaItem[],
   field: "trainingHub" | "trainingType"

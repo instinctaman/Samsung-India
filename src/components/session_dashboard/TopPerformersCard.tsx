@@ -8,6 +8,7 @@ import { TopPerformer } from "./sessionDashboardTypes";
 
 type TopPerformersCardProps = {
   performers?: TopPerformer[];
+  hasStarted?: boolean;
 };
 
 const DEFAULT_PERFORMERS: TopPerformer[] = [
@@ -20,6 +21,7 @@ const DEFAULT_PERFORMERS: TopPerformer[] = [
 
 export default function TopPerformersCard({
   performers = DEFAULT_PERFORMERS,
+  hasStarted = true,
 }: TopPerformersCardProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -32,26 +34,39 @@ export default function TopPerformersCard({
           <Text style={styles.title}>TOP PERFORMERS</Text>
         </View>
 
-        <Pressable
-          style={styles.toggleBtn}
-          onPress={() => setIsCollapsed((prev) => !prev)}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel={isCollapsed ? "View More" : "View Less"}
-        >
-          <Text style={styles.toggleText}>
-            {isCollapsed ? "View More" : "View Less"}
-          </Text>
-          <Ionicons
-            name={isCollapsed ? "chevron-down" : "chevron-forward"}
-            size={13}
-            color="#0066FF"
-          />
-        </Pressable>
+        {hasStarted && (
+          <Pressable
+            style={styles.toggleBtn}
+            onPress={() => setIsCollapsed((prev) => !prev)}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={isCollapsed ? "View More" : "View Less"}
+          >
+            <Text style={styles.toggleText}>
+              {isCollapsed ? "View More" : "View Less"}
+            </Text>
+            <Ionicons
+              name={isCollapsed ? "chevron-down" : "chevron-forward"}
+              size={13}
+              color="#0066FF"
+            />
+          </Pressable>
+        )}
       </View>
 
+      {/* Empty State */}
+      {!hasStarted && (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyTrophy}>🏆</Text>
+          <Text style={styles.emptyTitle}>Leaderboard Empty</Text>
+          <Text style={styles.emptySubtitle}>
+            Scores will appear here as participants finish quizzes
+          </Text>
+        </View>
+      )}
+
       {/* List */}
-      {!isCollapsed && (
+      {hasStarted && !isCollapsed && (
         <View style={styles.list}>
           {performers.map((performer, index) => (
             <View key={`${performer.id}-${index}`} style={styles.performerRow}>
@@ -121,6 +136,27 @@ const styles = StyleSheet.create({
   },
   list: {
     gap: 6,
+  },
+  emptyState: {
+    alignItems: "center",
+    paddingVertical: 18,
+    gap: 4,
+  },
+  emptyTrophy: {
+    fontSize: 32,
+    marginBottom: 4,
+  },
+  emptyTitle: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: "#111827",
+  },
+  emptySubtitle: {
+    fontSize: 11,
+    color: "#6B7280",
+    fontWeight: "500",
+    textAlign: "center",
+    paddingHorizontal: 20,
   },
   performerRow: {
     flexDirection: "row",

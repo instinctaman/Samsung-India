@@ -1,10 +1,10 @@
-import React from "react";
-import { Pressable, StyleSheet, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { StyleSheet, View } from "react-native";
 
 import AppText from "@/components/ui/AppText";
 import { Colors } from "@/theme/colors";
 import { FontWeight } from "@/theme/fontWeight";
+import { ConnectionIndicator, HeaderActionsPill } from "./quiz-live-header";
 
 export type QuizLiveHeaderProps = {
   onSync?: () => void;
@@ -12,6 +12,7 @@ export type QuizLiveHeaderProps = {
   isConnected?: boolean;
   isSyncing?: boolean;
   isRefreshing?: boolean;
+  showConnectionLabel?: boolean;
 };
 
 export default function QuizLiveHeader({
@@ -20,80 +21,20 @@ export default function QuizLiveHeader({
   isConnected = true,
   isSyncing = false,
   isRefreshing = false,
+  showConnectionLabel = false,
 }: QuizLiveHeaderProps) {
   return (
     <View style={styles.header}>
-      {/* Title with Flash Icon */}
       <View style={styles.titleSection}>
-        <Ionicons name="flash" size={17} color="#FACC15" />
-        <AppText
-          style={styles.titleText}
-          color={Colors.white}
-          weight={FontWeight.bold}
-        >
+        <Ionicons name="flash" size={16} color="#FACC15" />
+        <AppText style={styles.titleText} color={Colors.white} weight={FontWeight.bold} numberOfLines={1}>
           LIVE QUIZ
         </AppText>
       </View>
 
-      {/* Header Actions */}
       <View style={styles.actions}>
-        {/* Sync Live Quiz Button */}
-        {onSync && (
-          <Pressable
-            style={styles.actionButton}
-            onPress={onSync}
-            accessibilityRole="button"
-            accessibilityLabel="Sync live quiz"
-          >
-            <Ionicons
-              name="sync"
-              size={12}
-              color={Colors.headerBlue}
-              style={isSyncing ? styles.spinningIcon : undefined}
-            />
-            <AppText
-              style={styles.actionButtonText}
-              color={Colors.headerBlue}
-              weight={FontWeight.bold}
-            >
-              SYNC LIVE QUIZ
-            </AppText>
-          </Pressable>
-        )}
-
-        {/* Refresh Button */}
-        {onRefresh && (
-          <Pressable
-            style={styles.actionButton}
-            onPress={onRefresh}
-            accessibilityRole="button"
-            accessibilityLabel="Refresh"
-          >
-            <Ionicons
-              name="sync"
-              size={12}
-              color={Colors.headerBlue}
-              style={isRefreshing ? styles.spinningIcon : undefined}
-            />
-            <AppText
-              style={styles.actionButtonText}
-              color={Colors.headerBlue}
-              weight={FontWeight.bold}
-            >
-              REFRESH
-            </AppText>
-          </Pressable>
-        )}
-
-        {/* Connected Wi-Fi Indicator */}
-        <View
-          style={[
-            styles.wifiBadge,
-            { backgroundColor: isConnected ? Colors.statusGreen : Colors.gray400 },
-          ]}
-        >
-          <Ionicons name="wifi" size={13} color={Colors.white} />
-        </View>
+        <HeaderActionsPill onSync={onSync} onRefresh={onRefresh} isSyncing={isSyncing} isRefreshing={isRefreshing} />
+        <ConnectionIndicator isConnected={isConnected} showConnectionLabel={showConnectionLabel} />
       </View>
     </View>
   );
@@ -101,12 +42,12 @@ export default function QuizLiveHeader({
 
 const styles = StyleSheet.create({
   header: {
-    height: 52,
+    height: 44,
     marginHorizontal: 14,
     marginTop: 6,
-    borderRadius: 14,
+    borderRadius: 12,
     backgroundColor: Colors.headerBlue,
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -115,38 +56,17 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
+    flexShrink: 0,
   },
   titleText: {
-    fontSize: 17,
-    letterSpacing: 0.3,
+    fontSize: 15,
+    letterSpacing: 0.2,
   },
   actions: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-  },
-  actionButton: {
-    height: 24,
-    borderRadius: 6,
-    paddingHorizontal: 7,
-    backgroundColor: Colors.white,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  actionButtonText: {
-    fontSize: 10,
-    letterSpacing: 0.2,
-  },
-
-  spinningIcon: {
-    transform: [{ rotate: "180deg" }],
-  },
-  wifiBadge: {
-    width: 26,
-    height: 24,
-    borderRadius: 6,
-    alignItems: "center",
     justifyContent: "center",
+    gap: 5,
+    flexShrink: 1,
   },
 });

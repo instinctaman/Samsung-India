@@ -225,7 +225,7 @@ export default function ParticipantAttendanceCard({
                   style={[
                     styles.typePill,
                     {
-                      backgroundColor: isAssigned ? "#FFFBEB" : "#F9FAFB",
+                      backgroundColor: isAssigned ? "#FFFBEB" : Colors.gray50,
                       borderColor: isAssigned ? "#FDE68A" : "#D1D5DB",
                     },
                   ]}
@@ -380,7 +380,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    backgroundColor: "#F9FAFB",
+    backgroundColor: Colors.gray50,
     borderWidth: 1,
     borderColor: "#D1D5DB",
     borderRadius: 6,

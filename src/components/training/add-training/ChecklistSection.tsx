@@ -18,6 +18,7 @@ export function ChecklistSection({ form }: { form: AddTrainingForm }) {
       <SectionTitle index={5} title="Checklist" icon="checkmark-circle-outline" />
       <SearchableMultiSelect
         label="Select Required Checklist(s)"
+        compact
         placeholder="Select checklist items"
         values={form.checklist}
         options={CHECKLIST_OPTIONS}

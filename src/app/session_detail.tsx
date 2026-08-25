@@ -1,25 +1,13 @@
 import { StatusBar } from "expo-status-bar";
-import {
-  ActivityIndicator,
-  Pressable,
-  RefreshControl,
-  StyleSheet,
-  View,
-} from "react-native";
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
+import { StyleSheet, View } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import {
   RecentSessionsModal,
-  SessionNotification,
-  SessionTimeline,
+  SessionBody,
   TraineeBottomNavigation,
   TrainingSessionHeader,
-  WaitingCard,
 } from "@/components/session";
-import AppText from "@/components/ui/AppText";
 import { useTraineeHome } from "@/hooks/useTraineeHome";
 import { Colors } from "@/theme/colors";
 
@@ -52,7 +40,6 @@ export default function SessionDetailScreen() {
         <View style={[styles.statusBarBackground, { height: insets.top }]} />
         <StatusBar style="dark" animated />
 
-        {/* Training Session Royal Blue Header */}
         <TrainingSessionHeader
           onLogout={handleLogout}
           onHistoryPress={() => setHistoryVisible(true)}
@@ -67,75 +54,26 @@ export default function SessionDetailScreen() {
           location={session?.location ?? "New Delhi"}
         />
 
-        {/* Main Content Area */}
         <View style={styles.body}>
-          {loading && !session ? (
-            <View style={styles.centered}>
-              <ActivityIndicator color={Colors.headerBlue} size="large" />
-            </View>
-          ) : notAssigned ? (
-            <View style={styles.centered}>
-              <WaitingCard
-                title="No Session Assigned"
-                subtitle="No session is assigned yet"
-              />
-            </View>
-          ) : error ? (
-            <View style={styles.centered}>
-              <AppText variant="body" color={Colors.gray600} align="center">
-                {error}
-              </AppText>
-              <Pressable
-                style={styles.retryButton}
-                onPress={() => loadSession()}
-                accessibilityRole="button"
-                accessibilityLabel="Retry loading session"
-              >
-                <AppText variant="label" color={Colors.white}>
-                  Retry
-                </AppText>
-              </Pressable>
-            </View>
-          ) : session && !session.started ? (
-            <View style={styles.centered}>
-              <WaitingCard
-                title="Session hasn't started yet"
-                subtitle="Trainer will unlock soon as it's available"
-              />
-            </View>
-          ) : (
-            <SessionTimeline
-              activities={activities}
-              onMarkAttendance={handleMarkAttendance}
-              onEnterQuiz={handleEnterLiveQuiz}
-              onEnterPostTest={handleEnterPostTest}
-              onEnterSurvey={handleEnterSurvey}
-              footerComponent={<SessionNotification />}
-              refreshControl={
-                <RefreshControl
-                  refreshing={refreshing}
-                  onRefresh={() => loadSession("refresh")}
-                  colors={[Colors.headerBlue]}
-                  tintColor={Colors.headerBlue}
-                />
-              }
-            />
-          )}
+          <SessionBody
+            loading={loading}
+            session={session}
+            notAssigned={notAssigned}
+            error={error}
+            activities={activities}
+            refreshing={refreshing}
+            loadSession={loadSession}
+            onMarkAttendance={handleMarkAttendance}
+            onEnterLiveQuiz={handleEnterLiveQuiz}
+            onEnterPostTest={handleEnterPostTest}
+            onEnterSurvey={handleEnterSurvey}
+          />
         </View>
 
-        {/* Fixed Trainee Bottom Navigation */}
-        <TraineeBottomNavigation
-          activeTab={activeTab}
-          onSelectTab={handleTabSelect}
-        />
+        <TraineeBottomNavigation activeTab={activeTab} onSelectTab={handleTabSelect} />
       </SafeAreaView>
 
-      {/* Session History Modal */}
-      <RecentSessionsModal
-        visible={historyVisible}
-        onClose={() => setHistoryVisible(false)}
-        token={token}
-      />
+      <RecentSessionsModal visible={historyVisible} onClose={() => setHistoryVisible(false)} token={token} />
     </>
   );
 }
@@ -156,18 +94,5 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 0,
     backgroundColor: Colors.background,
-  },
-  centered: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 12,
-    paddingHorizontal: 24,
-  },
-  retryButton: {
-    backgroundColor: Colors.headerBlue,
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    borderRadius: 8,
   },
 });

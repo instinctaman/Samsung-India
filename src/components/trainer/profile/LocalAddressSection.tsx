@@ -21,20 +21,29 @@ export function LocalAddressSection({ form }: { form: TrainerProfileForm }) {
       saving={savingSection === "address"}
       onToggleEdit={() => (isEditing ? saveSection("address") : toggleEdit("address"))}
     >
-      <AppInput label="City *" value={profile.city} editable={isEditing} onChangeText={(v) => setField("city", v)} />
       <AppInput
+        compact
+        label="City *"
+        value={profile.city}
+        editable={isEditing}
+        onChangeText={(v) => setField("city", v)}
+      />
+      <AppInput
+        compact
         label="District *"
         value={profile.district}
         editable={isEditing}
         onChangeText={(v) => setField("district", v)}
       />
       <AppInput
+        compact
         label="State *"
         value={profile.state}
         editable={isEditing}
         onChangeText={(v) => setField("state", v)}
       />
       <AppInput
+        compact
         label="Pincode"
         value={profile.pincode}
         editable={isEditing}
@@ -42,6 +51,7 @@ export function LocalAddressSection({ form }: { form: TrainerProfileForm }) {
         onChangeText={(v) => setField("pincode", v)}
       />
       <AppInput
+        compact
         label="Landmark"
         value={profile.landmark}
         editable={isEditing}

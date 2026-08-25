@@ -1,3 +1,4 @@
+export { Breakpoints } from "./breakpoints";
 export { Colors } from "./colors";
 export { FontFamily } from "./fontFamily";
 export { Fonts, IconDimensions } from "./fonts";

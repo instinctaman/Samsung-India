@@ -31,9 +31,9 @@ export default function WaitScreen() {
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <QuizLiveHeader
-        onSync={navigateToQuiz}
         onRefresh={navigateToQuiz}
         isConnected={true}
+        showConnectionLabel
       />
       <QuizWaiting onSyncNow={navigateToQuiz} />
     </SafeAreaView>

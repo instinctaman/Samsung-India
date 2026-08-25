@@ -1,6 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useState } from "react";
 import { Image, Pressable, StyleSheet, View } from "react-native";
 
+import ConfirmModal from "@/components/ui/ConfirmModal";
 import AppText from "@/components/ui/AppText";
 import ScreenBanner from "@/components/ui/ScreenBanner";
 import { Colors } from "@/theme/colors";
@@ -22,6 +24,8 @@ export default function DashboardHeader({
   onOpenProfile,
   onLogout,
 }: DashboardHeaderProps) {
+  const [confirmLogoutOpen, setConfirmLogoutOpen] = useState(false);
+
   return (
     <ScreenBanner backgroundColor={Colors.mainColour1} style={styles.banner}>
       <View style={styles.topRow}>
@@ -61,7 +65,7 @@ export default function DashboardHeader({
 
         <Pressable
           style={styles.powerButton}
-          onPress={onLogout}
+          onPress={() => setConfirmLogoutOpen(true)}
           hitSlop={8}
           accessibilityRole="button"
           accessibilityLabel="Logout"
@@ -82,6 +86,16 @@ export default function DashboardHeader({
           {name}
         </AppText>
       </View>
+
+      <ConfirmModal
+        visible={confirmLogoutOpen}
+        message="Are you sure you want to go to the login page?"
+        onCancel={() => setConfirmLogoutOpen(false)}
+        onConfirm={() => {
+          setConfirmLogoutOpen(false);
+          onLogout();
+        }}
+      />
     </ScreenBanner>
   );
 }

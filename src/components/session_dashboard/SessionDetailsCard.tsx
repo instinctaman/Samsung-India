@@ -11,13 +11,13 @@ type SessionDetailsCardProps = {
   trainerName?: string;
   runtime?: string;
   conferenceStatus?: string;
+  hasStarted?: boolean;
 };
 
-function getStatusPresentation(status: string): { label: string; bg: string; color: string } {
-  const normalized = status.toLowerCase();
-  if (normalized === "completed") return { label: "Session Closed", bg: "#111827", color: Colors.white };
-  if (normalized === "ongoing") return { label: "Live", bg: "#059669", color: Colors.white };
-  return { label: status, bg: "#F59E0B", color: Colors.white };
+function getStatusPresentation(isClosed: boolean): { label: string; bg: string; color: string } {
+  return isClosed
+    ? { label: "Session Closed", bg: "#111827", color: Colors.white }
+    : { label: "Scheduled", bg: "#111827", color: Colors.white };
 }
 
 export default function SessionDetailsCard({
@@ -26,10 +26,12 @@ export default function SessionDetailsCard({
   trainerName = "Demo Trainer",
   runtime = "Runtime : 02h 31m",
   conferenceStatus = "Ongoing",
+  hasStarted = true,
 }: SessionDetailsCardProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const isClosed = conferenceStatus.toLowerCase() === "completed";
-  const statusPresentation = getStatusPresentation(conferenceStatus);
+  const showStatusRow = isClosed || !hasStarted;
+  const statusPresentation = getStatusPresentation(isClosed);
 
   return (
     <View style={styles.card}>
@@ -113,9 +115,9 @@ export default function SessionDetailsCard({
             </Text>
           </View>
 
-          {/* Row 4: Status — only shown once the session is actually closed
-              (i.e. opened via "Report" on a completed session) */}
-          {isClosed && (
+          {/* Row 4: Status — shown before the session has been started
+              (Scheduled) and once it's actually closed (Session Closed) */}
+          {showStatusRow && (
             <>
               <View style={styles.divider} />
               <View style={styles.row}>
@@ -164,7 +166,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderTopWidth: 1,
     borderBottomColor: "#EAECF0",
   },
   titleRow: {
@@ -253,7 +254,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   runtimePill: {
-    backgroundColor: "#F9FAFB",
+    backgroundColor: Colors.gray50,
     borderWidth: 1,
     borderColor: "#D1D5DB",
     borderRadius: 8,

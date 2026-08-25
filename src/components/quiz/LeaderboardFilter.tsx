@@ -1,9 +1,11 @@
-import React from "react";
-import { Pressable, StyleSheet, TextInput, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 
 import AppText from "@/components/ui/AppText";
+import { SearchableSelect, SelectOption } from "@/components/ui/SearchableSelect";
+import { STATES } from "@/data/states";
 import { Colors } from "@/theme/colors";
 import { FontWeight } from "@/theme/fontWeight";
+import { FilterField, STATE_OPTIONS, TRAINING_TYPE_OPTIONS, ZONE_OPTIONS } from "./leaderboard-filter";
 
 export type LeaderboardFilterValues = {
   trainingType: string;
@@ -18,94 +20,67 @@ export type LeaderboardFilterProps = {
   onApply: () => void;
 };
 
-export default function LeaderboardFilter({
-  values,
-  onChangeValues,
-  onApply,
-}: LeaderboardFilterProps) {
+export default function LeaderboardFilter({ values, onChangeValues, onApply }: LeaderboardFilterProps) {
   const updateField = (field: keyof LeaderboardFilterValues, val: string) => {
-    onChangeValues({
-      ...values,
-      [field]: val,
-    });
+    onChangeValues({ ...values, [field]: val });
   };
+
+  const districtOptions: SelectOption[] =
+    STATES.find((s) => s.label === values.state)?.cities.map((c) => ({ label: c.label, value: c.label })) ?? [];
 
   return (
     <View style={styles.filterSection}>
-      {/* Training Type Input */}
-      <View style={styles.fieldBlock}>
-        <AppText style={styles.fieldLabel} weight={FontWeight.semiBold}>
-          Training Type :
-        </AppText>
-        <TextInput
-          style={styles.fieldInput}
+      <FilterField label="Training Type :">
+        <SearchableSelect
+          compact
+          containerStyle={styles.selectField}
+          placeholder="Select Training Type"
           value={values.trainingType}
-          onChangeText={(t) => updateField("trainingType", t)}
-          placeholder="Classroom Training"
-          placeholderTextColor="#94A3B8"
-          autoCapitalize="words"
+          options={TRAINING_TYPE_OPTIONS}
+          onSelect={(option) => updateField("trainingType", option.value)}
         />
-      </View>
+      </FilterField>
 
-      {/* State & District Row */}
       <View style={styles.twoColRow}>
-        <View style={styles.col}>
-          <AppText style={styles.fieldLabel} weight={FontWeight.semiBold}>
-            State :
-          </AppText>
-          <TextInput
-            style={styles.fieldInput}
+        <FilterField label="State :" style={styles.col}>
+          <SearchableSelect
+            compact
+            containerStyle={styles.selectField}
+            placeholder="Select State"
             value={values.state}
-            onChangeText={(t) => updateField("state", t)}
-            placeholder="Delhi"
-            placeholderTextColor="#94A3B8"
-            autoCapitalize="words"
+            options={STATE_OPTIONS}
+            onSelect={(option) => onChangeValues({ ...values, state: option.value, district: "" })}
           />
-        </View>
+        </FilterField>
 
-        <View style={styles.col}>
-          <AppText style={styles.fieldLabel} weight={FontWeight.semiBold}>
-            District :
-          </AppText>
-          <TextInput
-            style={styles.fieldInput}
+        <FilterField label="District :" style={styles.col}>
+          <SearchableSelect
+            compact
+            containerStyle={styles.selectField}
+            placeholder={values.state ? "Select District" : "Select State First"}
             value={values.district}
-            onChangeText={(t) => updateField("district", t)}
-            placeholder="New Delhi"
-            placeholderTextColor="#94A3B8"
-            autoCapitalize="words"
+            options={districtOptions}
+            disabled={!values.state}
+            onSelect={(option) => updateField("district", option.value)}
           />
-        </View>
+        </FilterField>
       </View>
 
-      {/* Zone & Action Filter Button Row */}
-      <View style={styles.twoColRow}>
-        <View style={styles.col}>
-          <AppText style={styles.fieldLabel} weight={FontWeight.semiBold}>
-            Zone :
-          </AppText>
-          <TextInput
-            style={styles.fieldInput}
+      <View style={[styles.twoColRow, styles.actionRow]}>
+        <FilterField label="Zone :" style={styles.col}>
+          <SearchableSelect
+            compact
+            containerStyle={styles.selectField}
+            placeholder="Select Zone"
             value={values.zone}
-            onChangeText={(t) => updateField("zone", t)}
-            placeholder="South"
-            placeholderTextColor="#94A3B8"
-            autoCapitalize="words"
+            options={ZONE_OPTIONS}
+            onSelect={(option) => updateField("zone", option.value)}
           />
-        </View>
+        </FilterField>
 
-        <View style={styles.col}>
-          <Pressable
-            style={styles.applyFilterButton}
-            onPress={onApply}
-            accessibilityRole="button"
-            accessibilityLabel="Apply Filter"
-          >
-            <AppText
-              style={styles.applyFilterButtonText}
-              color={Colors.white}
-              weight={FontWeight.bold}
-            >
+        <View style={[styles.col, styles.buttonCol]}>
+          <Pressable style={styles.applyFilterButton} onPress={onApply} accessibilityRole="button" accessibilityLabel="Apply Filter">
+            <AppText style={styles.applyFilterButtonText} color={Colors.white} weight={FontWeight.bold}>
               Filter
             </AppText>
           </Pressable>
@@ -124,35 +99,24 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 14,
   },
-  fieldBlock: {
-    marginBottom: 12,
-  },
   twoColRow: {
     flexDirection: "row",
-    gap: 12,
-    marginBottom: 12,
+    gap: 8,
+    marginBottom: 8,
     alignItems: "flex-end",
   },
   col: {
     flex: 1,
   },
-  fieldLabel: {
-    fontSize: 12,
-    color: "#1E293B",
-    marginBottom: 6,
-    letterSpacing: 0.3,
+  actionRow: {
+    alignItems: "flex-start",
+    marginBottom: 0,
   },
-  fieldInput: {
-    height: 44,
-    backgroundColor: Colors.white,
-    borderWidth: 1,
-    borderColor: "#CBD5E1",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    fontSize: 13.5,
-    color: "#1E293B",
-    fontFamily: "Poppins-SemiBold",
-    includeFontPadding: false,
+  buttonCol: {
+    marginTop: 20,
+  },
+  selectField: {
+    marginBottom: 0,
   },
   applyFilterButton: {
     height: 44,

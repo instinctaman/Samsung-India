@@ -1,13 +1,14 @@
-import React, { useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
+import { useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 
 import AppText from "@/components/ui/AppText";
 import { Colors } from "@/theme/colors";
 import { FontWeight } from "@/theme/fontWeight";
 import { createShadow } from "@/theme/shadows";
-import LeaderboardRow, { LeaderboardUser } from "./LeaderboardRow";
+import { buildMockLeaderboardUsers } from "./buildMockLeaderboardUsers";
 import LeaderboardFilter, { LeaderboardFilterValues } from "./LeaderboardFilter";
+import LeaderboardRow, { LeaderboardUser } from "./LeaderboardRow";
 
 export type LeaderboardListProps = {
   title?: string;
@@ -22,7 +23,6 @@ export type LeaderboardListProps = {
 export default function LeaderboardList({
   title = "Global Top 100",
   users,
-  onViewAll,
   correctCount,
   totalQuestions,
   accuracy,
@@ -36,54 +36,7 @@ export default function LeaderboardList({
     zone: "South",
   });
 
-  const defaultUsers: LeaderboardUser[] = users ?? [
-    {
-      name: "You",
-      score: `${correctCount}/${totalQuestions}`,
-      accuracy: `${accuracy}%`,
-      isYou: true,
-    },
-    {
-      name: "Priyanshu Bora",
-      score: `${totalQuestions}/${totalQuestions}`,
-      accuracy: "100%",
-    },
-    {
-      name: "Ankit Kumar",
-      score: `${totalQuestions}/${totalQuestions}`,
-      accuracy: "100%",
-    },
-    {
-      name: "Anand Singh",
-      score: `${Math.max(1, totalQuestions - 1)}/${totalQuestions}`,
-      accuracy: `${Math.round(((totalQuestions - 1) / totalQuestions) * 100)}%`,
-    },
-    {
-      name: "Ameerul Haque",
-      score: `${Math.max(1, totalQuestions - 1)}/${totalQuestions}`,
-      accuracy: `${Math.round(((totalQuestions - 1) / totalQuestions) * 100)}%`,
-    },
-    {
-      name: "Priyanshu Bora",
-      score: `${totalQuestions}/${totalQuestions}`,
-      accuracy: "100%",
-    },
-    {
-      name: "Ankit Kumar",
-      score: `${totalQuestions}/${totalQuestions}`,
-      accuracy: "100%",
-    },
-    {
-      name: "Anand Singh",
-      score: `${Math.max(1, totalQuestions - 1)}/${totalQuestions}`,
-      accuracy: `${Math.round(((totalQuestions - 1) / totalQuestions) * 100)}%`,
-    },
-    {
-      name: "Ameerul Haque",
-      score: `${Math.max(1, totalQuestions - 1)}/${totalQuestions}`,
-      accuracy: `${Math.round(((totalQuestions - 1) / totalQuestions) * 100)}%`,
-    },
-  ];
+  const defaultUsers: LeaderboardUser[] = users ?? buildMockLeaderboardUsers(correctCount, totalQuestions, accuracy);
 
   const handleApply = () => {
     onApplyFilter?.(filterValues);
@@ -92,7 +45,6 @@ export default function LeaderboardList({
 
   return (
     <View style={styles.card}>
-      {/* Card Header */}
       <View style={styles.header}>
         <View style={styles.titleRow}>
           <Ionicons name="trophy" size={16} color="#F59E0B" />
@@ -107,37 +59,18 @@ export default function LeaderboardList({
           accessibilityRole="button"
           accessibilityLabel="Toggle Leaderboard Filter"
         >
-          <AppText
-            style={styles.filterBtnText}
-            color={Colors.headerBlue}
-            weight={FontWeight.semiBold}
-          >
+          <AppText style={styles.filterBtnText} color={Colors.headerBlue} weight={FontWeight.semiBold}>
             {filterOpen ? "Close" : "Filter"}
           </AppText>
-          <Ionicons
-            name={filterOpen ? "chevron-down" : "chevron-forward"}
-            size={13}
-            color={Colors.headerBlue}
-          />
+          <Ionicons name={filterOpen ? "chevron-down" : "chevron-forward"} size={13} color={Colors.headerBlue} />
         </Pressable>
       </View>
 
-      {/* Expandable / Collapsible Filter Section */}
-      {filterOpen && (
-        <LeaderboardFilter
-          values={filterValues}
-          onChangeValues={setFilterValues}
-          onApply={handleApply}
-        />
-      )}
+      {filterOpen && <LeaderboardFilter values={filterValues} onChangeValues={setFilterValues} onApply={handleApply} />}
 
-      {/* Leaderboard Rows */}
       <View style={styles.list}>
         {defaultUsers.map((user, idx) => (
-          <LeaderboardRow
-            key={`${user.name}-${user.score}-${idx}`}
-            user={user}
-          />
+          <LeaderboardRow key={`${user.name}-${user.score}-${idx}`} user={user} position={idx + 1} />
         ))}
       </View>
     </View>
