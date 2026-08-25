@@ -12,6 +12,7 @@ export type AssessmentQuestion = {
   explanation?: string | null;
 };
 
+
 export type AssessmentAnswer = {
   questionId: number;
   selectedOption: string | null;
@@ -52,5 +53,9 @@ export function submitAssessment(
   });
 }
 
+// No real backend endpoint yet - callers already treat failures as
+// non-fatal (see usePostTest.ts's handleViolationTermination).
 export { terminateAssessmentWithViolation } from "@/api/mockService";
 export { ApiError } from "@/api/client";
+
+

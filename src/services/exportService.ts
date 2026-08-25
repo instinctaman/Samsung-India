@@ -4,6 +4,8 @@ import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
 import * as XLSX from "xlsx";
 
+import { escapeHtml, sanitizeForSpreadsheet } from "./exportSanitize";
+
 export type ExportColumn = {
   key: string;
   header: string;
@@ -16,10 +18,12 @@ function cellText(value: unknown): string {
   return String(value);
 }
 
+// Feeds CSV, TSV (clipboard) and Excel export - all three are opened in
+// spreadsheet software, so every cell needs the formula-injection guard.
 function toMatrix(columns: ExportColumn[], rows: Record<string, unknown>[]): string[][] {
   return [
     columns.map((column) => column.header),
-    ...rows.map((row) => columns.map((column) => cellText(row[column.key]))),
+    ...rows.map((row) => columns.map((column) => sanitizeForSpreadsheet(cellText(row[column.key])))),
   ];
 }
 
@@ -38,11 +42,11 @@ function toTsv(columns: ExportColumn[], rows: Record<string, unknown>[]): string
 }
 
 function toHtmlTable(title: string, columns: ExportColumn[], rows: Record<string, unknown>[]): string {
-  const headerHtml = columns.map((column) => `<th>${column.header}</th>`).join("");
+  const headerHtml = columns.map((column) => `<th>${escapeHtml(column.header)}</th>`).join("");
   const rowsHtml = rows
     .map(
       (row) =>
-        `<tr>${columns.map((column) => `<td>${cellText(row[column.key])}</td>`).join("")}</tr>`
+        `<tr>${columns.map((column) => `<td>${escapeHtml(cellText(row[column.key]))}</td>`).join("")}</tr>`
     )
     .join("");
   return `
@@ -58,7 +62,7 @@ function toHtmlTable(title: string, columns: ExportColumn[], rows: Record<string
         </style>
       </head>
       <body>
-        <h1>${title}</h1>
+        <h1>${escapeHtml(title)}</h1>
         <table>
           <thead><tr>${headerHtml}</tr></thead>
           <tbody>${rowsHtml}</tbody>

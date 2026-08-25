@@ -21,6 +21,7 @@ export type SessionModule = {
   assessmentSuiteUid: string | null;
 };
 
+
 export type SessionFlowState =
   | "JOINED"
   | "SECURE_CHECKIN"
@@ -73,6 +74,8 @@ export function getSessionHistory(token: string) {
   });
 }
 
+// Pure client-side navigation state (not backed by any endpoint, real or
+// mock) - always the same implementation regardless of USE_MOCK_DATA.
 export {
   setSecurityCheckInCompleted,
   getAttendanceState,
@@ -83,3 +86,4 @@ export {
   isAttendanceRecorded,
 } from "@/api/mockService";
 export { ApiError } from "@/api/client";
+

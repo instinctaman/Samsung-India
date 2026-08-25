@@ -1,14 +1,22 @@
--- Test/dev seed data for tecsoui_tops_aman (imported from database_dump.sql).
+-- Test/dev seed data for mmtbtwob_tops (the real schema - see
+-- mmtbtwob_tops.sql, gitignored, not committed).
 -- NOT part of the org's authoritative dump — safe to re-run against a fresh
 -- import, and safe to delete once the app is wired to real trainer/admin flows.
 --
 -- Scenario seeded: one approved, already-started training session
--- ("conference") for the currently registered trainee (Aman Kumar Gautam,
--- id 3), with Attendance + Standard Test + Survey enabled in its session
+-- ("conference") for the currently registered trainee (Aman Kumar Gautam),
+-- with Attendance + Standard Test + Survey enabled in its session
 -- flow (Live Quiz intentionally left out of this session — see step 2).
 --
--- Run in phpMyAdmin (SQL tab) against tecsoui_tops_aman, or:
---   mysql -u root tecsoui_tops_aman < backend/seed_test_data.sql
+-- Run in phpMyAdmin (SQL tab) against mmtbtwob_tops, or:
+--   mysql -u root mmtbtwob_tops < backend/seed_test_data.sql
+--
+-- Note: this script assumes a trainee named "Aman Kumar Gautam" (phone
+-- 8287045234, traineeUid 42a982b39caf4715b6a29ea394572afb) already exists -
+-- insert one first if starting from a fresh database. It also assumes the
+-- app's session-selection logic (see routers/session.py) picks conferences
+-- by trainerEmployeeId == "demotrainer" and conferenceStatus == "Ongoing" -
+-- adjust those columns after seeding if they don't already match.
 
 -- ---------------------------------------------------------------
 -- Step 1: system_modules — lookup table for the four session-flow modules

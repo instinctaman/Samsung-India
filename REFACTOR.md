@@ -77,24 +77,30 @@ From the full-codebase audit (2026-08-17):
 
 ## Related standing rules (not refactor-specific, but adjacent)
 
-- This app runs entirely on frontend mock data (`src/data/mockData.ts` +
-  `src/api/mockService.ts`). Don't reconnect `src/api/*` to a real backend
-  without an explicit ask.
-- Backend code edits now require an explicit ask per area of work (as of
-  2026-08-24) — no longer a blanket "diagnose only" rule. **Database schema
-  and data are still off-limits** (no migrations, no direct DB writes,
-  no editing `database_dump.sql` / seed data) unless separately asked.
-  Current backend work in progress: security hardening (CORS lockdown,
-  login rate-limiting, `.env.example`) — done. Not yet asked for: schema/
-  migrations, fixing the missing `/admin/trainees` endpoint, tests/CI.
-- **Schema mismatch (confirmed 2026-08-24)**: the backend's SQLAlchemy
-  models and `backend/.env`'s `DB_NAME` target `tecsoui_tops_aman` (see
-  `database_dump.sql` at repo root, 52 tables) — but the user confirmed
-  the *actual live production database* is `mmtbtwob_tops` (31 tables,
-  simpler/flatter, e.g. no `conference_activity_log`, `finance_*`,
-  `supplier_*`/`agency_*` sub-tables; has `accounts`/`venue` instead).
-  `tecsoui_tops_aman` was a draft/future redesign, not what's deployed.
-  The backend currently would NOT work against the real DB as-is. A
-  schema-export of the live DB (`mmtbtwob_tops.sql`, gitignored, not
-  committed) exists locally if needed for reference. Realigning models to
-  the real schema has not been started — ask before touching this.
+- **Frontend is now wired to the real backend (as of 2026-08-25)**:
+  `src/config/dataSource.ts`'s `USE_MOCK_DATA = false`. `python run.py` in
+  `backend/` must be running (against the local `mmtbtwob_tops` MySQL DB)
+  for the app to work. Don't flip `USE_MOCK_DATA` back to `true` or revert
+  `src/api/*` without an explicit ask — this was a deliberate scope change.
+- Backend code edits require an explicit ask per area of work (as of
+  2026-08-24) — no longer a blanket "diagnose only" rule. **Database
+  schema/data edits still need a separate explicit ask** (migrations,
+  direct DB writes, editing `database_dump.sql` / seed data) — though as
+  of 2026-08-25 the schema realignment itself (see below) has been done
+  with the user's explicit go-ahead.
+  Done: security hardening (CORS lockdown, login rate-limiting,
+  `.env.example`); schema realignment to the real DB; the missing
+  `POST`/`GET /admin/trainees` endpoints. Not yet asked for: Alembic
+  migrations, the empty `models/session.py`, tests/CI.
+- **Schema mismatch — resolved 2026-08-25**: the backend used to target
+  `tecsoui_tops_aman` (`database_dump.sql`, a draft/future redesign) but
+  now targets the real schema, `mmtbtwob_tops`, imported into a local
+  MySQL database of the same name. `backend/.env`'s `DB_NAME` was updated
+  to match. The gap was smaller than feared: one column (`trainee.
+  employee_id`) needed an additive `ALTER TABLE`, one table
+  (`conference_activity_log`) didn't exist and was auto-created by
+  `create_all()` — every other actively-used model already matched.
+  Local DB is seeded (`demoadmin`/`demotrainer`, question sets, one full
+  end-to-end test conference). See memory `project_mock_data_only` /
+  `project_backend_schema_mismatch` for full detail if picking this back
+  up in a future session.
