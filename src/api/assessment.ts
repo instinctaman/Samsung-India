@@ -12,7 +12,6 @@ export type AssessmentQuestion = {
   explanation?: string | null;
 };
 
-
 export type AssessmentAnswer = {
   questionId: number;
   selectedOption: string | null;
@@ -32,14 +31,14 @@ export type AssessmentQuestionsResponse = {
   questions: AssessmentQuestion[];
 };
 
- function getAssessmentQuestions(token: string, suiteUid: string) {
+export function getAssessmentQuestions(token: string, suiteUid: string) {
   if (USE_MOCK_DATA) return mock.getAssessmentQuestions(token, suiteUid);
   return apiRequest<AssessmentQuestionsResponse>(`/assessments/${suiteUid}/questions`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 }
 
- function submitAssessment(
+export function submitAssessment(
   token: string,
   suiteUid: string,
   conferenceUid: string,
@@ -53,9 +52,5 @@ export type AssessmentQuestionsResponse = {
   });
 }
 
-
-// Demo implementations — no network calls.
-export { getAssessmentQuestions, submitAssessment, terminateAssessmentWithViolation } from "@/api/mockService";
+export { terminateAssessmentWithViolation } from "@/api/mockService";
 export { ApiError } from "@/api/client";
-
-
