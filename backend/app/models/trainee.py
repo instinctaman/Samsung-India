@@ -1,14 +1,15 @@
 import uuid
 
-from sqlalchemy import BigInteger, Column, DateTime, Integer, String, text
+from sqlalchemy import BigInteger, Column, Date, DateTime, Integer, String, Text, text
 from sqlalchemy.sql import func
 
 from app.database.database import Base
 
 
 class Trainee(Base):
-    """Mirrors the `trainee` table from the legacy tecsoui_tops_aman schema,
-    trimmed to the columns this app currently uses."""
+    """Mirrors the real `trainee` table (mmtbtwob_tops). Columns are added
+    here as the app grows into using them - the real table has more (see
+    database_dump.sql / mmtbtwob_tops.sql for the full shape)."""
 
     __tablename__ = "trainee"
 
@@ -30,10 +31,35 @@ class Trainee(Base):
     state = Column(String(100))
     profilePhoto = Column(String(255))
 
-    # Not present in the org's original dump - added via migration because the
-    # registration form collects it and no dump column maps to a trainee's own
-    # employee ID (`trainerEmployeeId` is the trainer's, not the trainee's).
+    # Genuinely present on the real table - added via migration on top of
+    # the legacy dump because the registration form collects it and no
+    # original column maps to a trainee's own employee ID
+    # (`trainerEmployeeId` is the trainer's, not the trainee's).
     employee_id = Column(String(100))
 
     status = Column(String(100), nullable=False, server_default=text("'Pending'"))
     timestamp = Column(DateTime, server_default=func.now(), nullable=False)
+
+    # ─── Columns used by the admin-side trainee registration/list flow ─────
+    zone = Column(String(100))
+    region = Column(String(100))
+    company = Column(String(100))
+    requestedBy = Column(String(100))
+    trainerEmployeeId = Column(String(100))
+    trainerName = Column(String(100))
+    supervisorUid = Column(String(100))
+    supervisorDesignation = Column(String(150))
+    agencyId = Column(String(150))
+    dob = Column(Date)
+    address = Column(Text)
+    altPhone = Column(String(20))
+    altEmail = Column(String(100))
+    joinedOn = Column(Date)
+    jobStatus = Column(String(50), server_default=text("'Active'"))
+    jobCity = Column(String(100))
+    jobPincode = Column(String(10))
+    resignedOn = Column(Date)
+    username = Column(String(100), unique=True)
+    password = Column(String(255))
+    updatedBy = Column(String(100))
+    updationOn = Column(DateTime)

@@ -5,8 +5,8 @@ from app.database.database import Base
 
 
 class Conference(Base):
-    """Mirrors the `conference` table from the legacy tecsoui_tops_aman schema,
-    trimmed to the columns the trainee-facing session flow and the trainer's
+    """Mirrors the real `conference` table (mmtbtwob_tops), trimmed to
+    the columns the trainee-facing session flow and the trainer's
     "Add New Training" registration form currently use."""
 
     __tablename__ = "conference"

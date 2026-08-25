@@ -6,8 +6,8 @@ from app.database.database import Base
 
 
 class AgencyTeam(Base):
-    """Mirrors the `agencyteam` table from the legacy tecsoui_tops_aman
-    schema, trimmed to the columns this app currently uses. This is the
+    """Mirrors the real `agencyteam` table (mmtbtwob_tops), trimmed to
+    the columns this app currently uses. This is the
     org-authoritative table for real trainers (as opposed to `admin`,
     which is only meant for the internal admin panel) - trainer login
     checks `admin` first, then falls back here."""

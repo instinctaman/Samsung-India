@@ -21,6 +21,7 @@ router = APIRouter(prefix="/trainees", tags=["trainees"])
     "/register",
     response_model=TraineeOut,
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(rate_limit(max_attempts=5, window_seconds=300))],
 )
 def register_trainee(payload: TraineeRegister, db: Session = Depends(get_db)):
     existing = (

@@ -32,14 +32,14 @@ export type AssessmentQuestionsResponse = {
   questions: AssessmentQuestion[];
 };
 
- function getAssessmentQuestions(token: string, suiteUid: string) {
+export function getAssessmentQuestions(token: string, suiteUid: string) {
   if (USE_MOCK_DATA) return mock.getAssessmentQuestions(token, suiteUid);
   return apiRequest<AssessmentQuestionsResponse>(`/assessments/${suiteUid}/questions`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 }
 
- function submitAssessment(
+export function submitAssessment(
   token: string,
   suiteUid: string,
   conferenceUid: string,
@@ -53,9 +53,9 @@ export type AssessmentQuestionsResponse = {
   });
 }
 
-
-// Demo implementations — no network calls.
-export { getAssessmentQuestions, submitAssessment, terminateAssessmentWithViolation } from "@/api/mockService";
+// No real backend endpoint yet - callers already treat failures as
+// non-fatal (see usePostTest.ts's handleViolationTermination).
+export { terminateAssessmentWithViolation } from "@/api/mockService";
 export { ApiError } from "@/api/client";
 
 

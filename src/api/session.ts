@@ -50,7 +50,7 @@ export type CurrentSession = {
   modules: SessionModule[];
 };
 
- function getCurrentSession(token: string) {
+export function getCurrentSession(token: string) {
   if (USE_MOCK_DATA) return mock.getCurrentSession(token);
   return apiRequest<CurrentSession>("/sessions/current", {
     headers: { Authorization: `Bearer ${token}` },
@@ -67,16 +67,16 @@ export type SessionHistoryItem = {
   passed: boolean | null;
 };
 
-function getSessionHistory(token: string) {
+export function getSessionHistory(token: string) {
   if (USE_MOCK_DATA) return mock.getSessionHistory(token);
   return apiRequest<SessionHistoryItem[]>("/sessions/history", {
     headers: { Authorization: `Bearer ${token}` },
   });
 }
-// Demo implementations — no network calls.
+
+// Pure client-side navigation state (not backed by any endpoint, real or
+// mock) - always the same implementation regardless of USE_MOCK_DATA.
 export {
-  getCurrentSession,
-  getSessionHistory,
   setSecurityCheckInCompleted,
   getAttendanceState,
   setAttendanceState,

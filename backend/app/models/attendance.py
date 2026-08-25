@@ -7,8 +7,8 @@ from app.database.database import Base
 
 
 class Attendance(Base):
-    """Mirrors the `attendance` table from the legacy tecsoui_tops_aman schema,
-    trimmed to the columns the trainee check-in flow currently uses."""
+    """Mirrors the real `attendance` table (mmtbtwob_tops), trimmed to
+    the columns the trainee check-in flow currently uses."""
 
     __tablename__ = "attendance"
 

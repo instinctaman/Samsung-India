@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 
-import { ApiError, loginTrainee, registerTrainee } from "@/api/auth";
-import { useAuth } from "@/hooks/useAuth";
+import { ApiError, registerTrainee } from "@/api/auth";
 
 export type RegisterFormValues = {
   name: string;
@@ -33,7 +32,6 @@ type UseRegisterFormOptions = {
 };
 
 export function useRegisterForm({ onSuccess }: UseRegisterFormOptions = {}) {
-  const { setSession } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -49,7 +47,7 @@ export function useRegisterForm({ onSuccess }: UseRegisterFormOptions = {}) {
     setLoading(true);
     setError(null);
     try {
-      const trainee = await registerTrainee({
+      await registerTrainee({
         name: values.name.trim(),
         phone: values.phone.trim(),
         email: values.email.trim(),
@@ -61,9 +59,6 @@ export function useRegisterForm({ onSuccess }: UseRegisterFormOptions = {}) {
         district: values.district || undefined,
       });
 
-      // Registration has no password, so log the trainee straight in.
-      const session = await loginTrainee(String(trainee.phone));
-      setSession(session);
       reset(defaultValues);
       onSuccess?.();
     } catch (err) {

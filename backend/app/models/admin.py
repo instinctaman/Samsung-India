@@ -6,8 +6,8 @@ from app.database.database import Base
 
 
 class Admin(Base):
-    """Mirrors the `admin` table from the legacy tecsoui_tops_aman schema,
-    trimmed to the columns this app currently uses. Shared by admin and
+    """Mirrors the real `admin` table (mmtbtwob_tops), trimmed to the
+    columns this app currently uses. Shared by admin and
     trainer accounts, distinguished by `role` - only `role="trainer"`
     accounts can sign into the trainer dashboard today; `role="admin"`
     rows are stored for a future admin panel."""

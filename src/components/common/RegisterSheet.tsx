@@ -1,5 +1,4 @@
 import { ScrollView, View, StyleSheet } from "react-native";
-import { useRouter } from "expo-router";
 import { Colors } from "@/theme/colors";
 import { Fonts } from "@/theme/fonts";
 import PersonalDetails from "@/components/registration/PersonalDetails";
@@ -20,12 +19,10 @@ export default function RegisterSheet({
     visible,
     onClose,
 }: RegisterSheetProps) {
-    const router = useRouter();
+    // Registration no longer signs the trainee in - closing this sheet
+    // just returns to the login form, where they log in themselves.
     const { control, errors, setValue, onSubmit, loading, error } = useRegisterForm({
-        onSuccess: () => {
-            onClose();
-            router.push("/session");
-        },
+        onSuccess: onClose,
     });
 
     return (
