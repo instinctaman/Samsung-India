@@ -8,7 +8,7 @@ from app.core.config import settings
 # like URL delimiters and prevents the API from starting.
 DATABASE_URL = URL.create(
     drivername="mysql+pymysql",
-    username=settings.DB_USER,
+    username=settings.DB_USER,  
     password=settings.DB_PASSWORD,
     host=settings.DB_HOST,
     port=settings.DB_PORT,

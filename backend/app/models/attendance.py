@@ -1,14 +1,15 @@
 import uuid
 
-from sqlalchemy import BigInteger, Column, DateTime, Integer, String, text
+from sqlalchemy import BigInteger, Column, DateTime, Integer, String, Text, text
 from sqlalchemy.sql import func
 
 from app.database.database import Base
 
 
 class Attendance(Base):
-    """Mirrors the `attendance` table from the legacy tecsoui_tops_aman schema,
-    trimmed to the columns the trainee check-in flow currently uses."""
+    """Mirrors the `attendance` table from the mmtbtwob_tops schema.
+    Includes anti-fraud columns (theft lock, geofence bypass) and
+    full session-meta fields added in the new schema."""
 
     __tablename__ = "attendance"
 
@@ -24,8 +25,39 @@ class Attendance(Base):
 
     markedOn = Column(String(50))
     status = Column(String(100), nullable=False, server_default=text("'Pending'"))
-    checkInDistance = Column(String(50))
-    checkInPhoto = Column(String(255))
-    checkOutTime = Column(DateTime)
 
+    # Check-in / check-out
+    checkInPhoto = Column(String(300))
+    checkOutPhoto = Column(String(300))
+    checkOutTime = Column(DateTime)
+    checkInDistance = Column(String(50))
+
+    # Geofence bypass
+    geofenceBypass = Column(Integer, server_default=text("0"))
+    bypassRemark = Column(Text)
+
+    # Attempt tracking
+    attemptCount = Column(Integer, server_default=text("1"))
+
+    # Theft / tab-switch detection
+    isTheftLocked = Column(Integer, server_default=text("0"))
+    theftAttemptsLeft = Column(Integer, server_default=text("3"))
+    theftRemarks = Column(Text)
+
+    # Session metadata (JSON blob)
+    sessionMeta = Column(Text)
+
+    # Upload tracking
+    filePath = Column(String(100))
+    logPath = Column(String(100))
+    excelUploadedOn = Column(String(100))
+
+    # Audit / meta
+    updatedBy = Column(String(100))
+    updationOn = Column(DateTime, onupdate=func.now())
+    isRead = Column(String(50))
+    token = Column(String(50))
     timestamp = Column(DateTime, server_default=func.now(), nullable=False)
+    remarks = Column(Text)
+    securityDetails = Column(Text)
+    masterRemarks = Column(Text)
