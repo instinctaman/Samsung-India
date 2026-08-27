@@ -5,7 +5,6 @@ import AppInput from "@/components/ui/AppInput";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { STATES } from "@/data/states";
 import { SectionTitle } from "./SectionTitle";
-import { TRAINER_OPTIONS, VENUE_OPTIONS } from "./constants";
 import { AddTrainingForm } from "./useAddTrainingForm";
 
 export function TrainerVenueSection({ form }: { form: AddTrainingForm }) {
@@ -19,10 +18,10 @@ export function TrainerVenueSection({ form }: { form: AddTrainingForm }) {
         placeholder="Select Trainer"
         icon="person-circle-outline"
         value={form.trainerId}
-        options={TRAINER_OPTIONS}
+        options={form.trainerOptions}
         onSelect={(option) => {
           form.setTrainerId(option.value);
-          form.setTrainerName(option.label.split(" - ")[1] ?? "");
+          form.setTrainerName(option.label);
         }}
       />
       <AppInput
@@ -66,7 +65,7 @@ export function TrainerVenueSection({ form }: { form: AddTrainingForm }) {
         placeholder={form.district ? "Select Venue" : "Select District First"}
         icon="location-outline"
         value={form.venue}
-        options={form.district ? VENUE_OPTIONS : []}
+        options={form.venueOptions}
         onSelect={(option) => form.setVenue(option.value)}
         disabled={!form.district}
       />

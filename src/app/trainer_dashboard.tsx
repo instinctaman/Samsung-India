@@ -19,9 +19,9 @@ export default function TrainerDashboardScreen() {
     setDateDropOpen,
     datePreset,
     dateRange,
-    agenda,
     refreshing,
     stats,
+    recentCompleted,
     loadAgenda,
     applyDateRange,
     handleLogout,
@@ -34,12 +34,13 @@ export default function TrainerDashboardScreen() {
     <>
       <SafeAreaView style={styles.container} edges={["top"]}>
         <TrainerDashboardScrollContent
-          adminName={admin?.name ?? "Demo Trainer"}
+          adminName={admin?.name ?? ""}
+          companyId={admin?.offerId ?? admin?.username ?? ""}
           dateRange={dateRange}
           datePreset={datePreset}
           onApplyDateRange={applyDateRange}
           stats={stats}
-          agenda={agenda}
+          recentCompleted={recentCompleted}
           refreshing={refreshing}
           onRefresh={() => loadAgenda("refresh")}
           onOpenProfile={() => router.push("/trainer_profile")}

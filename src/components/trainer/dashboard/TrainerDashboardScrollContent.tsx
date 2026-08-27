@@ -14,11 +14,12 @@ import TrainingEfficiencyCard from "./TrainingEfficiencyCard";
 
 type TrainerDashboardScrollContentProps = {
   adminName: string;
+  companyId: string;
   dateRange: DateRange;
   datePreset: DatePreset;
   onApplyDateRange: (range: DateRange, preset: DatePreset) => void;
   stats: DashboardStats;
-  agenda: TrainingAgendaItem[];
+  recentCompleted: TrainingAgendaItem[];
   refreshing: boolean;
   onRefresh: () => void;
   onOpenProfile: () => void;
@@ -28,11 +29,12 @@ type TrainerDashboardScrollContentProps = {
 
 export default function TrainerDashboardScrollContent({
   adminName,
+  companyId,
   dateRange,
   datePreset,
   onApplyDateRange,
   stats,
-  agenda,
+  recentCompleted,
   refreshing,
   onRefresh,
   onOpenProfile,
@@ -49,7 +51,7 @@ export default function TrainerDashboardScrollContent({
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[Colors.mainColour1]} tintColor={Colors.mainColour1} />
       }
     >
-      <DashboardHeader name={adminName} onOpenProfile={onOpenProfile} onLogout={onLogout} />
+      <DashboardHeader name={adminName} companyId={companyId} onOpenProfile={onOpenProfile} onLogout={onLogout} />
 
       <Calendar range={dateRange} preset={datePreset} onApply={onApplyDateRange} />
 
@@ -58,7 +60,11 @@ export default function TrainerDashboardScrollContent({
       <TrainingEfficiencyCard stats={stats} />
 
       <View style={styles.twoColumnRow}>
-        <RecentSessionsCard sessions={agenda} onViewAll={() => router.push("/training_list")} onSelectSession={onSelectSession} />
+        <RecentSessionsCard
+          sessions={recentCompleted}
+          onViewAll={() => router.push({ pathname: "/sessions", params: { tab: "completed" } })}
+          onSelectSession={onSelectSession}
+        />
         <QuickActionsCard
           onCreateTraining={() => router.push("/add_training")}
           onTrainingList={() => router.push("/training_list")}

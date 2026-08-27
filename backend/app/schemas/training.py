@@ -142,6 +142,28 @@ class TrainingAgendaItem(BaseModel):
     trainingType: Optional[str] = None
     state: Optional[str] = None
     trainingHub: Optional[str] = None
+    traineeCount: int = 0
+
+
+class TrainerAgendaResponse(BaseModel):
+    """GET /admin/trainings - the session list plus the dashboard's summary
+    stats, all computed server-side so the frontend just displays them
+    rather than re-deriving them from the raw list itself. `totalTrainees`
+    is a de-duplicated headcount (see the router for how it's built from
+    `attendance`/`assessment_results`); `totalSessions`/`completed`/`pending`
+    are counted straight off the filtered `conference` rows. `recentCompleted`
+    is always the trainer's most recently completed sessions all-time,
+    regardless of `start`/`end` - the Recent Sessions card ignores whatever
+    date scope the rest of this response uses."""
+
+    trainings: list[TrainingAgendaItem]
+    totalTrainees: int
+    totalSessions: int
+    completed: int
+    pending: int
+    executedPercentage: int
+    pendingPercentage: int
+    recentCompleted: list[TrainingAgendaItem] = []
 
 
 class AudienceBreakdown(BaseModel):

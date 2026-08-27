@@ -27,30 +27,52 @@ export default function Calendar({ range, preset = "custom", defaultExpanded = f
     setIsExpanded((prev) => !prev);
   };
 
+  // From must always be strictly before To - each calendar only ever
+  // highlights its own single date (not both), and the To calendar disables
+  // any date on or before the currently selected From date (and vice versa)
+  // so an invalid or equal-day range can't be picked in the first place.
+  const nextDay = (date: Date) =>
+    new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1);
+
+  const isFromDateDisabled = (date: Date) => date.getTime() >= selectedEnd.getTime();
+  const isToDateDisabled = (date: Date) => date.getTime() <= selectedStart.getTime();
+
+  // Picking a date only updates the local From/To selection - it does not
+  // refresh the dashboard. The dashboard only re-fetches when the trainer
+  // taps "Filter" (see `handleFilterPress`), so choosing From then To
+  // doesn't trigger two separate loads with a half-picked range.
   const handleSelectStartDate = (date: Date) => {
     const newStart = startOfDay(date);
     setSelectedStart(newStart);
     setActivePreset("custom");
 
-    const newEnd = newStart.getTime() > selectedEnd.getTime() ? newStart : selectedEnd;
-    if (newStart.getTime() > selectedEnd.getTime()) {
-      setSelectedEnd(newStart);
+    if (newStart.getTime() >= selectedEnd.getTime()) {
+      setSelectedEnd(nextDay(newStart));
     }
-
-    onApply({ start: newStart, end: newEnd }, "custom");
   };
 
   const handleSelectEndDate = (date: Date) => {
     const newEnd = startOfDay(date);
+    if (newEnd.getTime() <= selectedStart.getTime()) {
+      // The grid already disables these dates - defensive no-op only.
+      return;
+    }
     setSelectedEnd(newEnd);
     setActivePreset("custom");
+  };
 
-    const newStart = newEnd.getTime() < selectedStart.getTime() ? newEnd : selectedStart;
-    if (newEnd.getTime() < selectedStart.getTime()) {
-      setSelectedStart(newEnd);
+  // "Clear" resets just that one calendar's date back to today, independent
+  // of the other calendar - not a true deselect, since the backend query
+  // and the From<To invariant both require a valid date on each side.
+  const handleClearStart = () => handleSelectStartDate(new Date());
+  const handleClearEnd = () => {
+    const today = startOfDay(new Date());
+    if (today.getTime() > selectedStart.getTime()) {
+      handleSelectEndDate(today);
+    } else {
+      setSelectedEnd(nextDay(selectedStart));
+      setActivePreset("custom");
     }
-
-    onApply({ start: newStart, end: newEnd }, "custom");
   };
 
   const handleFilterPress = () => {
@@ -77,9 +99,11 @@ export default function Calendar({ range, preset = "custom", defaultExpanded = f
               summaryLabel="From Date"
               monthYear={fromMonthYear}
               selectedStart={selectedStart}
-              selectedEnd={selectedEnd}
+              selectedEnd={selectedStart}
               summaryDate={selectedStart}
               onSelectDate={handleSelectStartDate}
+              onClear={handleClearStart}
+              isDateDisabled={isFromDateDisabled}
             />
 
             <View style={styles.arrowContainer}>
@@ -90,10 +114,12 @@ export default function Calendar({ range, preset = "custom", defaultExpanded = f
               title="TO :"
               summaryLabel="To Date"
               monthYear={toMonthYear}
-              selectedStart={selectedStart}
+              selectedStart={selectedEnd}
               selectedEnd={selectedEnd}
               summaryDate={selectedEnd}
               onSelectDate={handleSelectEndDate}
+              onClear={handleClearEnd}
+              isDateDisabled={isToDateDisabled}
             />
           </View>
 

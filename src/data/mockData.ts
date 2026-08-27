@@ -318,6 +318,7 @@ export const DEMO_ADMIN_TRAINER = {
   username: "trainer1",
   name: "Rajesh Kumar",
   role: "trainer",
+  offerId: "OFF-DEMO-001",
 };
 export const DEMO_ADMIN_ADMIN = {
   username: "admin",

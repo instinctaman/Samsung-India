@@ -18,30 +18,6 @@ export default function RecentSessionsCard({
   onViewAll,
   onSelectSession,
 }: RecentSessionsCardProps) {
-  const items =
-    sessions.length > 0
-      ? sessions.slice(0, 2)
-      : [
-          {
-            conferenceUid: "demo-1",
-            title: "Sales Training Program",
-            conferenceDate: "2026-07-12",
-            conferenceTime: "10:00 AM",
-            conferenceStatus: "Completed" as const,
-            approvalStatus: "Approved" as const,
-            batchSize: "25",
-          },
-          {
-            conferenceUid: "demo-2",
-            title: "Product Knowledge",
-            conferenceDate: "2026-07-10",
-            conferenceTime: "02:00 PM",
-            conferenceStatus: "Ongoing" as const,
-            approvalStatus: "Approved" as const,
-            batchSize: "30",
-          },
-        ];
-
   return (
     <View style={styles.card}>
       {/* Header */}
@@ -52,21 +28,14 @@ export default function RecentSessionsCard({
         </Pressable>
       </View>
 
-      {/* List */}
-      <View style={styles.list}>
-        {items.map((session, index) => {
-          const statusInfo = getSessionStatusInfo(
-            session.conferenceStatus === "Ongoing"
-              ? "Ongoing"
-              : session.conferenceStatus === "Completed"
-                ? "Completed"
-                : "Scheduled",
-          );
-
-          const isCompleted =
-            index === 0 || session.conferenceStatus === "Completed";
-          const iconColor = isCompleted ? "#10B981" : "#0066FF";
-          const iconBg = isCompleted ? "#ECFDF5" : "#EFF6FF";
+      {sessions.length === 0 ? (
+        <Text style={styles.emptyText}>No sessions yet</Text>
+      ) : (
+        <View style={styles.list}>
+          {sessions.map((session, index) => {
+          const statusInfo = getSessionStatusInfo("Completed");
+          const iconColor = "#10B981";
+          const iconBg = "#ECFDF5";
 
           return (
             <View key={session.conferenceUid}>
@@ -120,9 +89,10 @@ export default function RecentSessionsCard({
                 </View>
               </Pressable>
             </View>
-          );
-        })}
-      </View>
+            );
+          })}
+        </View>
+      )}
     </View>
   );
 }
@@ -163,6 +133,11 @@ const styles = StyleSheet.create({
   },
   list: {
     gap: 5,
+  },
+  emptyText: {
+    fontSize: 10,
+    color: "#6B7280",
+    paddingVertical: 8,
   },
   divider: {
     height: 1,

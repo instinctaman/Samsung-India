@@ -4,7 +4,16 @@ import { useRouter } from "expo-router";
 import { SelectOption } from "@/components/ui/SearchableSelect";
 import { STATES } from "@/data/states";
 import { useAuth } from "@/hooks/useAuth";
-import { ApiError, AssessmentSuiteOut, ModuleConfig, createTraining, fetchAssessmentSuites } from "@/api/training";
+import {
+  ApiError,
+  AssessmentSuiteOut,
+  ModuleConfig,
+  createTraining,
+  fetchAssessmentSuites,
+  fetchChecklistItems,
+  fetchTrainers,
+  fetchVenues,
+} from "@/api/training";
 import { DEFAULT_CATEGORY_OPTIONS, DEFAULT_QUESTION_SET_OPTIONS, ModuleKey } from "./constants";
 import { parseTimeToMinutes, toPayloadModule } from "./formatting";
 
@@ -63,13 +72,29 @@ export function useAddTrainingForm() {
   const [notice, setNotice] = useState<string | null>(null);
 
   const [assessmentSuites, setAssessmentSuites] = useState<AssessmentSuiteOut[]>([]);
+  const [trainerOptions, setTrainerOptions] = useState<SelectOption[]>([]);
+  const [checklistOptions, setChecklistOptions] = useState<SelectOption[]>([]);
+  const [venueOptions, setVenueOptions] = useState<SelectOption[]>([]);
 
   useEffect(() => {
     if (!adminToken) return;
     fetchAssessmentSuites(adminToken)
       .then(setAssessmentSuites)
       .catch(() => setAssessmentSuites([]));
+    fetchTrainers(adminToken)
+      .then(setTrainerOptions)
+      .catch(() => setTrainerOptions([]));
+    fetchChecklistItems(adminToken)
+      .then(setChecklistOptions)
+      .catch(() => setChecklistOptions([]));
   }, [adminToken]);
+
+  // Venue is gated on District, so its options are re-fetched (scoped
+  // server-side) each time the trainer picks a different district.
+  useEffect(() => {
+    const load = adminToken && district ? fetchVenues(adminToken, district) : Promise.resolve([]);
+    load.then(setVenueOptions).catch(() => setVenueOptions([]));
+  }, [adminToken, district]);
 
   const categoryOptions: SelectOption[] = useMemo(() => {
     const merged = new Map<string, SelectOption>();
@@ -216,9 +241,11 @@ export function useAddTrainingForm() {
 
     trainerId, setTrainerId,
     trainerName, setTrainerName,
+    trainerOptions,
     stateValue, setStateValue,
     district, setDistrict,
     venue, setVenue,
+    venueOptions,
     selectedState,
 
     isResidential, setIsResidential,
@@ -237,6 +264,7 @@ export function useAddTrainingForm() {
 
     modules, toggleModule, updateModule,
     categoryOptions, questionSetOptionsFor, assessmentSuites,
+    checklistOptions,
 
     checklist, setChecklist,
     agreeTerms, setAgreeTerms,

@@ -11,9 +11,11 @@ from app.models import *
 from app.routers.admin import router as admin_router
 from app.routers.assessment import router as assessment_router
 from app.routers.attendance import router as attendance_router
+from app.routers.catalog import router as catalog_router
 from app.routers.proctoring import router as proctoring_router
 from app.routers.session import router as session_router
 from app.routers.trainee import router as trainee_router
+from app.routers.trainer import router as trainer_router
 from app.routers.training import router as training_router
 
 Base.metadata.create_all(bind=engine)
@@ -43,6 +45,8 @@ app.include_router(attendance_router)
 app.include_router(assessment_router)
 app.include_router(proctoring_router)
 app.include_router(admin_router)
+app.include_router(trainer_router)
+app.include_router(catalog_router)
 app.include_router(training_router)
 
 

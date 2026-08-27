@@ -51,8 +51,8 @@ export function useSessionsScreen() {
       try {
         if (adminToken) {
           const data = await fetchTrainerAgenda(adminToken, { start: params.start, end: params.end });
-          if (data && data.length > 0) {
-            setSessions(data);
+          if (data && data.trainings.length > 0) {
+            setSessions(data.trainings);
           } else {
             // Fallback to rich mock sessions matching reference image
             setSessions(MOCK_SESSIONS);

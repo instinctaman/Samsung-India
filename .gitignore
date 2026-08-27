@@ -50,3 +50,4 @@ mmtbtwob_tops.sql
 
 *.md 
 *.claude
+database_dump.sql

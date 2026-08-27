@@ -9,7 +9,6 @@ import { Colors } from "@/theme/colors";
 import { Fonts } from "@/theme/fonts";
 import { Spacing } from "@/theme/spacing";
 import { SectionTitle } from "./SectionTitle";
-import { CHECKLIST_OPTIONS } from "./constants";
 import { AddTrainingForm } from "./useAddTrainingForm";
 
 export function ChecklistSection({ form }: { form: AddTrainingForm }) {
@@ -21,7 +20,7 @@ export function ChecklistSection({ form }: { form: AddTrainingForm }) {
         compact
         placeholder="Select checklist items"
         values={form.checklist}
-        options={CHECKLIST_OPTIONS}
+        options={form.checklistOptions}
         onChange={form.setChecklist}
       />
 

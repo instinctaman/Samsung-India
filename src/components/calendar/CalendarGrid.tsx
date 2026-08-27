@@ -13,6 +13,7 @@ type CalendarGridProps = {
   startDate: Date | null;
   endDate: Date | null;
   onSelectDate: (date: Date) => void;
+  isDateDisabled?: (date: Date) => boolean;
 };
 
 export default function CalendarGrid({
@@ -21,6 +22,7 @@ export default function CalendarGrid({
   startDate,
   endDate,
   onSelectDate,
+  isDateDisabled,
 }: CalendarGridProps) {
   const days = generateMonthGrid(year, month);
 
@@ -41,6 +43,7 @@ export default function CalendarGrid({
           const isStart = isSameDay(item.date, startDate);
           const isEnd = isSameDay(item.date, endDate);
           const inRange = isBetweenDates(item.date, startDate, endDate);
+          const disabled = isDateDisabled ? isDateDisabled(item.date) : false;
 
           return (
             <CalendarDay
@@ -51,6 +54,7 @@ export default function CalendarGrid({
               isStart={isStart}
               isEnd={isEnd}
               isInRange={inRange}
+              disabled={disabled}
               onSelect={onSelectDate}
             />
           );

@@ -550,7 +550,27 @@ export async function fetchTrainerAgenda(
   _range?: { start?: string; end?: string },
 ) {
   await delay();
-  return _agenda.map((item) => ({ ...item }));
+  const trainings = _agenda.map((item) => ({ ...item }));
+  // No real attendance data in the mock demo agenda to de-duplicate against,
+  // so approximate with the sum of each session's planned batch size.
+  const totalTrainees = trainings.reduce((sum, item) => {
+    const size = parseInt(item.batchSize || "0", 10);
+    return sum + (isNaN(size) ? 0 : size);
+  }, 0);
+  const totalSessions = trainings.length;
+  const completedSessions = trainings.filter((item) => item.conferenceStatus === "Completed");
+  const completed = completedSessions.length;
+  const pending = totalSessions - completed;
+  return {
+    trainings,
+    totalTrainees,
+    totalSessions,
+    completed,
+    pending,
+    executedPercentage: totalSessions > 0 ? Math.round((completed / totalSessions) * 100) : 0,
+    pendingPercentage: totalSessions > 0 ? Math.round((pending / totalSessions) * 100) : 0,
+    recentCompleted: completedSessions.slice(0, 2),
+  };
 }
 
 export async function fetchTrainerName(_token: string, _username: string) {
@@ -559,6 +579,24 @@ export async function fetchTrainerName(_token: string, _username: string) {
     username: DEMO_ADMIN_TRAINER.username,
     name: DEMO_ADMIN_TRAINER.name,
   };
+}
+
+export async function fetchTrainers(_token: string) {
+  await delay();
+  return [{ label: DEMO_ADMIN_TRAINER.name, value: DEMO_ADMIN_TRAINER.username }];
+}
+
+export async function fetchVenues(_token: string, _district?: string) {
+  await delay();
+  return [{ label: "Main Auditorium", value: "demo-venue-1" }];
+}
+
+export async function fetchChecklistItems(_token: string) {
+  await delay();
+  return [
+    { label: "Hall", value: "demo-checklist-1" },
+    { label: "Projector", value: "demo-checklist-2" },
+  ];
 }
 
 // ─── Session Dashboard ────────────────────────────────────────────────────────

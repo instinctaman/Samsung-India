@@ -1,6 +1,7 @@
 import json
 import uuid
-from datetime import datetime
+from collections import defaultdict
+from datetime import date, datetime
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -32,6 +33,7 @@ from app.schemas.training import (
     SessionDashboardOut,
     TopPerformer,
     TraineeRow,
+    TrainerAgendaResponse,
     TrainingAgendaItem,
     TrainingCreate,
     TrainingOut,
@@ -167,23 +169,6 @@ def _audit_log(db: Session, conference: Conference) -> list[AuditLogEntry]:
                 )
             )
     return entries
-
-
-@router.get("/trainers/{username}")
-def get_trainer_name(
-    username: str,
-    db: Session = Depends(get_db),
-    _admin: Admin = Depends(get_current_admin),
-):
-    trainer = (
-        db.query(Admin)
-        .filter(Admin.username == username, Admin.role == "trainer")
-        .first()
-    )
-    if not trainer:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Trainer not found")
-
-    return {"username": trainer.username, "name": trainer.name}
 
 
 @router.get("/assessment-suites", response_model=list[AssessmentSuiteOut])
@@ -415,7 +400,40 @@ def _get_owned_conference(db: Session, admin: Admin, conference_uid: str) -> Con
     return conference
 
 
-@router.get("/trainings", response_model=list[TrainingAgendaItem])
+def _real_trainee_uids_by_conference(db: Session, conference_uids: list[str]) -> dict[str, set[str]]:
+    """Real headcount per conference - the same "who actually showed up or
+    attempted the test" definition used by the single-session dashboard
+    (see `_build_dashboard`) - rather than the planned `batchSize` field,
+    which is just whatever capacity number the trainer typed in at
+    creation time and never reflects who was actually trained."""
+    by_conference: dict[str, set[str]] = defaultdict(set)
+    if not conference_uids:
+        return by_conference
+
+    for row in (
+        db.query(Attendance.conferenceUid, Attendance.traineeUid)
+        .filter(
+            Attendance.conferenceUid.in_(conference_uids),
+            Attendance.status == "Present",
+        )
+        .all()
+    ):
+        by_conference[row.conferenceUid].add(row.traineeUid)
+
+    for row in (
+        db.query(AssessmentResult.conferenceUid, AssessmentResult.traineeUid)
+        .filter(
+            AssessmentResult.conferenceUid.in_(conference_uids),
+            AssessmentResult.status == "Submitted",
+        )
+        .all()
+    ):
+        by_conference[row.conferenceUid].add(row.traineeUid)
+
+    return by_conference
+
+
+@router.get("/trainings", response_model=TrainerAgendaResponse)
 def list_trainer_trainings(
     start: Optional[str] = None,
     end: Optional[str] = None,
@@ -424,16 +442,84 @@ def list_trainer_trainings(
 ):
     """Powers the trainer's Home agenda. `start`/`end` are `YYYY-MM-DD`
     strings (matching how `conferenceDate` is stored) and are compared
-    lexicographically, which sorts correctly for that format."""
-    query = db.query(Conference).filter(Conference.trainerEmployeeId == admin.username)
-    if start:
-        query = query.filter(Conference.conferenceDate >= start)
-    if end:
-        query = query.filter(Conference.conferenceDate <= end)
+    lexicographically, which sorts correctly for that format.
+
+    With neither `start` nor `end` given - the dashboard's initial,
+    unfiltered landing view - this deliberately mixes scopes: totalSessions/
+    completed/pending only cover TODAY, while totalTrainees is an all-time
+    cumulative headcount across every session this trainer has ever run
+    ("who have I trained so far" isn't naturally a single-day question).
+    As soon as the trainer applies an explicit start/end, every number
+    (including totalTrainees) is scoped to that range instead."""
+    base_query = db.query(Conference).filter(Conference.trainerEmployeeId == admin.username)
+    is_default_view = start is None and end is None
+
+    query = base_query
+    if is_default_view:
+        query = query.filter(Conference.conferenceDate == date.today().isoformat())
+    else:
+        if start:
+            query = query.filter(Conference.conferenceDate >= start)
+        if end:
+            query = query.filter(Conference.conferenceDate <= end)
 
     conferences = query.order_by(Conference.timestamp.desc()).all()
+    conference_uids = [c.conferenceUid for c in conferences]
+    trainee_uids_by_conference = _real_trainee_uids_by_conference(db, conference_uids)
 
-    return [
+    result = []
+    for conference in conferences:
+        uids = trainee_uids_by_conference.get(conference.conferenceUid, set())
+        result.append(
+            TrainingAgendaItem(
+                conferenceUid=conference.conferenceUid,
+                title=conference.suiteTitle or conference.trainingType or "Training Session",
+                conferenceDate=conference.conferenceDate,
+                conferenceTime=conference.conferenceTime,
+                conferenceStatus=conference.conferenceStatus,
+                approvalStatus=conference.status,
+                location=", ".join(filter(None, [conference.district, conference.state])) or None,
+                batchSize=conference.batchSize,
+                trainingType=conference.trainingType,
+                state=conference.state,
+                trainingHub=conference.trainingHub,
+                traineeCount=len(uids),
+            )
+        )
+
+    if is_default_view:
+        # All-time headcount across every session this trainer has ever run,
+        # not just today's - a trainee trained last month still counts.
+        all_conference_uids = [c.conferenceUid for c in base_query.all()]
+        trainee_source = _real_trainee_uids_by_conference(db, all_conference_uids)
+    else:
+        # De-duplicated across every session in the filtered range - a
+        # trainee trained in more than one of these sessions still counts once.
+        trainee_source = trainee_uids_by_conference
+
+    all_trainee_uids: set[str] = set()
+    for uids in trainee_source.values():
+        all_trainee_uids |= uids
+
+    total_sessions = len(conferences)
+    completed = sum(1 for c in conferences if c.conferenceStatus == "Completed")
+    pending = total_sessions - completed
+    executed_percentage = round((completed / total_sessions) * 100) if total_sessions else 0
+    pending_percentage = round((pending / total_sessions) * 100) if total_sessions else 0
+
+    # Always all-time, regardless of `start`/`end` - the Recent Sessions card
+    # wants "what did I most recently complete", not "what completed within
+    # whatever range is currently filtered".
+    recent_completed_conferences = (
+        base_query.filter(Conference.conferenceStatus == "Completed")
+        .order_by(Conference.timestamp.desc())
+        .limit(2)
+        .all()
+    )
+    recent_completed_uids = _real_trainee_uids_by_conference(
+        db, [c.conferenceUid for c in recent_completed_conferences]
+    )
+    recent_completed = [
         TrainingAgendaItem(
             conferenceUid=conference.conferenceUid,
             title=conference.suiteTitle or conference.trainingType or "Training Session",
@@ -446,9 +532,21 @@ def list_trainer_trainings(
             trainingType=conference.trainingType,
             state=conference.state,
             trainingHub=conference.trainingHub,
+            traineeCount=len(recent_completed_uids.get(conference.conferenceUid, set())),
         )
-        for conference in conferences
+        for conference in recent_completed_conferences
     ]
+
+    return TrainerAgendaResponse(
+        trainings=result,
+        totalTrainees=len(all_trainee_uids),
+        totalSessions=total_sessions,
+        completed=completed,
+        pending=pending,
+        executedPercentage=executed_percentage,
+        pendingPercentage=pending_percentage,
+        recentCompleted=recent_completed,
+    )
 
 
 @router.get("/trainings/pending", response_model=list[PendingSessionItem])

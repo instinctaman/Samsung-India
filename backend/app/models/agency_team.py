@@ -22,6 +22,11 @@ class AgencyTeam(Base):
 
     name = Column(String(100))
     username = Column(String(100), unique=True, nullable=True, index=True)
+
+    # The trainer's employee ID - the login screen's "Company ID / Phone No"
+    # field should accept this as well as `username` (the phone number).
+    offerId = Column(String(100), nullable=True, index=True)
+
     password = Column(String(100), nullable=False)
     role = Column(String(100))
     status = Column(String(50), nullable=False, default="Pending")

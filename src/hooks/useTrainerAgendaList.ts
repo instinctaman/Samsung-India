@@ -24,8 +24,8 @@ export function useTrainerAgendaList(filterPendingOnly = false) {
         const data = await fetchTrainerAgenda(adminToken);
         setItems(
           filterPendingOnly
-            ? data.filter((item) => item.approvalStatus === "Pending")
-            : data,
+            ? data.trainings.filter((item) => item.approvalStatus === "Pending")
+            : data.trainings,
         );
       } catch {
         setItems([]);

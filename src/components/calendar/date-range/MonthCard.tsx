@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { Colors } from "@/theme/colors";
 import CalendarGrid from "../CalendarGrid";
@@ -14,6 +14,8 @@ type MonthCardProps = {
   selectedEnd: Date;
   summaryDate: Date;
   onSelectDate: (date: Date) => void;
+  onClear: () => void;
+  isDateDisabled?: (date: Date) => boolean;
 };
 
 export default function MonthCard({
@@ -24,12 +26,19 @@ export default function MonthCard({
   selectedEnd,
   summaryDate,
   onSelectDate,
+  onClear,
+  isDateDisabled,
 }: MonthCardProps) {
   const { month, year, setMonth, setYear, prevMonth, nextMonth } = monthYear;
 
   return (
     <View style={styles.card}>
-      <Text style={styles.cardTitle}>{title}</Text>
+      <View style={styles.titleRow}>
+        <Text style={styles.cardTitle}>{title}</Text>
+        <Pressable onPress={onClear} hitSlop={6}>
+          <Text style={styles.clearText}>Clear</Text>
+        </Pressable>
+      </View>
 
       <CalendarHeader
         currentMonth={month}
@@ -40,7 +49,14 @@ export default function MonthCard({
         onSelectYear={setYear}
       />
 
-      <CalendarGrid year={year} month={month} startDate={selectedStart} endDate={selectedEnd} onSelectDate={onSelectDate} />
+      <CalendarGrid
+        year={year}
+        month={month}
+        startDate={selectedStart}
+        endDate={selectedEnd}
+        onSelectDate={onSelectDate}
+        isDateDisabled={isDateDisabled}
+      />
 
       <View style={styles.summaryBadge}>
         <Text style={styles.summaryLabel}>{summaryLabel}</Text>
@@ -59,12 +75,22 @@ const styles = StyleSheet.create({
     borderColor: "#EAECF0",
     padding: 4,
   },
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 4,
+  },
   cardTitle: {
     fontSize: 9.5,
     fontWeight: "700",
     color: "#111827",
-    marginBottom: 4,
     letterSpacing: 0.5,
+  },
+  clearText: {
+    fontSize: 8.5,
+    fontWeight: "600",
+    color: Colors.mainColour1,
   },
   summaryBadge: {
     marginTop: 6,

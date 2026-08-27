@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.core.rate_limit import rate_limit
@@ -32,7 +33,18 @@ def login(payload: AdminLoginRequest, db: Session = Depends(get_db)):
 
     # Real trainers live in `agencyteam`, not `admin` - fall back to it so
     # they can sign in the same way once they're not seeded into `admin`.
-    agent = db.query(AgencyTeam).filter(AgencyTeam.username == payload.username).first()
+    # The login field doubles as "Company ID / Phone No", so match either
+    # `username` (phone) or `offerId` (employee ID).
+    agent = (
+        db.query(AgencyTeam)
+        .filter(
+            or_(
+                AgencyTeam.username == payload.username,
+                AgencyTeam.offerId == payload.username,
+            )
+        )
+        .first()
+    )
     if agent and agent.password and verify_password(payload.password, agent.password):
         token = create_access_token(subject=f"agencyteam:{agent.username}")
         return AdminAuthSession(
@@ -41,6 +53,7 @@ def login(payload: AdminLoginRequest, db: Session = Depends(get_db)):
                 username=agent.username,
                 name=agent.name or agent.username,
                 role=agent.role or "trainer",
+                offerId=agent.offerId,
             ),
         )
 

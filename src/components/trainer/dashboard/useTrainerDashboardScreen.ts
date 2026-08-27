@@ -1,11 +1,20 @@
 import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 
 import { TrainingAgendaItem, fetchTrainerAgenda } from "@/api/training";
 import { DatePreset, DateRange, rangeForPreset } from "@/components/trainer/DateDrop";
 import { useAuth } from "@/hooks/useAuth";
-import { calculateDashboardStats } from "./dashboardUtils";
+import { DashboardStats } from "./dashboardUtils";
 import { toApiDate } from "./TrainerMoreMenu";
+
+const EMPTY_STATS: DashboardStats = {
+  totalTrainees: 0,
+  totalSessions: 0,
+  completed: 0,
+  pending: 0,
+  executedPercentage: 0,
+  pendingPercentage: 0,
+};
 
 export type TrainerDashboardTab = "home" | "plan" | "profile" | "more";
 
@@ -20,11 +29,22 @@ export function useTrainerDashboardScreen() {
   const [dateRange, setDateRange] = useState<DateRange>(() =>
     rangeForPreset("today", { start: new Date(), end: new Date() }),
   );
-  const [agenda, setAgenda] = useState<TrainingAgendaItem[]>([]);
+  // Until the trainer explicitly applies a date filter, `loadAgenda` sends
+  // no start/end at all - the backend then uses its own default view
+  // (today for sessions, all-time for trainees) rather than whatever
+  // `dateRange` happens to hold for display in the calendar boxes.
+  const [filterApplied, setFilterApplied] = useState(false);
+  // Every number here comes straight off the backend response - it's the
+  // one joining against `conference`/`attendance`/`assessment_results`, so
+  // nothing gets re-derived from the raw agenda list on the client.
+  const [stats, setStats] = useState<DashboardStats>(EMPTY_STATS);
+  // Always the trainer's most recently completed sessions all-time, straight
+  // off the backend - independent of `dateRange`/`filterApplied` above, so
+  // the Recent Sessions card doesn't go empty just because today (or the
+  // applied filter range) has nothing completed in it.
+  const [recentCompleted, setRecentCompleted] = useState<TrainingAgendaItem[]>([]);
   const [loadingAgenda, setLoadingAgenda] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-
-  const stats = useMemo(() => calculateDashboardStats(agenda), [agenda]);
 
   const loadAgenda = useCallback(
     async (mode: "load" | "refresh" | "silent" = "load") => {
@@ -32,37 +52,55 @@ export function useTrainerDashboardScreen() {
       if (mode === "refresh") setRefreshing(true);
       else if (mode === "load") setLoadingAgenda(true);
       try {
-        const data = await fetchTrainerAgenda(adminToken, {
-          start: toApiDate(dateRange.start),
-          end: toApiDate(dateRange.end),
+        const data = await fetchTrainerAgenda(
+          adminToken,
+          filterApplied
+            ? { start: toApiDate(dateRange.start), end: toApiDate(dateRange.end) }
+            : undefined,
+        );
+        setStats({
+          totalTrainees: data.totalTrainees,
+          totalSessions: data.totalSessions,
+          completed: data.completed,
+          pending: data.pending,
+          executedPercentage: data.executedPercentage,
+          pendingPercentage: data.pendingPercentage,
         });
-        setAgenda(data);
+        setRecentCompleted(data.recentCompleted);
       } catch {
-        if (mode !== "silent") setAgenda([]);
+        if (mode !== "silent") {
+          setStats(EMPTY_STATS);
+          setRecentCompleted([]);
+        }
       } finally {
         if (mode === "refresh") setRefreshing(false);
         else if (mode === "load") setLoadingAgenda(false);
       }
     },
-    [adminToken, dateRange],
+    [adminToken, dateRange, filterApplied],
   );
 
   useFocusEffect(
     useCallback(() => {
       loadAgenda();
-      const interval = setInterval(() => loadAgenda("silent"), 10000);
+      const interval = setInterval(() => {
+        loadAgenda("silent");
+      }, 10000);
       return () => clearInterval(interval);
     }, [loadAgenda]),
   );
 
   const applyDateRange = (range: DateRange, preset: DatePreset) => {
+    // Just update the filter and stay on the dashboard - the agenda/stats
+    // re-fetch on their own because `loadAgenda`/`loadMonthAgenda` depend on
+    // `dateRange`, which reruns the focus effect below while this screen is
+    // still focused. This used to also navigate to `/sessions`, which took
+    // the trainer off the dashboard before they could see the refreshed
+    // stats there.
     setDateRange(range);
     setDatePreset(preset);
+    setFilterApplied(true);
     setDateDropOpen(false);
-    router.push({
-      pathname: "/sessions",
-      params: { start: toApiDate(range.start), end: toApiDate(range.end) },
-    });
   };
 
   const handleLogout = () => {
@@ -103,10 +141,10 @@ export function useTrainerDashboardScreen() {
     setDateDropOpen,
     datePreset,
     dateRange,
-    agenda,
     loadingAgenda,
     refreshing,
     stats,
+    recentCompleted,
     loadAgenda,
     applyDateRange,
     handleLogout,

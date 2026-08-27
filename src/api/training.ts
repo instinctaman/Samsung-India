@@ -1,3 +1,4 @@
+import { SelectOption } from "@/components/ui/SearchableSelect";
 import { USE_MOCK_DATA } from "@/config/dataSource";
 import { apiRequest } from "./client";
 import * as mock from "./mockService";
@@ -78,6 +79,7 @@ export type TrainingAgendaItem = {
   trainingType: string | null;
   state: string | null;
   trainingHub: string | null;
+  traineeCount?: number;
   totalPax: number | null;
   hoid: string | null;
   venueName: string | null;
@@ -85,6 +87,17 @@ export type TrainingAgendaItem = {
   updatedBy: string | null;
   updationOn: string | null;
   timestamp: string | null;
+};
+
+export type TrainerAgendaResponse = {
+  trainings: TrainingAgendaItem[];
+  totalTrainees: number;
+  totalSessions: number;
+  completed: number;
+  pending: number;
+  executedPercentage: number;
+  pendingPercentage: number;
+  recentCompleted: TrainingAgendaItem[];
 };
 
 export type AudienceBreakdown = {
@@ -175,8 +188,7 @@ export function fetchTrainerAgenda(token: string, range?: { start?: string; end?
   if (range?.start) params.set("start", range.start);
   if (range?.end) params.set("end", range.end);
   const query = params.toString();
-  if (USE_MOCK_DATA) return mock.fetchTrainerAgenda(token, range);
-  return apiRequest<TrainingAgendaItem[]>(`/admin/trainings${query ? `?${query}` : ""}`, {
+  return apiRequest<TrainerAgendaResponse>(`/admin/trainings${query ? `?${query}` : ""}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 }
@@ -248,6 +260,28 @@ export function fetchTrainerName(token: string, username: string) {
     `/admin/trainers/${encodeURIComponent(username)}`,
     { headers: { Authorization: `Bearer ${token}` } }
   );
+}
+
+export function fetchTrainers(token: string) {
+  if (USE_MOCK_DATA) return mock.fetchTrainers(token);
+  return apiRequest<SelectOption[]>("/admin/trainers", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export function fetchVenues(token: string, district?: string) {
+  if (USE_MOCK_DATA) return mock.fetchVenues(token, district);
+  const query = district ? `?district=${encodeURIComponent(district)}` : "";
+  return apiRequest<SelectOption[]>(`/admin/venues${query}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export function fetchChecklistItems(token: string) {
+  if (USE_MOCK_DATA) return mock.fetchChecklistItems(token);
+  return apiRequest<SelectOption[]>("/admin/checklist-items", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
 }
 
 export type PendingSessionItem = {
