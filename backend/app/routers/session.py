@@ -93,45 +93,53 @@ def _conference_start(conference: Conference) -> datetime | None:
 DEMO_TRAINER_EMPLOYEE_ID = "demotrainer"
 
 
-def _select_current_conference(db: Session) -> tuple[Conference | None, bool, datetime | None]:
-    """Picks which conference is "current" for the trainee app. To point the
-    app at a different session for testing, just edit that row's
-    `conferenceDate` / `conferenceTime` (or `status`) in the database.
+def _select_current_conference(
+    db: Session, trainee: Trainee | None = None
+) -> tuple[Conference | None, bool, datetime | None]:
+    """Picks which conference is "current" for the trainee app.
 
-    Trainees can't yet pick which trainer's session to join - that'll come
-    from scanning a QR code or entering a trainer ID. Until then, the app
-    only ever shows the demo trainer's session, so this is hardcoded to
-    `DEMO_TRAINER_EMPLOYEE_ID`.
-
-    Returns (conference, started, start_at):
-      - A conference the trainer has explicitly started (`conferenceStatus
-        == "Ongoing"`, set by POST /admin/trainings/{uid}/start) is always
-        "current" and reports started=True - going live is a trainer
-        action, not something derived from the clock.
-      - Otherwise, among the remaining (still-`Scheduled`) conferences,
-        picks the soonest upcoming one (or the most recently-due one if all
-        of them are overdue) and reports started=False, so the caller can
-        show "starts at ...".
-      - If none of those has a parseable date/time at all, falls back to
-        the most recently created one, started=True (keeps existing seed
-        data working without dates).
+    Priority:
+      1. Any conference with conferenceStatus in ("Ongoing", "Live") (matching trainee's trainer/demo trainer first, or any active one).
+      2. Approved scheduled conferences (matching trainee trainer or demo trainer, then any approved).
+      3. Fallback to the latest available conference in the database.
     """
+    # 1. Look for actively Ongoing / Live conferences
+    ongoing_query = db.query(Conference).filter(
+        Conference.conferenceStatus.in_(["Ongoing", "Live"])
+    )
+    if trainee and trainee.trainerEmployeeId:
+        trainer_ongoing = ongoing_query.filter(
+            Conference.trainerEmployeeId == trainee.trainerEmployeeId
+        ).all()
+        if trainer_ongoing:
+            conf = max(trainer_ongoing, key=lambda c: c.id)
+            return conf, True, _conference_start(conf)
+
+    all_ongoing = ongoing_query.all()
+    if all_ongoing:
+        # Prefer demo trainer or highest id
+        demo_ongoing = [c for c in all_ongoing if c.trainerEmployeeId == DEMO_TRAINER_EMPLOYEE_ID]
+        conf = max(demo_ongoing or all_ongoing, key=lambda c: c.id)
+        return conf, True, _conference_start(conf)
+
+    # 2. Look for Approved conferences (or any valid conferences)
     conferences = (
         db.query(Conference)
-        .filter(
-            Conference.status == "Approved",
-            Conference.trainerEmployeeId == DEMO_TRAINER_EMPLOYEE_ID,
-            Conference.conferenceEndsOn.is_(None),
-        )
+        .filter(Conference.status == "Approved")
         .all()
     )
     if not conferences:
+        # Fallback to any conferences if none are explicitly approved
+        conferences = db.query(Conference).all()
+
+    if not conferences:
         return None, False, None
 
-    ongoing = [c for c in conferences if c.conferenceStatus == "Ongoing"]
-    if ongoing:
-        conference = max(ongoing, key=lambda c: c.id)
-        return conference, True, _conference_start(conference)
+    # Check for trainer-specific upcoming conferences
+    if trainee and trainee.trainerEmployeeId:
+        trainer_confs = [c for c in conferences if c.trainerEmployeeId == trainee.trainerEmployeeId]
+        if trainer_confs:
+            conferences = trainer_confs
 
     now = datetime.now()
     timed: list[tuple[datetime, Conference]] = []
@@ -147,10 +155,13 @@ def _select_current_conference(db: Session) -> tuple[Conference | None, bool, da
     if timed:
         upcoming = [item for item in timed if item[0] > now]
         start_at, conference = min(upcoming, key=lambda item: item[0]) if upcoming else max(timed, key=lambda item: item[0])
-        return conference, False, start_at
+        is_live = conference.conferenceStatus in ["Ongoing", "Live"]
+        return conference, is_live, start_at
 
     if undated:
-        return max(undated, key=lambda c: c.id), True, None
+        conf = max(undated, key=lambda c: c.id)
+        is_live = conf.conferenceStatus in ["Ongoing", "Live"]
+        return conf, is_live, None
 
     return None, False, None
 
@@ -160,7 +171,7 @@ def get_current_session(
     db: Session = Depends(get_db),
     trainee: Trainee = Depends(get_current_trainee),
 ):
-    conference, started, start_at = _select_current_conference(db)
+    conference, started, start_at = _select_current_conference(db, trainee=trainee)
     if not conference:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -194,11 +205,32 @@ def get_current_session(
     module_order = configured_modules(conference)
     active_index = module_order.index(conference.activeModuleId) if conference.activeModuleId in module_order else None
 
-    def is_missed(key: str, completed: bool, live: bool) -> bool:
-        if completed or live:
+    def _is_time_passed(end_time_str: str | None) -> bool:
+        if not end_time_str:
             return False
-        if conference.conferenceEndsOn is not None:
+        try:
+            now = datetime.now()
+            if conference.conferenceDate:
+                end_dt = datetime.strptime(f"{conference.conferenceDate} {end_time_str}", "%Y-%m-%d %I:%M %p")
+                return now > end_dt
+            else:
+                end_time = datetime.strptime(end_time_str, "%I:%M %p").time()
+                return now.time() > end_time
+        except ValueError:
+            return False
+
+    def is_missed(key: str, completed: bool, live: bool, end_time_str: str | None = None) -> bool:
+        if completed:
+            return False
+        if conference.conferenceStatus == "Completed":
             return True
+        now_date_str = datetime.now().strftime("%Y-%m-%d")
+        if conference.conferenceEndsOn and str(conference.conferenceEndsOn) < now_date_str:
+            return True
+        if _is_time_passed(end_time_str):
+            return True
+        if live:
+            return False
         if key not in module_order or active_index is None:
             return False
         return module_order.index(key) < active_index
@@ -215,18 +247,19 @@ def get_current_session(
     attendance_live = not attendance_completed and conference.activeModuleId == "ATTENDANCE"
 
     attendance_cfg = config.get("attendance", {})
+    attendance_close = attendance_cfg.get("checkOutCloses")
     modules.append(
         SessionModule(
             key="ATTENDANCE",
             name=MODULE_NAMES["ATTENDANCE"],
             time=attendance_cfg.get("checkInOpens"),
-            endTime=attendance_cfg.get("checkOutCloses"),
+            endTime=attendance_close,
             duration=_duration(
-                attendance_cfg.get("checkInOpens"), attendance_cfg.get("checkOutCloses")
+                attendance_cfg.get("checkInOpens"), attendance_close
             ),
             isLive=attendance_live,
             isCompleted=attendance_completed,
-            isMissed=is_missed("ATTENDANCE", attendance_completed, attendance_live),
+            isMissed=is_missed("ATTENDANCE", attendance_completed, attendance_live, attendance_close),
             completedAt=attendance.markedOn.split(" ")[-1][:5] if attendance and attendance.markedOn else None,
         )
     )
@@ -245,6 +278,7 @@ def get_current_session(
             continue
 
         module_cfg = config.get(config_key, {})
+        end_time_str = module_cfg.get("endTime")
         result = _find_assessment_result(db, conference.conferenceUid, trainee.traineeUid, suite_uid)
         completed = result is not None
         live = not completed and conference.activeModuleId == key
@@ -254,11 +288,11 @@ def get_current_session(
                 key=key,
                 name=MODULE_NAMES[key],
                 time=module_cfg.get("startTime"),
-                endTime=module_cfg.get("endTime"),
-                duration=_duration(module_cfg.get("startTime"), module_cfg.get("endTime")),
+                endTime=end_time_str,
+                duration=_duration(module_cfg.get("startTime"), end_time_str),
                 isLive=live,
                 isCompleted=completed,
-                isMissed=is_missed(key, completed, live),
+                isMissed=is_missed(key, completed, live, end_time_str),
                 completedAt=result.submittedAt.strftime("%H:%M") if result and result.submittedAt else None,
                 score=f"{float(result.totalScore):g}/{float(result.maxScore):g}" if result else None,
                 assessmentSuiteUid=suite_uid,
