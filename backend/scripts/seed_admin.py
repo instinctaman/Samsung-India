@@ -19,12 +19,15 @@ from app.models.admin import Admin
 from app.models.agency_team import AgencyTeam
 
 ADMIN_ACCOUNTS = [
-    {"username": "demoadmin", "password": "SomSir@1234", "name": "Demo Admin", "role": "admin"},
-    {"username": "demotrainer", "password": "SomSir@1234", "name": "Demo Trainer", "role": "trainer"},
+    {"username": "admin", "password": "1234", "name": "Admin", "role": "admin"},
+    {"username": "demoadmin", "password": "1234", "name": "Demo Admin", "role": "admin"},
+    {"username": "demotrainer", "password": "1234", "name": "Demo Trainer", "role": "trainer"},
+    {"username": "Tushar", "password": "1234", "name": "Tushar", "role": "trainer"},
 ]
 
 AGENCY_TEAM_ACCOUNTS = [
-    {"username": "demotrainer", "password": "SomSir@1234", "name": "Demo Trainer", "role": "trainer", "status": "Approved"},
+    {"username": "demotrainer", "password": "1234", "name": "Demo Trainer", "role": "trainer", "status": "Approved"},
+    {"username": "Tushar", "password": "1234", "name": "Tushar", "role": "trainer", "status": "Approved"},
 ]
 
 db = SessionLocal()

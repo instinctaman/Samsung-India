@@ -134,7 +134,7 @@ INSERT INTO `attendance` (
 
 -- ---------------------------------------------------------------
 -- Step 7: trainer has moved on from Attendance to the Standard Test
--- (Aman already checked in, so this makes the next module live for testing
+-- (Tushar already checked in, so this makes the next module live for testing
 -- post_test.tsx end to end without needing a trainer app yet).
 -- ---------------------------------------------------------------
 UPDATE `conference` SET `activeModuleId` = 'STANDARD_TEST' WHERE `conferenceUid` = '7cc3f30e56454ab7b393b17aa79e7906';

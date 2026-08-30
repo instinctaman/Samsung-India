@@ -1,18 +1,10 @@
 import { Platform } from "react-native";
 
-// Android emulator can't reach the host machine via 127.0.0.1 - it needs
-// the special 10.0.2.2 alias. iOS simulator/web can use 127.0.0.1 directly.
-// For a physical device, set EXPO_PUBLIC_API_URL to your machine's LAN IP,
-// e.g. EXPO_PUBLIC_API_URL=http://192.168.1.23:8000
-const LOCAL_HOST = Platform.select({
-  android: "10.0.2.2",
-  default: "127.0.0.1",
-});
+// In Expo, EXPO_PUBLIC_* env vars are inlined at bundle time.
+// Set default host to your computer's local Wi-Fi IP so physical devices on Wi-Fi,
+// emulators, and web browsers can all reach FastAPI without depending on .env reload.
+const DEFAULT_HOST = "192.168.29.237";
 
 // Only used when USE_MOCK_DATA is false (see src/config/dataSource.ts).
 export const API_BASE_URL =
-  process.env.EXPO_PUBLIC_API_URL ?? `http://${LOCAL_HOST}:8000`;
-
-// Same host/port as API_BASE_URL, scheme swapped - used for the live-events
-// WebSocket connection (see src/services/liveEvents.ts).
-export const WS_BASE_URL = API_BASE_URL.replace(/^http/, "ws");
+  process.env.EXPO_PUBLIC_API_URL || `http://${DEFAULT_HOST}:8000`;
