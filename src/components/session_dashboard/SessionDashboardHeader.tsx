@@ -12,6 +12,7 @@ type SessionDashboardHeaderProps = {
   timestamp?: string;
   isClosed?: boolean;
   hasStarted?: boolean;
+  isApproved?: boolean;
   loading?: boolean;
   onBack: () => void;
   onCopyLink: () => void;
@@ -27,6 +28,7 @@ export default function SessionDashboardHeader({
   timestamp = "Generated: 29 July 2026, 11:09 AM",
   isClosed = false,
   hasStarted = true,
+  isApproved = true,
   loading = false,
   onBack,
   onCopyLink,
@@ -132,6 +134,11 @@ export default function SessionDashboardHeader({
           ) : isClosed ? (
             <View style={[styles.endSessionBtn, styles.sessionClosedBtn]}>
               <Text style={styles.endSessionBtnText}>Session Closed</Text>
+            </View>
+          ) : !hasStarted && !isApproved ? (
+            <View style={[styles.endSessionBtn, styles.sessionPendingBtn]}>
+              <Ionicons name="time-outline" size={12} color="#92400E" />
+              <Text style={[styles.endSessionBtnText, styles.sessionPendingBtnText]}>Awaiting Approval</Text>
             </View>
           ) : !hasStarted ? (
             <Pressable
@@ -298,6 +305,12 @@ const styles = StyleSheet.create({
   },
   startSessionBtn: {
     backgroundColor: Colors.success,
+  },
+  sessionPendingBtn: {
+    backgroundColor: "#FEF3C7",
+  },
+  sessionPendingBtnText: {
+    color: "#92400E",
   },
   sessionLoadingBtn: {
     backgroundColor: "#E5E7EB",

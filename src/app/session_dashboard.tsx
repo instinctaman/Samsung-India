@@ -2,7 +2,12 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { StyleSheet } from "react-native";
 
 import { SessionDashboardHeader } from "@/components/session_dashboard";
-import { DashboardScrollContent, SessionQRModal, useSessionDashboardScreen } from "@/components/session_dashboard/dashboard-screen";
+import {
+  DashboardScrollContent,
+  SessionQRModal,
+  TrainerCheckInModal,
+  useSessionDashboardScreen,
+} from "@/components/session_dashboard/dashboard-screen";
 import DashboardBottomNav from "@/components/trainer/dashboard/DashboardBottomNav";
 import TrainerMoreMenu from "@/components/trainer/dashboard/TrainerMoreMenu";
 
@@ -16,16 +21,20 @@ export default function SessionDashboardScreen() {
     refreshing,
     showQR,
     setShowQR,
+    showCheckInModal,
+    setShowCheckInModal,
     bottomTab,
     moreOpen,
     setMoreOpen,
     loadData,
     handleCopyLink,
     handleStartSession,
+    handleConfirmStartSession,
     handleEndSession,
     handleBottomNavSelect,
     isSessionClosed,
     showSessionData,
+    isApproved,
   } = useSessionDashboardScreen();
 
   return (
@@ -34,6 +43,7 @@ export default function SessionDashboardScreen() {
         conferenceUid={conferenceUid}
         isClosed={isSessionClosed}
         hasStarted={showSessionData}
+        isApproved={isApproved}
         loading={loading}
         timestamp={generatedAt}
         onBack={() => router.back()}
@@ -60,6 +70,12 @@ export default function SessionDashboardScreen() {
       <TrainerMoreMenu visible={moreOpen} onClose={() => setMoreOpen(false)} />
 
       <SessionQRModal visible={showQR} onClose={() => setShowQR(false)} conferenceUid={conferenceUid} />
+
+      <TrainerCheckInModal
+        visible={showCheckInModal}
+        onClose={() => setShowCheckInModal(false)}
+        onConfirm={handleConfirmStartSession}
+      />
     </SafeAreaView>
   );
 }

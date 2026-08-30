@@ -1,0 +1,37 @@
+from datetime import datetime
+
+
+def parse_module_start(conference_date: str | None, time_str: str | None) -> datetime | None:
+    """`conferenceDate`/`conferenceTime` (and each module's own configured
+    start/end time) are free-text columns filled in by whoever schedules the
+    training (e.g. "2026-07-25" / "10:00 AM"). This is the one place that
+    combines and parses them - change the format string here if the admin
+    panel that writes those columns ever changes its format."""
+    if not conference_date or not time_str:
+        return None
+    try:
+        return datetime.strptime(f"{conference_date} {time_str}", "%Y-%m-%d %I:%M %p")
+    except ValueError:
+        return None
+
+
+def duration(start: str | None, end: str | None) -> str | None:
+    """Formats a "10:00 AM" -> "11:30 AM" pair as "1h 30m" for display."""
+    if not start or not end:
+        return None
+    try:
+        started = datetime.strptime(start, "%I:%M %p")
+        ended = datetime.strptime(end, "%I:%M %p")
+    except ValueError:
+        return None
+
+    minutes = int((ended - started).total_seconds() // 60)
+    if minutes <= 0:
+        return None
+
+    hours, mins = divmod(minutes, 60)
+    if hours and mins:
+        return f"{hours}h {mins}m"
+    if hours:
+        return f"{hours}h"
+    return f"{mins}m"

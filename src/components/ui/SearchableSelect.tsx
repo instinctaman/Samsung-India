@@ -10,7 +10,11 @@ import { Radius } from "@/theme/radius";
 import { Spacing } from "@/theme/spacing";
 import AppModal from "@/components/ui/AppModal";
 
-export type SelectOption = { label: string; value: string };
+// `name` is optional - only pickers whose `label` isn't itself the plain
+// display name (e.g. the trainer picker prefixes an employee ID onto
+// `label`) set it, for callers that need the bare name rather than the
+// display string.
+export type SelectOption = { label: string; value: string; name?: string };
 
 type SearchableSelectProps = {
   label?: string;

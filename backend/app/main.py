@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
 from app.core.media import MEDIA_ROOT
-from app.database.database import Base, engine
+from app.database.connection import Base, engine
 
 # Import all models
 from app.models import *
@@ -17,6 +17,7 @@ from app.routers.session import router as session_router
 from app.routers.trainee import router as trainee_router
 from app.routers.trainer import router as trainer_router
 from app.routers.training import router as training_router
+from app.routers.ws import router as ws_router
 
 Base.metadata.create_all(bind=engine)
 
@@ -48,6 +49,7 @@ app.include_router(admin_router)
 app.include_router(trainer_router)
 app.include_router(catalog_router)
 app.include_router(training_router)
+app.include_router(ws_router)
 
 
 @app.get("/")

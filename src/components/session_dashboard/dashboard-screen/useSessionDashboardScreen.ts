@@ -6,6 +6,7 @@ import { SessionDashboard, endTraining, fetchSessionDashboard, startTraining } f
 import { DashboardTab } from "@/components/trainer/dashboard/DashboardBottomNav";
 import { useAuth } from "@/hooks/useAuth";
 import { formatGeneratedTimestamp } from "./formatting";
+import { TrainerCheckInPhoto } from "./TrainerCheckInModal";
 
 export function useSessionDashboardScreen() {
   const router = useRouter();
@@ -21,6 +22,7 @@ export function useSessionDashboardScreen() {
   const [bottomTab, setBottomTab] = useState<DashboardTab>("plan");
   const [moreOpen, setMoreOpen] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
+  const [showCheckInModal, setShowCheckInModal] = useState(false);
   const [startedForUid, setStartedForUid] = useState(conferenceUid);
 
   if (startedForUid !== conferenceUid) {
@@ -65,14 +67,22 @@ export function useSessionDashboardScreen() {
     }
   };
 
-  const handleStartSession = async () => {
+  const handleStartSession = () => {
+    setShowCheckInModal(true);
+  };
+
+  const handleConfirmStartSession = async (photo: TrainerCheckInPhoto) => {
     if (!adminToken) return;
-    setHasStarted(true);
+    setShowCheckInModal(false);
     try {
-      await startTraining(adminToken, conferenceUid);
+      await startTraining(adminToken, conferenceUid, photo);
+      // Only flip to the "started" view once the backend actually confirms
+      // it - e.g. an unapproved session gets rejected with a 403, and the
+      // dashboard shouldn't show as live when nothing actually started.
+      setHasStarted(true);
       loadData("silent");
     } catch {
-      // Fallback / gracefully keep state
+      // Fallback / gracefully keep state - no blocking alert on failure.
     }
   };
 
@@ -114,6 +124,10 @@ export function useSessionDashboardScreen() {
   // Assessment / Execution Flow etc. should render the same populated view as
   // an in-progress session instead of the "not started yet" empty state.
   const showSessionData = hasStarted || isSessionClosed;
+  // Gates the header's Start Session button - an unapproved session would
+  // just bounce off the backend's 403 (see start_training), so hide the
+  // action instead of letting the trainer hit a dead-end "not approved" alert.
+  const isApproved = data ? data.approvalStatus === "Approved" : true;
 
   return {
     router,
@@ -124,15 +138,19 @@ export function useSessionDashboardScreen() {
     refreshing,
     showQR,
     setShowQR,
+    showCheckInModal,
+    setShowCheckInModal,
     bottomTab,
     moreOpen,
     setMoreOpen,
     loadData,
     handleCopyLink,
     handleStartSession,
+    handleConfirmStartSession,
     handleEndSession,
     handleBottomNavSelect,
     isSessionClosed,
     showSessionData,
+    isApproved,
   };
 }

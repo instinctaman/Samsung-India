@@ -3,7 +3,7 @@ import uuid
 from sqlalchemy import BigInteger, Column, Date, DateTime, Integer, String, Text, text
 from sqlalchemy.sql import func
 
-from app.database.database import Base
+from app.database.connection import Base
 
 
 class Trainee(Base):

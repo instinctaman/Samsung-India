@@ -5,13 +5,17 @@ builder has at least one genuine, working Post Test question set to pick
 label with nothing behind it - see add_training.tsx's
 DEFAULT_CATEGORY_OPTIONS / DEFAULT_QUESTION_SET_OPTIONS).
 
-Run with: venv/Scripts/python.exe seed_post_test.py
+Run from backend/ with: venv/Scripts/python.exe scripts/seed_post_test.py
 """
 
 import json
+import sys
 import uuid
+from pathlib import Path
 
-from app.database.database import SessionLocal
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from app.database.connection import SessionLocal
 from app.models.quiz import AssessmentSuite, Question
 
 SUITE_UID = "posttest-galaxy-s26-demo"

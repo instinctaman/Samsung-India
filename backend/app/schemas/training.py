@@ -110,6 +110,12 @@ class TrainingCreate(BaseModel):
     isResidential: bool = False
     conferenceDate: str
     conferenceTime: str
+    # Only meaningful when isResidential is set - the program's last day.
+    # No dedicated conference column for this yet, so it's folded into
+    # sessionConfig (see create_training) rather than conferenceEndsOn,
+    # which already means something else (the session's actual end
+    # timestamp, set by /trainings/{uid}/end).
+    trainingEndDate: Optional[str] = None
     trainingHub: Optional[str] = None
     audience: Optional[str] = None
     sessionType: Optional[str] = None
@@ -130,9 +136,42 @@ class AttendanceMarkRequest(BaseModel):
     status: str  # "Present" | "Absent"
 
 
+class AttendanceListItemOut(BaseModel):
+    """Powers the trainer's Attendance List / Pending Attendance / Confirmed
+    Attendance screens - one row per attendance record across every
+    conference this trainer owns. `marked`/`Present` vs not is how the
+    Pending/Confirmed screens split the same list client-side."""
+
+    attendanceId: str
+    region: Optional[str] = None
+    product: Optional[str] = None
+    session: Optional[str] = None
+    audienceType: Optional[str] = None
+    conferenceDate: Optional[str] = None
+    trainerName: Optional[str] = None
+    trainerHoId: Optional[str] = None
+    participantHoId: Optional[str] = None
+    participantName: str
+    phone: Optional[str] = None
+    state: Optional[str] = None
+    location: Optional[str] = None
+    reportingManagerOfPromoter: Optional[str] = None
+    attendanceStatus: str
+    checkIn: Optional[str] = None
+    checkOut: Optional[str] = None
+    postTestScore: Optional[str] = None
+    postTestScoreSummary: Optional[str] = None
+    sessionTypeMethod: Optional[str] = None
+    conferenceId: Optional[str] = None
+    lastUpdates: Optional[str] = None
+    marked: bool
+
+
 class TrainingAgendaItem(BaseModel):
     conferenceUid: str
     title: str
+    trainerName: Optional[str] = None
+    hoid: Optional[str] = None
     conferenceDate: Optional[str] = None
     conferenceTime: Optional[str] = None
     conferenceStatus: str
@@ -141,7 +180,12 @@ class TrainingAgendaItem(BaseModel):
     batchSize: Optional[str] = None
     trainingType: Optional[str] = None
     state: Optional[str] = None
+    district: Optional[str] = None
     trainingHub: Optional[str] = None
+    venueName: Optional[str] = None
+    updatedBy: Optional[str] = None
+    updationOn: Optional[str] = None
+    timestamp: Optional[str] = None
     traineeCount: int = 0
 
 
@@ -223,6 +267,7 @@ class AuditLogEntry(BaseModel):
 class SessionDashboardOut(BaseModel):
     conferenceUid: str
     title: str
+    trainingType: Optional[str] = None
     conferenceDate: Optional[str] = None
     conferenceTime: Optional[str] = None
     trainerName: Optional[str] = None

@@ -3,7 +3,7 @@ import uuid
 from sqlalchemy import Column, DateTime, Integer, Numeric, String, Text, text
 from sqlalchemy.sql import func
 
-from app.database.database import Base
+from app.database.connection import Base
 
 
 class AssessmentSuite(Base):

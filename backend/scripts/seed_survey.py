@@ -4,12 +4,16 @@ builder has at least one genuine, working Survey question set to pick for
 the Survey module (mirrors seed_post_test.py, using the same
 assessmentsuite/questions tables - there's no separate survey table).
 
-Run with: venv/Scripts/python.exe seed_survey.py
+Run from backend/ with: venv/Scripts/python.exe scripts/seed_survey.py
 """
 
 import json
+import sys
+from pathlib import Path
 
-from app.database.database import SessionLocal
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from app.database.connection import SessionLocal
 from app.models.quiz import AssessmentSuite, Question
 
 SUITE_UID = "survey-june-classroom-feedback-demo"

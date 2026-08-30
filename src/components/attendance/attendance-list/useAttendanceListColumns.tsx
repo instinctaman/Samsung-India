@@ -1,6 +1,5 @@
 import { Pressable, StyleSheet } from "react-native";
 
-import ActionIcon from "@/assets/images/svg/action.svg";
 import { DataTableColumn } from "@/components/ui/DataTable";
 import AppText from "@/components/ui/AppText";
 import { StatusPill } from "@/components/ui/StatusPill";
@@ -24,16 +23,16 @@ export function useAttendanceListColumns(
       exportValue: (_row, index) => String(index + 1),
     },
     {
-      key: "action",
-      header: "Action",
-      minWidth: 48,
-      sortable: false,
-      render: (row) => (
-        <Pressable style={styles.actionButton} onPress={() => onViewCandidate(row)} hitSlop={4}>
-          <ActionIcon width={15} height={15} />
-        </Pressable>
-      ),
-      exportValue: () => "",
+      key: "attendanceStatus",
+      header: "Attendance",
+      minWidth: 92,
+      render: (row) =>
+        row.attendanceStatus === "Present" ? (
+          <StatusPill label="Present" tone="success" />
+        ) : (
+          <StatusPill label={row.attendanceStatus} tone="warning" />
+        ),
+      exportValue: (row) => row.attendanceStatus,
     },
     { key: "region", header: "Region", minWidth: 90, exportValue: (row) => row.region ?? "--" },
     { key: "product", header: "Product", minWidth: 140, exportValue: (row) => row.product ?? "--" },
@@ -58,18 +57,6 @@ export function useAttendanceListColumns(
       header: "Reporting Manager of Promoter",
       minWidth: 160,
       exportValue: (row) => row.reportingManagerOfPromoter ?? "--",
-    },
-    {
-      key: "attendanceStatus",
-      header: "Attendance",
-      minWidth: 92,
-      render: (row) =>
-        row.attendanceStatus === "Present" ? (
-          <StatusPill label="Present" tone="success" />
-        ) : (
-          <StatusPill label={row.attendanceStatus} tone="warning" />
-        ),
-      exportValue: (row) => row.attendanceStatus,
     },
     { key: "checkIn", header: "Check-In", minWidth: 90, exportValue: (row) => row.checkIn ?? "-" },
     { key: "checkOut", header: "Check-Out", minWidth: 90, exportValue: (row) => row.checkOut ?? "-" },
@@ -101,14 +88,6 @@ export function useAttendanceListColumns(
 
 const styles = StyleSheet.create({
   cellText: { fontSize: Fonts.overline, textAlign: "center" },
-  actionButton: {
-    width: 26,
-    height: 26,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.success,
-    alignItems: "center",
-    justifyContent: "center",
-  },
   reportButton: {
     paddingHorizontal: 10,
     paddingVertical: 6,

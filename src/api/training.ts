@@ -1,7 +1,5 @@
 import { SelectOption } from "@/components/ui/SearchableSelect";
-import { USE_MOCK_DATA } from "@/config/dataSource";
-import { apiRequest } from "./client";
-import * as mock from "./mockService";
+import { apiRequest, apiUpload } from "./client";
 // All types are preserved — they are used extensively across screens.
 
 export type ModuleConfig = {
@@ -50,6 +48,7 @@ export type TrainingCreatePayload = {
   isResidential: boolean;
   conferenceDate: string;
   conferenceTime: string;
+  trainingEndDate?: string;
   trainingHub?: string;
   audience?: string;
   sessionType?: string;
@@ -80,7 +79,6 @@ export type TrainingAgendaItem = {
   state: string | null;
   trainingHub: string | null;
   traineeCount?: number;
-  totalPax: number | null;
   hoid: string | null;
   venueName: string | null;
   district: string | null;
@@ -174,7 +172,6 @@ export type SessionDashboard = {
 };
 
 export function createTraining(token: string, payload: TrainingCreatePayload) {
-  if (USE_MOCK_DATA) return mock.createTraining(token, payload);
   return apiRequest<TrainingOut>("/admin/trainings", {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
@@ -182,11 +179,11 @@ export function createTraining(token: string, payload: TrainingCreatePayload) {
   });
 }
 
-export function fetchTrainerAgenda(token: string, range?: { start?: string; end?: string }) {
-  if (USE_MOCK_DATA) return mock.fetchTrainerAgenda(token, range);
+export function fetchTrainerAgenda(token: string, range?: { start?: string; end?: string; all?: boolean }) {
   const params = new URLSearchParams();
   if (range?.start) params.set("start", range.start);
   if (range?.end) params.set("end", range.end);
+  if (range?.all) params.set("all_sessions", "true");
   const query = params.toString();
   return apiRequest<TrainerAgendaResponse>(`/admin/trainings${query ? `?${query}` : ""}`, {
     headers: { Authorization: `Bearer ${token}` },
@@ -194,22 +191,22 @@ export function fetchTrainerAgenda(token: string, range?: { start?: string; end?
 }
 
 export function fetchSessionDashboard(token: string, conferenceUid: string) {
-  if (USE_MOCK_DATA) return mock.fetchSessionDashboard(token, conferenceUid);
   return apiRequest<SessionDashboard>(`/admin/trainings/${encodeURIComponent(conferenceUid)}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 }
 
-export function startTraining(token: string, conferenceUid: string) {
-  if (USE_MOCK_DATA) return mock.startTraining(token, conferenceUid);
-  return apiRequest<TrainingOut>(`/admin/trainings/${encodeURIComponent(conferenceUid)}/start`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export function startTraining(
+  token: string,
+  conferenceUid: string,
+  photo: { uri: string; name: string; type: string },
+) {
+  const formData = new FormData();
+  formData.append("photo", { uri: photo.uri, name: photo.name, type: photo.type } as unknown as Blob);
+  return apiUpload<TrainingOut>(`/admin/trainings/${encodeURIComponent(conferenceUid)}/start`, formData, token);
 }
 
 export function endTraining(token: string, conferenceUid: string) {
-  if (USE_MOCK_DATA) return mock.endTraining(token, conferenceUid);
   return apiRequest<TrainingOut>(`/admin/trainings/${encodeURIComponent(conferenceUid)}/end`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
@@ -217,7 +214,6 @@ export function endTraining(token: string, conferenceUid: string) {
 }
 
 export function advanceModule(token: string, conferenceUid: string) {
-  if (USE_MOCK_DATA) return mock.advanceModule(token, conferenceUid);
   return apiRequest<TrainingOut>(`/admin/trainings/${encodeURIComponent(conferenceUid)}/advance-module`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
@@ -225,7 +221,6 @@ export function advanceModule(token: string, conferenceUid: string) {
 }
 
 export function markAttendance(token: string, conferenceUid: string, traineeUid: string, status: "Present" | "Absent") {
-  if (USE_MOCK_DATA) return mock.markAttendance(token, conferenceUid, traineeUid, status);
   return apiRequest<SessionDashboard>(
     `/admin/trainings/${encodeURIComponent(conferenceUid)}/attendance/${encodeURIComponent(traineeUid)}`,
     {
@@ -237,7 +232,6 @@ export function markAttendance(token: string, conferenceUid: string, traineeUid:
 }
 
 export function resetAttendance(token: string, conferenceUid: string, traineeUid: string) {
-  if (USE_MOCK_DATA) return mock.resetAttendance(token, conferenceUid, traineeUid);
   return apiRequest<SessionDashboard>(
     `/admin/trainings/${encodeURIComponent(conferenceUid)}/attendance/${encodeURIComponent(traineeUid)}`,
     {
@@ -248,14 +242,12 @@ export function resetAttendance(token: string, conferenceUid: string, traineeUid
 }
 
 export function fetchAssessmentSuites(token: string) {
-  if (USE_MOCK_DATA) return mock.fetchAssessmentSuites(token);
   return apiRequest<AssessmentSuiteOut[]>("/admin/assessment-suites", {
     headers: { Authorization: `Bearer ${token}` },
   });
 }
 
 export function fetchTrainerName(token: string, username: string) {
-  if (USE_MOCK_DATA) return mock.fetchTrainerName(token, username);
   return apiRequest<{ username: string; name: string }>(
     `/admin/trainers/${encodeURIComponent(username)}`,
     { headers: { Authorization: `Bearer ${token}` } }
@@ -263,14 +255,12 @@ export function fetchTrainerName(token: string, username: string) {
 }
 
 export function fetchTrainers(token: string) {
-  if (USE_MOCK_DATA) return mock.fetchTrainers(token);
   return apiRequest<SelectOption[]>("/admin/trainers", {
     headers: { Authorization: `Bearer ${token}` },
   });
 }
 
 export function fetchVenues(token: string, district?: string) {
-  if (USE_MOCK_DATA) return mock.fetchVenues(token, district);
   const query = district ? `?district=${encodeURIComponent(district)}` : "";
   return apiRequest<SelectOption[]>(`/admin/venues${query}`, {
     headers: { Authorization: `Bearer ${token}` },
@@ -278,7 +268,6 @@ export function fetchVenues(token: string, district?: string) {
 }
 
 export function fetchChecklistItems(token: string) {
-  if (USE_MOCK_DATA) return mock.fetchChecklistItems(token);
   return apiRequest<SelectOption[]>("/admin/checklist-items", {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -294,14 +283,12 @@ export type PendingSessionItem = {
 };
 
 export function fetchPendingTrainings(token: string) {
-  if (USE_MOCK_DATA) return mock.fetchPendingTrainings(token);
   return apiRequest<PendingSessionItem[]>("/admin/trainings/pending", {
     headers: { Authorization: `Bearer ${token}` },
   });
 }
 
 export function approveTraining(token: string, conferenceUid: string) {
-  if (USE_MOCK_DATA) return mock.approveTraining(token, conferenceUid);
   return apiRequest<TrainingOut>(`/admin/trainings/${encodeURIComponent(conferenceUid)}/approve`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
@@ -309,7 +296,6 @@ export function approveTraining(token: string, conferenceUid: string) {
 }
 
 export function rejectTraining(token: string, conferenceUid: string) {
-  if (USE_MOCK_DATA) return mock.rejectTraining(token, conferenceUid);
   return apiRequest<TrainingOut>(`/admin/trainings/${encodeURIComponent(conferenceUid)}/reject`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
@@ -360,7 +346,6 @@ export type AssessmentSuiteCreatePayload = {
 };
 
 export function createAssessmentSuite(token: string, payload: AssessmentSuiteCreatePayload) {
-  if (USE_MOCK_DATA) return mock.createAssessmentSuite(token, payload);
   return apiRequest<AssessmentSuiteDetail>("/admin/assessment-suites", {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
@@ -369,14 +354,12 @@ export function createAssessmentSuite(token: string, payload: AssessmentSuiteCre
 }
 
 export function fetchAssessmentSuiteDetail(token: string, suiteUid: string) {
-  if (USE_MOCK_DATA) return mock.fetchAssessmentSuiteDetail(token, suiteUid);
   return apiRequest<AssessmentSuiteDetail>(`/admin/assessment-suites/${encodeURIComponent(suiteUid)}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 }
 
 export function addAssessmentQuestion(token: string, suiteUid: string, payload: QuestionCreatePayload) {
-  if (USE_MOCK_DATA) return mock.addAssessmentQuestion(token, suiteUid, payload);
   return apiRequest<AssessmentSuiteDetail>(`/admin/assessment-suites/${encodeURIComponent(suiteUid)}/questions`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
@@ -385,7 +368,6 @@ export function addAssessmentQuestion(token: string, suiteUid: string, payload: 
 }
 
 export function deleteAssessmentQuestion(token: string, suiteUid: string, questionId: number) {
-  if (USE_MOCK_DATA) return mock.deleteAssessmentQuestion(token, suiteUid, questionId);
   return apiRequest<AssessmentSuiteDetail>(
     `/admin/assessment-suites/${encodeURIComponent(suiteUid)}/questions/${questionId}`,
     {

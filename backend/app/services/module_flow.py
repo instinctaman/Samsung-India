@@ -3,29 +3,13 @@ from datetime import datetime
 
 from sqlalchemy.orm import Session
 
+from app.core.constants import AUTO_ADVANCE_PERFORMER, MODULE_CONFIG_KEY, MODULE_LABELS
 from app.models.conference import Conference
 from app.models.conference_activity_log import ConferenceActivityLog
+from app.repositories import activity_log_repository
+from app.utils.date_utils import parse_module_start
 
-# The order modules run in within a session. LIVE_QUIZ has no dedicated
-# Conference column (unlike the other three) so it's detected from
-# `sessionConfig` instead - see `configured_modules`.
-MODULE_SEQUENCE = ["ATTENDANCE", "STANDARD_TEST", "LIVE_QUIZ", "SURVEY"]
-MODULE_LABELS = {
-    "ATTENDANCE": "Attendance Module",
-    "STANDARD_TEST": "Standard Test Module",
-    "LIVE_QUIZ": "Live Quiz Module",
-    "SURVEY": "Survey Module",
-}
-# Maps a module key to the key it's stored under in `sessionConfig` -
-# ATTENDANCE isn't here because it doesn't have an `unlockCondition`; it
-# only ever unlocks via `start_training`.
-MODULE_CONFIG_KEY = {
-    "STANDARD_TEST": "standardTest",
-    "LIVE_QUIZ": "liveQuiz",
-    "SURVEY": "survey",
-}
-
-AUTO_ADVANCE_PERFORMER = "system:auto-advance"
+__all__ = ["MODULE_LABELS", "configured_modules", "log_module_action", "auto_advance_if_due"]
 
 
 def configured_modules(conference: Conference) -> list[str]:
@@ -43,23 +27,15 @@ def configured_modules(conference: Conference) -> list[str]:
 
 
 def log_module_action(db: Session, conference_uid: str, module_id: str, action: str, performed_by: str) -> None:
-    db.add(
+    activity_log_repository.add(
+        db,
         ConferenceActivityLog(
             conferenceUid=conference_uid,
             moduleId=module_id,
             action=action,
             performedBy=performed_by,
-        )
+        ),
     )
-
-
-def _parse_module_start(conference_date: str | None, time_str: str | None) -> datetime | None:
-    if not conference_date or not time_str:
-        return None
-    try:
-        return datetime.strptime(f"{conference_date} {time_str}", "%Y-%m-%d %I:%M %p")
-    except ValueError:
-        return None
 
 
 def _module_end(conference: Conference, config: dict, module_key: str) -> datetime | None:
@@ -69,11 +45,11 @@ def _module_end(conference: Conference, config: dict, module_key: str) -> dateti
     module config's `endTime`."""
     if module_key == "ATTENDANCE":
         attendance_cfg = config.get("attendance", {})
-        return _parse_module_start(conference.conferenceDate, attendance_cfg.get("checkOutCloses"))
+        return parse_module_start(conference.conferenceDate, attendance_cfg.get("checkOutCloses"))
 
     config_key = MODULE_CONFIG_KEY.get(module_key)
     module_cfg = config.get(config_key, {}) if config_key else {}
-    return _parse_module_start(conference.conferenceDate, module_cfg.get("endTime"))
+    return parse_module_start(conference.conferenceDate, module_cfg.get("endTime"))
 
 
 def auto_advance_if_due(db: Session, conference: Conference) -> bool:
@@ -85,8 +61,16 @@ def auto_advance_if_due(db: Session, conference: Conference) -> bool:
     session state, and walks forward through as many due modules as have
     already passed their start time (in case nobody checked in a while).
 
-    Returns True if it changed `conference.activeModuleId` (caller should
-    treat `conference` as freshly refreshed from the DB either way).
+    Once the *last* configured module's own window closes, there's nothing
+    left to advance to - at that point the session auto-completes exactly
+    as if the trainer had pressed "End Session" themselves (only applies to
+    a session that was actually started - conferenceStatus is only ever
+    "Ongoing" via the trainer's own manual Start action in the first place,
+    there's no automatic start).
+
+    Returns True if it changed `conference.activeModuleId` and/or
+    `conference.conferenceStatus` (caller should treat `conference` as
+    freshly refreshed from the DB either way).
     """
     if conference.conferenceStatus != "Ongoing" or not conference.activeModuleId:
         return False
@@ -101,8 +85,6 @@ def auto_advance_if_due(db: Session, conference: Conference) -> bool:
 
     while True:
         current_index = modules.index(conference.activeModuleId)
-        if current_index + 1 >= len(modules):
-            break
 
         # Don't race ahead of the module that's actually live just because
         # the next one's start time has arrived - e.g. Standard Test opening
@@ -110,6 +92,17 @@ def auto_advance_if_due(db: Session, conference: Conference) -> bool:
         # before anyone's had a chance to check in. Only advance once the
         # current module's own window (its configured end time) has closed.
         current_ends_at = _module_end(conference, config, conference.activeModuleId)
+
+        if current_index + 1 >= len(modules):
+            if current_ends_at and now >= current_ends_at:
+                log_module_action(db, conference.conferenceUid, conference.activeModuleId, "STOPPED", AUTO_ADVANCE_PERFORMER)
+                conference.activeModuleId = None
+                conference.conferenceEndsOn = now.strftime("%Y-%m-%d %H:%M:%S")
+                conference.conferenceStatus = "Completed"
+                conference.actualEndedAt = now
+                changed = True
+            break
+
         if current_ends_at and now < current_ends_at:
             break
 
@@ -119,7 +112,7 @@ def auto_advance_if_due(db: Session, conference: Conference) -> bool:
         if module_cfg.get("unlockCondition") != "Automatic":
             break
 
-        starts_at = _parse_module_start(conference.conferenceDate, module_cfg.get("startTime"))
+        starts_at = parse_module_start(conference.conferenceDate, module_cfg.get("startTime"))
         if not starts_at or now < starts_at:
             break
 

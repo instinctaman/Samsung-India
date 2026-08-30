@@ -63,6 +63,56 @@ export function filterSessions(
   });
 }
 
+// Combines conferenceDate ("YYYY-MM-DD") + conferenceTime ("hh:mm AM/PM")
+// into a sortable timestamp. Returns NaN for anything unparseable so those
+// sessions can be pushed to the end of their group rather than breaking
+// the sort.
+function sessionTimestamp(session: TrainingAgendaItem): number {
+  if (!session.conferenceDate) return NaN;
+  const parsed = new Date(`${session.conferenceDate}T00:00:00`);
+  if (isNaN(parsed.getTime())) return NaN;
+
+  const match = (session.conferenceTime || "").match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (match) {
+    let hours = Number(match[1]) % 12;
+    if (match[3].toUpperCase() === "PM") hours += 12;
+    parsed.setHours(hours, Number(match[2]), 0, 0);
+  }
+  return parsed.getTime();
+}
+
+// Ordering: live/ongoing sessions first, then scheduled ones soonest-first,
+// then completed sessions most-recent-first - so the table leads with what
+// needs attention now or soonest, and trails off into history.
+export function sortSessions(sessions: TrainingAgendaItem[]): TrainingAgendaItem[] {
+  const completed = sessions.filter((s) => s.conferenceStatus === "Completed");
+  const upcoming = sessions.filter((s) => s.conferenceStatus !== "Completed");
+
+  upcoming.sort((a, b) => {
+    const aLive = a.conferenceStatus === "Ongoing";
+    const bLive = b.conferenceStatus === "Ongoing";
+    if (aLive !== bLive) return aLive ? -1 : 1;
+
+    const aTime = sessionTimestamp(a);
+    const bTime = sessionTimestamp(b);
+    if (isNaN(aTime) && isNaN(bTime)) return 0;
+    if (isNaN(aTime)) return 1;
+    if (isNaN(bTime)) return -1;
+    return aTime - bTime;
+  });
+
+  completed.sort((a, b) => {
+    const aTime = sessionTimestamp(a);
+    const bTime = sessionTimestamp(b);
+    if (isNaN(aTime) && isNaN(bTime)) return 0;
+    if (isNaN(aTime)) return 1;
+    if (isNaN(bTime)) return -1;
+    return bTime - aTime;
+  });
+
+  return [...upcoming, ...completed];
+}
+
 export function getUniqueOptions(
   sessions: TrainingAgendaItem[],
   field: "trainingHub" | "trainingType"
@@ -150,216 +200,3 @@ export function parseSessionDate(dateStr?: string | null, timeStr?: string | nul
 
   return { day, month, time };
 }
-
-export const MOCK_SESSIONS: TrainingAgendaItem[] = [
-  {
-    conferenceUid: "CONF25456581",
-    title: "Classroom Training",
-    trainerName: "Demo Trainer",
-    conferenceDate: "2026-07-07",
-    conferenceTime: "09:00",
-    conferenceStatus: "Ongoing",
-    approvalStatus: "Approved",
-    batchSize: "25",
-    trainingHub: "New Delhi",
-    location: "New Delhi",
-    trainingType: "Classroom",
-    state: "Delhi",
-    totalPax: null,
-    hoid: null,
-    venueName: null,
-    district: null,
-    updatedBy: null,
-    updationOn: null,
-    timestamp: null,
-  },
-  {
-    conferenceUid: "CONF25456582",
-    title: "Classroom Training",
-    trainerName: "Demo Trainer",
-    conferenceDate: "2026-07-07",
-    conferenceTime: "12:00",
-    conferenceStatus: "Scheduled",
-    approvalStatus: "Approved",
-    batchSize: "28",
-    trainingHub: "New Delhi",
-    location: "New Delhi",
-    trainingType: "Classroom",
-    state: "Delhi",
-    totalPax: null,
-    hoid: null,
-    venueName: null,
-    district: null,
-    updatedBy: null,
-    updationOn: null,
-    timestamp: null,
-  },
-  {
-    conferenceUid: "CONF25456583",
-    title: "Webinar",
-    trainerName: "Demo Trainer",
-    conferenceDate: "2026-07-07",
-    conferenceTime: "16:00",
-    conferenceStatus: "Scheduled",
-    approvalStatus: "Approved",
-    batchSize: "28",
-    trainingHub: "New Delhi",
-    location: "Online",
-    trainingType: "Webinar",
-    state: "Delhi",
-    totalPax: null,
-    hoid: null,
-    venueName: null,
-    district: null,
-    updatedBy: null,
-    updationOn: null,
-    timestamp: null,
-  },
-  {
-    conferenceUid: "CONF25456584",
-    title: "Webinar",
-    trainerName: "Demo Trainer",
-    conferenceDate: "2026-07-06",
-    conferenceTime: "16:00",
-    conferenceStatus: "Completed",
-    approvalStatus: "Approved",
-    batchSize: "30",
-    trainingHub: "New Delhi",
-    location: "Online",
-    trainingType: "Webinar",
-    state: "Delhi",
-    totalPax: null,
-    hoid: null,
-    venueName: null,
-    district: null,
-    updatedBy: null,
-    updationOn: null,
-    timestamp: null,
-  },
-  {
-    conferenceUid: "CONF25456585",
-    title: "Webinar",
-    trainerName: "Demo Trainer",
-    conferenceDate: "2026-07-06",
-    conferenceTime: "10:00",
-    conferenceStatus: "Completed",
-    approvalStatus: "Approved",
-    batchSize: "30",
-    trainingHub: "New Delhi",
-    location: "Online",
-    trainingType: "Webinar",
-    state: "Delhi",
-    totalPax: null,
-    hoid: null,
-    venueName: null,
-    district: null,
-    updatedBy: null,
-    updationOn: null,
-    timestamp: null,
-  },
-  {
-    conferenceUid: "CONF25456586",
-    title: "Classroom Training",
-    trainerName: "Demo Trainer",
-    conferenceDate: "2026-07-05",
-    conferenceTime: "16:00",
-    conferenceStatus: "Completed",
-    approvalStatus: "Approved",
-    batchSize: "30",
-    trainingHub: "New Delhi",
-    location: "New Delhi",
-    trainingType: "Classroom",
-    state: "Delhi",
-    totalPax: null,
-    hoid: null,
-    venueName: null,
-    district: null,
-    updatedBy: null,
-    updationOn: null,
-    timestamp: null,
-  },
-  {
-    conferenceUid: "CONF25456587",
-    title: "Classroom Training",
-    trainerName: "Demo Trainer",
-    conferenceDate: "2026-07-04",
-    conferenceTime: "10:00",
-    conferenceStatus: "Completed",
-    approvalStatus: "Approved",
-    batchSize: "30",
-    trainingHub: "New Delhi",
-    location: "New Delhi",
-    trainingType: "Classroom",
-    state: "Delhi",
-    totalPax: null,
-    hoid: null,
-    venueName: null,
-    district: null,
-    updatedBy: null,
-    updationOn: null,
-    timestamp: null,
-  },
-  {
-    conferenceUid: "CONF25456588",
-    title: "Webinar",
-    trainerName: "Demo Trainer",
-    conferenceDate: "2026-07-04",
-    conferenceTime: "16:00",
-    conferenceStatus: "Completed",
-    approvalStatus: "Approved",
-    batchSize: "30",
-    trainingHub: "New Delhi",
-    location: "Online",
-    trainingType: "Webinar",
-    state: "Delhi",
-    totalPax: null,
-    hoid: null,
-    venueName: null,
-    district: null,
-    updatedBy: null,
-    updationOn: null,
-    timestamp: null,
-  },
-  {
-    conferenceUid: "CONF25456589",
-    title: "Classroom Training",
-    trainerName: "Demo Trainer",
-    conferenceDate: "2026-07-03",
-    conferenceTime: "10:00",
-    conferenceStatus: "Completed",
-    approvalStatus: "Approved",
-    batchSize: "30",
-    trainingHub: "New Delhi",
-    location: "New Delhi",
-    trainingType: "Classroom",
-    state: "Delhi",
-    totalPax: null,
-    hoid: null,
-    venueName: null,
-    district: null,
-    updatedBy: null,
-    updationOn: null,
-    timestamp: null,
-  },
-  {
-    conferenceUid: "CONF25456590",
-    title: "Webinar",
-    trainerName: "Demo Trainer",
-    conferenceDate: "2026-07-03",
-    conferenceTime: "16:00",
-    conferenceStatus: "Completed",
-    approvalStatus: "Approved",
-    batchSize: "30",
-    trainingHub: "New Delhi",
-    location: "Online",
-    trainingType: "Webinar",
-    state: "Delhi",
-    totalPax: null,
-    hoid: null,
-    venueName: null,
-    district: null,
-    updatedBy: null,
-    updationOn: null,
-    timestamp: null,
-  },
-];

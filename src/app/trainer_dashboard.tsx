@@ -51,7 +51,7 @@ export default function TrainerDashboardScreen() {
         <DashboardBottomNav activeTab={activeTab} onSelectTab={handleBottomNavSelect} />
       </SafeAreaView>
 
-      <TrainerMoreMenu visible={menuOpen} onClose={closePanels} dateRange={dateRange} />
+      <TrainerMoreMenu visible={menuOpen} onClose={closePanels} />
 
       <AppModal visible={dateDropOpen} onClose={() => setDateDropOpen(false)} position="top" contentStyle={styles.dateDropPanel} closeOnOverlayPress>
         <DateDrop range={dateRange} preset={datePreset} onApply={applyDateRange} />

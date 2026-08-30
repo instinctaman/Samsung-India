@@ -21,7 +21,7 @@ export function TrainerVenueSection({ form }: { form: AddTrainingForm }) {
         options={form.trainerOptions}
         onSelect={(option) => {
           form.setTrainerId(option.value);
-          form.setTrainerName(option.label);
+          form.setTrainerName(option.name ?? option.label);
         }}
       />
       <AppInput

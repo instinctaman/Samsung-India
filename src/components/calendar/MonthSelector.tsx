@@ -42,17 +42,15 @@ export default function MonthSelector({ currentMonth, currentYear, onSelectMonth
         <Ionicons name="chevron-down" size={9} color="#6B7280" />
       </Pressable>
 
-      {pickerMode !== null && (
-        <MonthYearPickerPanel
-          pickerMode={pickerMode}
-          currentMonth={currentMonth}
-          currentYear={currentYear}
-          years={years}
-          onSelectMonth={onSelectMonth}
-          onSelectYear={onSelectYear}
-          onClose={close}
-        />
-      )}
+      <MonthYearPickerPanel
+        pickerMode={pickerMode}
+        currentMonth={currentMonth}
+        currentYear={currentYear}
+        years={years}
+        onSelectMonth={onSelectMonth}
+        onSelectYear={onSelectYear}
+        onClose={close}
+      />
     </View>
   );
 }

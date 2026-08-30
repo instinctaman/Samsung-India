@@ -1,15 +1,15 @@
 """One-off script to seed sample real-looking trainer accounts into
 `agencyteam` (the org-authoritative table for real trainers, per
 seed_admin.py's comment) and link a few existing `trainee` rows that
-have no assigned trainer yet. Run with:
+have no assigned trainer yet. Run from backend/ with:
 
-    venv/Scripts/python.exe seed_trainers.py
+    venv/Scripts/python.exe scripts/seed_trainers.py
 
 `agencyteam.trainerEmployeeId`-style linking on other tables actually
 stores the trainer's `username` (see `trainee.trainerEmployeeId` /
 `conference.trainerEmployeeId`, resolved via AgencyTeam.username in
-app/routers/training.py's `_resolve_performer_names`), not a separate
-employee-id column - so `username` doubles as that identifier here.
+app/services/training_service.py's `_resolve_performer_names`), not a
+separate employee-id column - so `username` doubles as that identifier here.
 
 Uses raw SQL for the insert/update because the `AgencyTeam` ORM model
 is deliberately trimmed to the columns the app currently reads
@@ -18,12 +18,16 @@ still has the richer columns (email, phone, designation, etc.) from
 the original schema, so we write straight to them.
 """
 
+import sys
 import uuid
+from pathlib import Path
 
 from sqlalchemy import text
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 from app.core.security import hash_password
-from app.database.database import SessionLocal
+from app.database.connection import SessionLocal
 
 DEFAULT_PASSWORD = "Trainer@123"
 

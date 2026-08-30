@@ -1,13 +1,13 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text } from "react-native";
 
+import AppModal from "@/components/ui/AppModal";
 import { Colors } from "@/theme/colors";
 import { Radius } from "@/theme/radius";
-import { Shadows } from "@/theme/shadows";
 import { MONTH_NAMES } from "./calendarUtils";
 
 type MonthYearPickerPanelProps = {
-  pickerMode: "month" | "year";
+  pickerMode: "month" | "year" | null;
   currentMonth: number;
   currentYear: number;
   years: number[];
@@ -26,83 +26,67 @@ export default function MonthYearPickerPanel({
   onClose,
 }: MonthYearPickerPanelProps) {
   return (
-    <View style={styles.dropdownPanel} pointerEvents="box-none">
-      <Pressable style={styles.dropdownBackdrop} onPress={onClose} />
-      <View style={styles.dropdownCard}>
-        <Text style={styles.modalTitle}>{pickerMode === "month" ? "Select Month" : "Select Year"}</Text>
-        <ScrollView style={styles.modalList} nestedScrollEnabled showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-          {pickerMode === "month" &&
-            MONTH_NAMES.map((name, index) => {
-              const isSelected = currentMonth === index;
-              return (
-                <Pressable
-                  key={name}
-                  style={[styles.modalOption, isSelected && styles.modalOptionSelected]}
-                  onPress={() => {
-                    onSelectMonth(index);
-                    onClose();
-                  }}
-                >
-                  <Text style={[styles.modalOptionText, isSelected && styles.modalOptionTextSelected]}>{name}</Text>
-                  {isSelected && <Ionicons name="checkmark" size={14} color={Colors.mainColour1} />}
-                </Pressable>
-              );
-            })}
+    // A bottom-sheet AppModal (native Modal underneath) rather than an
+    // absolutely-positioned View nested inside the dashboard's outer
+    // ScrollView - a same-direction nested ScrollView never scrolls
+    // reliably there, since the outer one wins the touch responder.
+    <AppModal
+      visible={pickerMode !== null}
+      onClose={onClose}
+      position="bottom"
+      title={pickerMode === "month" ? "Select Month" : "Select Year"}
+      showCloseButton
+      contentStyle={styles.sheet}
+    >
+      <ScrollView style={styles.modalList} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+        {pickerMode === "month" &&
+          MONTH_NAMES.map((name, index) => {
+            const isSelected = currentMonth === index;
+            return (
+              <Pressable
+                key={name}
+                style={[styles.modalOption, isSelected && styles.modalOptionSelected]}
+                onPress={() => {
+                  onSelectMonth(index);
+                  onClose();
+                }}
+              >
+                <Text style={[styles.modalOptionText, isSelected && styles.modalOptionTextSelected]}>{name}</Text>
+                {isSelected && <Ionicons name="checkmark" size={14} color={Colors.mainColour1} />}
+              </Pressable>
+            );
+          })}
 
-          {pickerMode === "year" &&
-            years.map((year) => {
-              const isSelected = currentYear === year;
-              return (
-                <Pressable
-                  key={year}
-                  style={[styles.modalOption, isSelected && styles.modalOptionSelected]}
-                  onPress={() => {
-                    onSelectYear(year);
-                    onClose();
-                  }}
-                >
-                  <Text style={[styles.modalOptionText, isSelected && styles.modalOptionTextSelected]}>{year}</Text>
-                  {isSelected && <Ionicons name="checkmark" size={14} color={Colors.mainColour1} />}
-                </Pressable>
-              );
-            })}
-        </ScrollView>
-      </View>
-    </View>
+        {pickerMode === "year" &&
+          years.map((year) => {
+            const isSelected = currentYear === year;
+            return (
+              <Pressable
+                key={year}
+                style={[styles.modalOption, isSelected && styles.modalOptionSelected]}
+                onPress={() => {
+                  onSelectYear(year);
+                  onClose();
+                }}
+              >
+                <Text style={[styles.modalOptionText, isSelected && styles.modalOptionTextSelected]}>{year}</Text>
+                {isSelected && <Ionicons name="checkmark" size={14} color={Colors.mainColour1} />}
+              </Pressable>
+            );
+          })}
+      </ScrollView>
+    </AppModal>
   );
 }
 
 const styles = StyleSheet.create({
-  dropdownPanel: {
-    ...StyleSheet.absoluteFill,
-    zIndex: 100,
-    elevation: 100,
-  },
-  dropdownBackdrop: {
-    ...StyleSheet.absoluteFill,
-  },
-  dropdownCard: {
-    position: "absolute",
-    top: 28,
-    left: -20,
-    right: -20,
-    maxHeight: 220,
-    backgroundColor: Colors.white,
-    borderRadius: Radius.lg,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    ...Shadows.raised,
-  },
-  modalTitle: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: "#111827",
-    marginBottom: 6,
-    textAlign: "center",
+  sheet: {
+    paddingHorizontal: 10,
+    paddingTop: 4,
+    paddingBottom: 20,
   },
   modalList: {
-    maxHeight: 180,
+    maxHeight: 360,
   },
   modalOption: {
     flexDirection: "row",

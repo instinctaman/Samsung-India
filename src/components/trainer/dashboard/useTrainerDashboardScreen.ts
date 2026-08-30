@@ -4,8 +4,14 @@ import { useCallback, useState } from "react";
 import { TrainingAgendaItem, fetchTrainerAgenda } from "@/api/training";
 import { DatePreset, DateRange, rangeForPreset } from "@/components/trainer/DateDrop";
 import { useAuth } from "@/hooks/useAuth";
+import { subscribe } from "@/services/liveEvents";
 import { DashboardStats } from "./dashboardUtils";
 import { toApiDate } from "./TrainerMoreMenu";
+
+// Live "training_created" pushes drive refreshes now - this interval is
+// just a safety net for a missed push or a reconnect gap, not the primary
+// mechanism, hence far slower than the old 10s poll.
+const FALLBACK_POLL_MS = 60000;
 
 const EMPTY_STATS: DashboardStats = {
   totalTrainees: 0,
@@ -83,10 +89,12 @@ export function useTrainerDashboardScreen() {
   useFocusEffect(
     useCallback(() => {
       loadAgenda();
-      const interval = setInterval(() => {
-        loadAgenda("silent");
-      }, 10000);
-      return () => clearInterval(interval);
+      const unsubscribe = subscribe("training_created", () => loadAgenda("silent"));
+      const interval = setInterval(() => loadAgenda("silent"), FALLBACK_POLL_MS);
+      return () => {
+        unsubscribe();
+        clearInterval(interval);
+      };
     }, [loadAgenda]),
   );
 
@@ -121,10 +129,18 @@ export function useTrainerDashboardScreen() {
     if (tab === "home") {
       // Return to home view
     } else if (tab === "plan") {
-      router.push({
-        pathname: "/sessions",
-        params: { start: toApiDate(dateRange.start), end: toApiDate(dateRange.end) },
-      });
+      // Only carry the calendar range over if the trainer actually applied
+      // one - otherwise `dateRange` is still just its "today" default, and
+      // forwarding it would make the Sessions screen's "All" tab silently
+      // show only today's sessions instead of everything.
+      router.push(
+        filterApplied
+          ? {
+              pathname: "/sessions",
+              params: { start: toApiDate(dateRange.start), end: toApiDate(dateRange.end) },
+            }
+          : "/sessions",
+      );
     } else if (tab === "profile") {
       router.push("/trainer_profile");
     } else if (tab === "more") {

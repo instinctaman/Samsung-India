@@ -48,6 +48,8 @@ export function useAddTrainingForm() {
   const [isResidential, setIsResidential] = useState(false);
   const [conferenceDate, setConferenceDate] = useState("");
   const [conferenceTime, setConferenceTime] = useState("");
+  // Only shown/used when isResidential is on - a multi-day program's last day.
+  const [trainingEndDate, setTrainingEndDate] = useState("");
   const [trainingHub, setTrainingHub] = useState("");
   const [audience, setAudience] = useState("");
   const [sessionType, setSessionType] = useState("");
@@ -114,6 +116,11 @@ export function useAddTrainingForm() {
 
   const selectedState = useMemo(() => STATES.find((item) => item.value === stateValue), [stateValue]);
 
+  const toggleResidential = (value: boolean) => {
+    setIsResidential(value);
+    if (!value) setTrainingEndDate("");
+  };
+
   const toggleModule = (key: ModuleKey) => {
     setModules((prev) => ({ ...prev, [key]: { ...prev[key], enabled: !prev[key].enabled } }));
   };
@@ -172,6 +179,14 @@ export function useAddTrainingForm() {
       setNotice("Training date and start time are required.");
       return;
     }
+    if (isResidential && !trainingEndDate) {
+      setNotice("End date is required for a residential program.");
+      return;
+    }
+    if (isResidential && trainingEndDate < conferenceDate) {
+      setNotice("End date can't be before the training date.");
+      return;
+    }
     if (!agreeTerms) {
       setNotice("Please agree to the Terms & Conditions to continue.");
       return;
@@ -202,6 +217,7 @@ export function useAddTrainingForm() {
         isResidential,
         conferenceDate,
         conferenceTime,
+        trainingEndDate: isResidential ? trainingEndDate : undefined,
         trainingHub: trainingHub || undefined,
         audience: audience || undefined,
         sessionType: sessionType || undefined,
@@ -248,9 +264,10 @@ export function useAddTrainingForm() {
     venueOptions,
     selectedState,
 
-    isResidential, setIsResidential,
+    isResidential, setIsResidential, toggleResidential,
     conferenceDate, setConferenceDate,
     conferenceTime, setConferenceTime,
+    trainingEndDate, setTrainingEndDate,
     trainingHub, setTrainingHub,
     audience, setAudience,
     sessionType, setSessionType,

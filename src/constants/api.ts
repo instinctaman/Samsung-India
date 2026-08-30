@@ -12,3 +12,7 @@ const LOCAL_HOST = Platform.select({
 // Only used when USE_MOCK_DATA is false (see src/config/dataSource.ts).
 export const API_BASE_URL =
   process.env.EXPO_PUBLIC_API_URL ?? `http://${LOCAL_HOST}:8000`;
+
+// Same host/port as API_BASE_URL, scheme swapped - used for the live-events
+// WebSocket connection (see src/services/liveEvents.ts).
+export const WS_BASE_URL = API_BASE_URL.replace(/^http/, "ws");

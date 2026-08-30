@@ -1,19 +1,23 @@
 """One-off script to seed sample real-looking Venue and Checklist
 (Category/SubCategory) reference data, powering the Add Training form's
-Venue and Checklist pickers. Run with:
+Venue and Checklist pickers. Run from backend/ with:
 
-    venv/Scripts/python.exe seed_catalog.py
+    venv/Scripts/python.exe scripts/seed_catalog.py
 
 `district` values match the district `value` codes in
 src/data/states.ts, so the Venue picker's State/District gating filters
 correctly against real rows.
 """
 
+import sys
 import uuid
+from pathlib import Path
 
 from sqlalchemy import text
 
-from app.database.database import SessionLocal
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from app.database.connection import SessionLocal
 
 VENUES = [
     {"name": "Main Auditorium", "zone": "North Zone", "region": "North 1", "city": "Noida", "district": "noida", "state": "Uttar Pradesh", "venueType": "Auditorium"},

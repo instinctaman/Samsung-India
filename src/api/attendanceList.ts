@@ -1,6 +1,4 @@
-import { USE_MOCK_DATA } from "@/config/dataSource";
 import { apiRequest } from "./client";
-import * as mock from "./mockService";
 
 export type AttendanceListItem = {
   attendanceId: string;
@@ -29,7 +27,6 @@ export type AttendanceListItem = {
 };
 
 export function fetchAttendanceList(token: string) {
-  if (USE_MOCK_DATA) return mock.fetchAttendanceList(token);
   return apiRequest<AttendanceListItem[]>("/admin/attendance", {
     headers: { Authorization: `Bearer ${token}` },
   });
