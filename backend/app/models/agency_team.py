@@ -1,5 +1,3 @@
-import uuid
-
 from sqlalchemy import BigInteger, Column, Integer, String
 
 from app.database.connection import Base
@@ -20,9 +18,7 @@ class AgencyTeam(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    agencyTeamUid = Column(
-        String(100), unique=True, nullable=True, default=lambda: uuid.uuid4().hex
-    )
+    agencyTeamUid = Column(String(100), unique=True, nullable=True)
     companyUid = Column(String(100))
     company = Column(String(150))
 

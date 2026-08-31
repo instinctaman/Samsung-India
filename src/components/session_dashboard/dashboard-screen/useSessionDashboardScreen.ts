@@ -2,7 +2,14 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import { Alert, Share } from "react-native";
 
-import { SessionDashboard, endTraining, fetchSessionDashboard, startTraining } from "@/api/training";
+import {
+  SessionDashboard,
+  advanceModule,
+  endTraining,
+  fetchSessionDashboard,
+  markAttendance,
+  startTraining,
+} from "@/api/training";
 import { DashboardTab } from "@/components/trainer/dashboard/DashboardBottomNav";
 import { useAuth } from "@/hooks/useAuth";
 import { formatGeneratedTimestamp } from "./formatting";
@@ -60,8 +67,10 @@ export function useSessionDashboardScreen() {
 
   const handleCopyLink = async () => {
     try {
-      const url = `https://training.samsung.com/session/${conferenceUid}`;
-      await Share.share({ message: `Join Session: ${url}` });
+      // Same deep link the QR encodes - opens the app on the join screen
+      // (samsungindia:// scheme, see app.json). Tapping it in a chat app
+      // on an Android device with the app installed opens it directly.
+      await Share.share({ message: `Join the training session: samsungindia://join/${conferenceUid}` });
     } catch {
       // Ignored
     }
@@ -83,6 +92,28 @@ export function useSessionDashboardScreen() {
       loadData("silent");
     } catch {
       // Fallback / gracefully keep state - no blocking alert on failure.
+    }
+  };
+
+  const handleMarkAttendance = async (traineeUid: string, status: "Present" | "Absent") => {
+    if (!adminToken) return;
+    try {
+      // The endpoint returns a fresh dashboard, so we can update in place
+      // without waiting for the next poll.
+      const fresh = await markAttendance(adminToken, conferenceUid, traineeUid, status);
+      setData(fresh);
+    } catch {
+      // Fallback / gracefully keep state.
+    }
+  };
+
+  const handleAdvanceModule = async () => {
+    if (!adminToken) return;
+    try {
+      await advanceModule(adminToken, conferenceUid);
+      loadData("silent");
+    } catch {
+      // Fallback / gracefully keep state.
     }
   };
 
@@ -120,10 +151,19 @@ export function useSessionDashboardScreen() {
   };
 
   const isSessionClosed = data?.conferenceStatus === "Completed";
+  // The backend is the source of truth for whether the session is live -
+  // `hasStarted` is only an optimistic local flag so the UI flips the
+  // instant the trainer taps Start (before the next poll lands). Without
+  // this, navigating away and back showed "Start Session" / "Scheduled"
+  // again even though the session was already Ongoing.
+  const backendLive = data?.conferenceStatus === "Ongoing" || data?.conferenceStatus === "Live";
+  // The join QR is only meaningful for a session that's actually running -
+  // hide "Show QR" until Start Session, and again once it's closed.
+  const isLive = !isSessionClosed && (hasStarted || backendLive);
   // A closed session already ran to completion, so its Audience Breakdown /
   // Assessment / Execution Flow etc. should render the same populated view as
   // an in-progress session instead of the "not started yet" empty state.
-  const showSessionData = hasStarted || isSessionClosed;
+  const showSessionData = hasStarted || backendLive || isSessionClosed;
   // Gates the header's Start Session button - an unapproved session would
   // just bounce off the backend's 403 (see start_training), so hide the
   // action instead of letting the trainer hit a dead-end "not approved" alert.
@@ -147,10 +187,13 @@ export function useSessionDashboardScreen() {
     handleCopyLink,
     handleStartSession,
     handleConfirmStartSession,
+    handleMarkAttendance,
+    handleAdvanceModule,
     handleEndSession,
     handleBottomNavSelect,
     isSessionClosed,
     showSessionData,
+    isLive,
     isApproved,
   };
 }

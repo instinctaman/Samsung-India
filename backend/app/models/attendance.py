@@ -1,5 +1,3 @@
-import uuid
-
 from sqlalchemy import (
     BigInteger,
     Boolean,
@@ -24,9 +22,7 @@ class Attendance(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    attendanceUid = Column(
-        String(100), unique=True, default=lambda: uuid.uuid4().hex
-    )
+    attendanceUid = Column(String(100), unique=True)
     conferenceUid = Column(String(100), nullable=False, index=True)
     trainerUid = Column(String(100))
     traineeUid = Column(String(100), nullable=False, index=True)

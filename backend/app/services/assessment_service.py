@@ -1,5 +1,4 @@
 import json
-import uuid
 from datetime import datetime
 
 from sqlalchemy.orm import Session
@@ -59,7 +58,6 @@ def submit_assessment(db: Session, trainee: Trainee, suite_uid: str, payload: Su
         assessment_repository.add_answer(
             db,
             Assessment(
-                assessmentUid=uuid.uuid4().hex,
                 assessmentSuiteUid=suite_uid,
                 conferenceUid=payload.conferenceUid,
                 traineeUid=trainee.traineeUid,
@@ -75,7 +73,6 @@ def submit_assessment(db: Session, trainee: Trainee, suite_uid: str, payload: Su
     assessment_repository.add_result(
         db,
         AssessmentResult(
-            resultUid=uuid.uuid4().hex,
             conferenceUid=payload.conferenceUid,
             traineeUid=trainee.traineeUid,
             assessmentSuiteUid=suite_uid,

@@ -22,7 +22,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.media import ALLOWED_IMAGE_CONTENT_TYPES, MAX_UPLOAD_BYTES, media_subdir
-from app.core.security import get_current_trainee
+from app.dependencies.auth import get_current_trainee
 from app.models.attendance import Attendance
 from app.models.attendance_log import AttendanceLog
 from app.models.conference import Conference
@@ -34,7 +34,7 @@ from app.schemas.attendance import (
     VerifyLocationRequest,
 )
 from app.services import attendance_service
-from backend.app.utils.helpers import distance_meters
+from app.utils.helpers import distance_meters
 
 router = APIRouter(prefix="/attendance", tags=["attendance"])
 

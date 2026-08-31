@@ -4,13 +4,22 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 
 from app.core.constants import DEMO_TRAINER_EMPLOYEE_ID, PASS_THRESHOLD_PERCENT
-from app.core.exceptions import not_found
+from app.core.exceptions import bad_request, not_found
+from app.models.attendance import Attendance
 from app.models.conference import Conference
 from app.models.trainee import Trainee
-from app.repositories import assessment_repository, attendance_repository, conference_repository
-from app.schemas.session import CurrentSession, SessionHistoryItem, SessionModule
+from app.repositories import (
+    assessment_repository,
+    attendance_repository,
+    conference_repository,
+    trainee_repository,
+)
+from app.schemas.session import CurrentSession, SessionHistoryItem, SessionJoinInfo, SessionModule
 from app.services.module_flow import auto_advance_if_due, configured_modules
 from app.utils.date_utils import duration, parse_module_start
+from app.utils.status import title_status
+
+_LIVE_STATUSES = ("Ongoing", "Live")
 
 MODULE_NAMES = {
     "ATTENDANCE": "Attendance",
@@ -98,6 +107,66 @@ def _select_current_conference(db: Session) -> tuple[Conference | None, bool, da
         return max(undated, key=lambda c: c.id), True, None
 
     return None, False, None
+
+
+def _join_info(conference: Conference) -> SessionJoinInfo:
+    start_at = _conference_start(conference)
+    return SessionJoinInfo(
+        conferenceUid=conference.conferenceUid,
+        title=conference.suiteTitle or conference.trainingType or "Training Session",
+        sessionType=conference.sessionType,
+        date=conference.conferenceDate,
+        location=", ".join(filter(None, [conference.district, conference.state])) or None,
+        trainerName=conference.trainerName,
+        started=conference.conferenceStatus in _LIVE_STATUSES,
+        startsAt=start_at.strftime("%d %b %Y, %I:%M %p") if start_at else None,
+    )
+
+
+def _conference_for_code(db: Session, code: str) -> Conference:
+    conference = conference_repository.get_by_uid(db, code)
+    if not conference:
+        raise not_found("That training session code isn't valid")
+    approved = title_status(conference.status) == "Approved"
+    if not approved and conference.conferenceStatus not in (*_LIVE_STATUSES, "Completed"):
+        raise bad_request("This training isn't open to join yet")
+    return conference
+
+
+def get_join_info(db: Session, code: str) -> SessionJoinInfo:
+    """Public preview of the training behind a scanned QR code."""
+    return _join_info(_conference_for_code(db, code))
+
+
+def join_session(db: Session, trainee: Trainee, code: str) -> SessionJoinInfo:
+    """Binds the (already-authenticated) trainee to the scanned training so
+    `GET /sessions/current` resolves to it, and auto-approves a trainee who
+    reached the app through a trainer-shared QR."""
+    conference = _conference_for_code(db, code)
+    trainee.trainerEmployeeId = conference.trainerEmployeeId
+    if title_status(trainee.status) != "Approved":
+        trainee.status = "Approved"
+    trainee_repository.save(db, trainee)
+
+    # Register the trainee as a participant of this specific conference so
+    # they show on the trainer's live Participant Master List right away.
+    # Status "Joined" distinguishes a QR/link participant from the pre-seeded
+    # roster "Pending" rows (which the dashboard deliberately hides); check-in
+    # later promotes it to "Present".
+    if not attendance_repository.get_for_conference_and_trainee(
+        db, conference.conferenceUid, trainee.traineeUid
+    ):
+        attendance_repository.create(
+            db,
+            Attendance(
+                conferenceUid=conference.conferenceUid,
+                trainerUid=conference.trainerEmployeeId,
+                traineeUid=trainee.traineeUid,
+                phone=trainee.phone,
+                status="Joined",
+            ),
+        )
+    return _join_info(conference)
 
 
 def get_current_session(db: Session, trainee: Trainee) -> CurrentSession:

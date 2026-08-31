@@ -10,6 +10,7 @@ import { Fonts } from "@/theme/fonts";
 import { FontWeight } from "@/theme/fontWeight";
 import { Radius } from "@/theme/radius";
 import { Spacing } from "@/theme/spacing";
+import { digitsOnly } from "@/utils/validation";
 import { DateTimeField } from "./DateTimeField";
 import { SectionTitle } from "./SectionTitle";
 import {
@@ -135,8 +136,9 @@ function ModuleCard({ moduleKey: key, form }: { moduleKey: ModuleKey; form: AddT
             compact
             placeholder="Number of questions"
             keyboardType="number-pad"
+            maxLength={4}
             value={moduleState.questionCount}
-            onChangeText={(text) => form.updateModule(key, { questionCount: text })}
+            onChangeText={(text) => form.updateModule(key, { questionCount: digitsOnly(text) })}
             editable={!!moduleState.assessmentSuiteUid}
           />
         </View>

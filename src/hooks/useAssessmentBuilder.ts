@@ -13,6 +13,7 @@ import {
   deleteAssessmentQuestion,
   fetchAssessmentSuiteDetail,
 } from "@/api/training";
+import { cleanText, digitsOnly, firstError, intInRange, required } from "@/utils/validation";
 
 export function useAssessmentBuilder(suiteUidParam?: string) {
   const { adminToken } = useAuth();
@@ -63,18 +64,24 @@ export function useAssessmentBuilder(suiteUidParam?: string) {
   }, [adminToken, suiteUid]);
 
   const handleCreateSuite = async () => {
-    if (!adminToken || !title.trim() || !category) {
-      setError("Title and Category are required.");
+    const validationError = firstError(
+      required(title, "Title"),
+      required(category, "Category"),
+      intInRange(testTime, 1, 180, "Time (min)", true),
+    );
+    if (validationError) {
+      setError(validationError);
       return;
     }
+    if (!adminToken) return;
     setCreating(true);
     setError(null);
     try {
       const created = await createAssessmentSuite(adminToken, {
-        title: title.trim(),
-        description: description.trim() || undefined,
+        title: cleanText(title, 150),
+        description: cleanText(description, 500) || undefined,
         category,
-        testTime,
+        testTime: digitsOnly(testTime),
         type,
       });
       setSuiteUid(created.assessmentSuiteUid);

@@ -11,8 +11,12 @@ from app.models.data_scope import DataScope
 from app.models.quiz import Assessment, AssessmentResult, AssessmentSuite, Question
 from app.models.system_module import SystemModule
 from app.models.trainee import Trainee
+from app.models.uid_sequence import UidSequence
 from app.models.user_permission import UserPermission
 from app.models.venue import Venue
+
+# Registers before_insert UID hooks - must be last, after every model above.
+import app.models.uid_events  # noqa: E402,F401
 
 __all__ = [
     # Existing models (updated for mmtbtwob_tops)
@@ -34,6 +38,7 @@ __all__ = [
     "Booking",
     "DataScope",
     "SystemModule",
+    "UidSequence",
     "UserPermission",
     "Venue",
 ]

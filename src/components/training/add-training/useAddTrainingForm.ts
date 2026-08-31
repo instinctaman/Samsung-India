@@ -14,8 +14,14 @@ import {
   fetchTrainers,
   fetchVenues,
 } from "@/api/training";
-import { DEFAULT_CATEGORY_OPTIONS, DEFAULT_QUESTION_SET_OPTIONS, ModuleKey } from "./constants";
+import {
+  DEFAULT_CATEGORY_OPTIONS,
+  DEFAULT_QUESTION_SET_OPTIONS,
+  MODULE_LABELS,
+  ModuleKey,
+} from "./constants";
 import { parseTimeToMinutes, toPayloadModule } from "./formatting";
+import { cleanText, digitsOnly, firstError, intInRange } from "@/utils/validation";
 
 export type EvaluationModuleState = Omit<ModuleConfig, "questionCount"> & {
   enabled: boolean;
@@ -201,14 +207,36 @@ export function useAddTrainingForm() {
       return;
     }
 
+    const numberError = firstError(
+      intInRange(batchSize, 1, 100000, "Batch size"),
+      ...(["standardTest", "liveQuiz", "survey"] as ModuleKey[])
+        .filter((key) => modules[key].enabled && modules[key].assessmentSuiteUid)
+        .map((key) => {
+          const suite = assessmentSuites.find(
+            (item) => item.assessmentSuiteUid === modules[key].assessmentSuiteUid,
+          );
+          return intInRange(
+            modules[key].questionCount,
+            1,
+            suite?.noOfQuestion ?? 999,
+            `${MODULE_LABELS[key]} question count`,
+            true,
+          );
+        }),
+    );
+    if (numberError) {
+      setNotice(numberError);
+      return;
+    }
+
     setSubmitting(true);
     setNotice(null);
     try {
       await createTraining(adminToken, {
-        zone: zone || undefined,
-        region: region || undefined,
-        company: company || undefined,
-        requestedBy: requestedBy || undefined,
+        zone: cleanText(zone, 100) || undefined,
+        region: cleanText(region, 100) || undefined,
+        company: cleanText(company, 120) || undefined,
+        requestedBy: cleanText(requestedBy, 120) || undefined,
         trainerEmployeeId: trainerId || undefined,
         trainerName: trainerName || undefined,
         state: selectedState?.label,
@@ -222,7 +250,7 @@ export function useAddTrainingForm() {
         audience: audience || undefined,
         sessionType: sessionType || undefined,
         trainingType: trainingType || undefined,
-        batchSize: batchSize || undefined,
+        batchSize: digitsOnly(batchSize) || undefined,
         sessionFlow: {
           attendance: attendanceEnabled
             ? { checkInOpens: checkInOpens || undefined, checkOutCloses: checkOutCloses || undefined, geoFencing }

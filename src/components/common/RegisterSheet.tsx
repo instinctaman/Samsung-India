@@ -1,4 +1,5 @@
 import { ScrollView, View, StyleSheet } from "react-native";
+import { useRouter } from "expo-router";
 import { Colors } from "@/theme/colors";
 import { Fonts } from "@/theme/fonts";
 import PersonalDetails from "@/components/registration/PersonalDetails";
@@ -12,17 +13,26 @@ import { useRegisterForm } from "@/hooks/useRegisterForm";
 type RegisterSheetProps = {
     visible: boolean;
     onClose: () => void;
+    // Set when registering as part of a scanned-QR session join.
+    joinCode?: string;
 };
 
 
 export default function RegisterSheet({
     visible,
     onClose,
+    joinCode,
 }: RegisterSheetProps) {
-    // Registration no longer signs the trainee in - closing this sheet
-    // just returns to the login form, where they log in themselves.
+    const router = useRouter();
+    // Plain registration doesn't sign the trainee in - closing this sheet
+    // returns to the login form. In the QR-join flow the hook signs them in
+    // and binds the session, so we send them straight to it.
     const { control, errors, setValue, onSubmit, loading, error } = useRegisterForm({
-        onSuccess: onClose,
+        joinCode,
+        onSuccess: () => {
+            onClose();
+            if (joinCode) router.replace("/session");
+        },
     });
 
     return (

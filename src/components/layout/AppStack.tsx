@@ -31,6 +31,7 @@ export function AppStack() {
       <Stack.Screen name="survey" />
       <Stack.Screen name="profile" />
       <Stack.Screen name="participant_login" />
+      <Stack.Screen name="join/[code]" />
     </Stack>
   );
 }

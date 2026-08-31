@@ -1,5 +1,3 @@
-import uuid
-
 from sqlalchemy import Column, Integer, String
 
 from app.database.connection import Base
@@ -12,9 +10,7 @@ class Category(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    categoryUid = Column(
-        String(100), unique=True, nullable=True, default=lambda: uuid.uuid4().hex
-    )
+    categoryUid = Column(String(100), unique=True, nullable=True)
 
     name = Column(String(200))
     status = Column(String(100), nullable=False, default="Pending")
@@ -30,9 +26,7 @@ class SubCategory(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    subCategoryUid = Column(
-        String(100), unique=True, nullable=True, default=lambda: uuid.uuid4().hex
-    )
+    subCategoryUid = Column(String(100), unique=True, nullable=True)
 
     categoryUid = Column(String(100))
     subCategory = Column(String(200))

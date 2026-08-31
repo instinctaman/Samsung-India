@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from "
 
 import { AdminAccount, AdminAuthSession } from "@/api/admin";
 import { AuthSession, Trainee } from "@/api/auth";
-import { WS_BASE_URL } from "@/constants/api";
+import { getWsBaseUrl } from "@/constants/api";
 import { USE_MOCK_DATA } from "@/config/dataSource";
 import { DEMO_AUTH_SESSION } from "@/data/mockData";
 import { emit } from "@/services/liveEvents";
@@ -51,7 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let stopped = false;
 
     const connect = () => {
-      socket = new WebSocket(`${WS_BASE_URL}/ws/admin?token=${adminToken}`);
+      socket = new WebSocket(`${getWsBaseUrl()}/ws/admin?token=${adminToken}`);
       socket.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data as string);

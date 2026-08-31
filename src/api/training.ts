@@ -112,14 +112,27 @@ export type AssessmentSummary = {
 export type TopPerformer = {
   traineeUid: string;
   name: string;
+  score: number;
+  maxScore: number;
   percentage: number;
+};
+
+export type SessionHeroStat = {
+  moduleKey: string; // "LIVE_QUIZ" | "STANDARD_TEST"
+  label: string;
+  participants: number;
+  averagePercent: number;
+  bestPercent: number;
+  topName: string | null;
 };
 
 export type TraineeRow = {
   traineeUid: string;
   name: string;
+  employeeId: string | null;
   phone: number | null;
-  status: string;
+  audienceType: string;
+  status: string; // "Present" | "Pending" | "Absent" | "Attempted"
   markedOn: string | null;
   checkOutTime: string | null;
   score: string | null;
@@ -160,6 +173,7 @@ export type SessionDashboard = {
   conferenceStatus: string;
   approvalStatus: string;
   activeModuleId: string | null;
+  activeModuleQuestionCount: number | null;
   actualStartedAt: string | null;
   actualEndedAt: string | null;
   runtimeSeconds: number | null;
@@ -169,6 +183,7 @@ export type SessionDashboard = {
   trainees: TraineeRow[];
   executionFlow: ExecutionFlowItem[];
   auditLog: AuditLogEntry[];
+  sessionHeroes: SessionHeroStat[];
 };
 
 export function createTraining(token: string, payload: TrainingCreatePayload) {

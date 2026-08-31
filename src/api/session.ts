@@ -57,6 +57,32 @@ export function getCurrentSession(token: string) {
   });
 }
 
+// The training behind a shared QR code (samsungindia://join/<code>).
+export type SessionJoinInfo = {
+  conferenceUid: string;
+  title: string;
+  sessionType: string | null;
+  date: string | null;
+  location: string | null;
+  trainerName: string | null;
+  started: boolean;
+  startsAt: string | null;
+};
+
+/** Public preview - no auth. Used by the join screen before login. */
+export function getSessionJoinInfo(code: string) {
+  return apiRequest<SessionJoinInfo>(`/sessions/join/${encodeURIComponent(code)}`);
+}
+
+/** Binds the logged-in trainee to the scanned training (and auto-approves
+ *  a trainee who arrived via a trainer-shared QR). */
+export function joinSession(code: string, token: string) {
+  return apiRequest<SessionJoinInfo>(`/sessions/join/${encodeURIComponent(code)}`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
 export type SessionHistoryItem = {
   conferenceUid: string;
   title: string;

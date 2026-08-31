@@ -1,11 +1,13 @@
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class AdminLoginRequest(BaseModel):
-    username: str
-    password: str
+    # Cap both: an unbounded password is a bcrypt slow-hash DoS vector, and
+    # an unbounded username is pointless DB-query load.
+    username: str = Field(min_length=1, max_length=150)
+    password: str = Field(min_length=1, max_length=128)
 
 
 class AdminOut(BaseModel):

@@ -1,5 +1,3 @@
-import uuid
-
 from sqlalchemy import BigInteger, Column, DateTime, Integer, String, Text, text
 from sqlalchemy.sql import func
 
@@ -16,9 +14,7 @@ class Admin(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    adminUid = Column(
-        String(100), unique=True, nullable=False, default=lambda: uuid.uuid4().hex
-    )
+    adminUid = Column(String(100), unique=True, nullable=False)
 
     name = Column(String(100))
     email = Column(String(255))

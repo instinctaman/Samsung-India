@@ -1,19 +1,30 @@
-from typing import Optional
+from typing import Annotated, Literal, Optional
 
 from pydantic import BaseModel, Field
+
+from app.schemas._common import (
+    DateLikeStr,
+    IdStr,
+    OptDateLikeStr,
+    OptDigitStr,
+    OptIdStr,
+    OptShortStr,
+    OptTextStr,
+    ShortStr,
+)
 
 
 class ModuleConfig(BaseModel):
     """One block of `conference.sessionConfig` - shared shape for the
     Standard Test, Live Quiz and Survey modules of the session flow."""
 
-    category: Optional[str] = None
-    assessmentSuiteUid: Optional[str] = None
-    questionCount: Optional[int] = None
-    startTime: Optional[str] = None
-    endTime: Optional[str] = None
+    category: OptShortStr = None
+    assessmentSuiteUid: OptIdStr = None
+    questionCount: Optional[Annotated[int, Field(ge=0, le=10_000)]] = None
+    startTime: OptDateLikeStr = None
+    endTime: OptDateLikeStr = None
     checkIn: bool = False
-    unlockCondition: Optional[str] = None
+    unlockCondition: OptShortStr = None
 
 
 class AssessmentSuiteOut(BaseModel):
@@ -27,18 +38,18 @@ class AssessmentSuiteOut(BaseModel):
 
 
 class QuestionOptionIn(BaseModel):
-    id: str
-    text: str
+    id: IdStr
+    text: Annotated[str, Field(max_length=1000)]
 
 
 class QuestionCreate(BaseModel):
-    question: str
-    questionType: str = "multiple_choice"
-    options: list[QuestionOptionIn] = []
-    correctAnswer: Optional[str] = None
-    points: int = 1
-    timerSeconds: Optional[int] = None
-    explanation: Optional[str] = None
+    question: Annotated[str, Field(min_length=1, max_length=2000)]
+    questionType: ShortStr = "multiple_choice"
+    options: Annotated[list[QuestionOptionIn], Field(max_length=20)] = []
+    correctAnswer: OptIdStr = None
+    points: Annotated[int, Field(ge=0, le=1000)] = 1
+    timerSeconds: Optional[Annotated[int, Field(ge=0, le=86_400)]] = None
+    explanation: OptTextStr = None
 
 
 class QuestionOut(BaseModel):
@@ -54,11 +65,11 @@ class QuestionOut(BaseModel):
 
 
 class AssessmentSuiteCreate(BaseModel):
-    title: str
-    description: Optional[str] = None
-    category: str
-    testTime: Optional[str] = None
-    type: str = "Quiz"
+    title: Annotated[str, Field(min_length=1, max_length=200)]
+    description: OptTextStr = None
+    category: Annotated[str, Field(min_length=1, max_length=120)]
+    testTime: OptDigitStr = None
+    type: ShortStr = "Quiz"
 
 
 class AssessmentSuiteDetail(BaseModel):
@@ -95,35 +106,35 @@ class SessionFlowConfig(BaseModel):
 
 
 class TrainingCreate(BaseModel):
-    zone: Optional[str] = None
-    region: Optional[str] = None
-    company: Optional[str] = None
-    requestedBy: Optional[str] = None
+    zone: OptShortStr = None
+    region: OptShortStr = None
+    company: OptShortStr = None
+    requestedBy: OptShortStr = None
 
-    trainerEmployeeId: Optional[str] = None
-    trainerName: Optional[str] = None
+    trainerEmployeeId: OptIdStr = None
+    trainerName: OptShortStr = None
 
-    state: Optional[str] = None
-    district: Optional[str] = None
-    venue: Optional[str] = None
+    state: OptShortStr = None
+    district: OptShortStr = None
+    venue: OptIdStr = None
 
     isResidential: bool = False
-    conferenceDate: str
-    conferenceTime: str
+    conferenceDate: DateLikeStr
+    conferenceTime: DateLikeStr
     # Only meaningful when isResidential is set - the program's last day.
     # No dedicated conference column for this yet, so it's folded into
     # sessionConfig (see create_training) rather than conferenceEndsOn,
     # which already means something else (the session's actual end
     # timestamp, set by /trainings/{uid}/end).
-    trainingEndDate: Optional[str] = None
-    trainingHub: Optional[str] = None
-    audience: Optional[str] = None
-    sessionType: Optional[str] = None
-    trainingType: Optional[str] = None
-    batchSize: Optional[str] = None
+    trainingEndDate: OptDateLikeStr = None
+    trainingHub: OptShortStr = None
+    audience: OptShortStr = None
+    sessionType: OptShortStr = None
+    trainingType: OptShortStr = None
+    batchSize: OptDigitStr = None
 
     sessionFlow: Optional[SessionFlowConfig] = None
-    checklist: Optional[list[str]] = None
+    checklist: Optional[Annotated[list[ShortStr], Field(max_length=100)]] = None
 
 
 class TrainingOut(BaseModel):
@@ -133,7 +144,7 @@ class TrainingOut(BaseModel):
 
 
 class AttendanceMarkRequest(BaseModel):
-    status: str  # "Present" | "Absent"
+    status: Literal["Present", "Absent", "Joined", "Pending"]
 
 
 class AttendanceListItemOut(BaseModel):
@@ -226,13 +237,31 @@ class AssessmentSummary(BaseModel):
 class TopPerformer(BaseModel):
     traineeUid: str
     name: str
+    score: float = 0
+    maxScore: float = 0
     percentage: float
+
+
+class SessionHeroStat(BaseModel):
+    """Per-module summary for the Session Heroes cards (Live Quiz / Test)."""
+
+    moduleKey: str  # "LIVE_QUIZ" | "STANDARD_TEST"
+    label: str
+    participants: int
+    averagePercent: float
+    bestPercent: float
+    topName: Optional[str] = None
 
 
 class TraineeRow(BaseModel):
     traineeUid: str
     name: str
+    employeeId: Optional[str] = None
     phone: Optional[int] = None
+    # "ASSIGNED" if on this trainer's roster, else "NOT ALLOCATED" (walked
+    # in / joined by QR).
+    audienceType: str = "NOT ALLOCATED"
+    # "Present" | "Pending" (joined, not checked in) | "Absent" | "Attempted"
     status: str
     markedOn: Optional[str] = None
     checkOutTime: Optional[str] = None
@@ -275,6 +304,9 @@ class SessionDashboardOut(BaseModel):
     conferenceStatus: str
     approvalStatus: str
     activeModuleId: Optional[str] = None
+    # Question count of the active module's suite - only for STANDARD_TEST /
+    # LIVE_QUIZ; None for ATTENDANCE / SURVEY / no active module.
+    activeModuleQuestionCount: Optional[int] = None
 
     actualStartedAt: Optional[str] = None
     actualEndedAt: Optional[str] = None
@@ -286,3 +318,4 @@ class SessionDashboardOut(BaseModel):
     trainees: list[TraineeRow]
     executionFlow: list[ExecutionFlowItem] = []
     auditLog: list[AuditLogEntry] = []
+    sessionHeroes: list[SessionHeroStat] = []

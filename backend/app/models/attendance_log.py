@@ -1,9 +1,7 @@
-import uuid
-
 from sqlalchemy import Column, DateTime, Integer, String, Text, text
 from sqlalchemy.sql import func
 
-from app.database.database import Base
+from app.database.connection import Base
 
 
 class AttendanceLog(Base):
@@ -14,7 +12,7 @@ class AttendanceLog(Base):
     __tablename__ = "attendance_logs"
 
     id = Column(Integer, primary_key=True, index=True)
-    logUid = Column(String(50), default=lambda: uuid.uuid4().hex)
+    logUid = Column(String(50))
 
     conferenceUid = Column(String(50), index=True)
     traineeUid = Column(String(50), index=True)

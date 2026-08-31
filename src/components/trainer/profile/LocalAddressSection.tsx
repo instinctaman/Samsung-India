@@ -1,10 +1,11 @@
-import { Pressable, StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 import AppInput from "@/components/ui/AppInput";
 import AppText from "@/components/ui/AppText";
 import { Colors } from "@/theme/colors";
 import { Fonts } from "@/theme/fonts";
+import { digitsOnly } from "@/utils/validation";
 import { TrainerProfileForm } from "./useTrainerProfileForm";
 import { ProfileSection } from "./ProfileSection";
 
@@ -48,7 +49,8 @@ export function LocalAddressSection({ form }: { form: TrainerProfileForm }) {
         value={profile.pincode}
         editable={isEditing}
         keyboardType="number-pad"
-        onChangeText={(v) => setField("pincode", v)}
+        maxLength={6}
+        onChangeText={(v) => setField("pincode", digitsOnly(v))}
       />
       <AppInput
         compact

@@ -1,7 +1,18 @@
 from datetime import date, datetime
-from typing import Literal, Optional
+from typing import Annotated, Literal, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr, Field
+
+from app.schemas._common import (
+    DigitStr,
+    IdStr,
+    NameStr,
+    OptDigitStr,
+    OptIdStr,
+    OptShortStr,
+    OptTextStr,
+    ShortStr,
+)
 
 ApprovalStatus = Literal["Approved", "Pending", "Rejected"]
 
@@ -10,36 +21,36 @@ class TraineeAdminIn(BaseModel):
     """Payload for POST /admin/trainees - the trainer/admin-side "register a
     new trainee" form. Mirrors NewTraineeInput on the frontend."""
 
-    traineeUid: str
-    profilePhoto: Optional[str] = None
-    agencyId: Optional[str] = None
-    fullName: str
-    designation: str
-    gender: str
+    traineeUid: IdStr
+    profilePhoto: OptShortStr = None
+    agencyId: OptIdStr = None
+    fullName: NameStr
+    designation: ShortStr
+    gender: ShortStr
     dob: Optional[date] = None
-    primaryEmail: str
-    primaryPhone: str
-    altEmail: Optional[str] = None
-    altPhone: Optional[str] = None
-    address: Optional[str] = None
-    state: Optional[str] = None
-    district: Optional[str] = None
-    zone: str
-    region: str
-    company: str
-    requestedBy: str
-    trainerId: str
-    trainerName: str
-    supervisorId: str
-    supervisorName: str
-    supervisorDesignation: Optional[str] = None
+    primaryEmail: EmailStr
+    primaryPhone: DigitStr
+    altEmail: Optional[EmailStr] = None
+    altPhone: OptDigitStr = None
+    address: OptTextStr = None
+    state: OptShortStr = None
+    district: OptShortStr = None
+    zone: ShortStr
+    region: ShortStr
+    company: ShortStr
+    requestedBy: ShortStr
+    trainerId: IdStr
+    trainerName: ShortStr
+    supervisorId: IdStr
+    supervisorName: ShortStr
+    supervisorDesignation: OptShortStr = None
     joinedOn: Optional[date] = None
-    jobStatus: str
-    jobCity: Optional[str] = None
-    jobPincode: Optional[str] = None
+    jobStatus: ShortStr
+    jobCity: OptShortStr = None
+    jobPincode: OptDigitStr = None
     resignedOn: Optional[date] = None
-    username: str
-    password: str
+    username: IdStr
+    password: Annotated[str, Field(min_length=1, max_length=128)]
 
 
 class TraineeAdminOut(BaseModel):

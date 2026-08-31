@@ -31,6 +31,21 @@ class CurrentSession(BaseModel):
     modules: List[SessionModule]
 
 
+class SessionJoinInfo(BaseModel):
+    """Summary of the training behind a shared QR code - shown on the
+    "You're joining …" preview before/after the scanner sends the trainee
+    through login."""
+
+    conferenceUid: str
+    title: str
+    sessionType: Optional[str] = None
+    date: Optional[str] = None
+    location: Optional[str] = None
+    trainerName: Optional[str] = None
+    started: bool
+    startsAt: Optional[str] = None
+
+
 class SessionHistoryItem(BaseModel):
     conferenceUid: str
     title: str

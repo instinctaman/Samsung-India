@@ -5,6 +5,16 @@ import { ApiError, registerNewTrainee } from "@/api/trainee";
 import { STATES } from "@/data/states";
 import { useAuth } from "@/hooks/useAuth";
 import { formatDate } from "@/components/training/add-training/formatting";
+import {
+  cleanText,
+  digitsOnly,
+  email,
+  firstError,
+  mobile10,
+  normalizeEmail,
+  pincode6,
+  required,
+} from "@/utils/validation";
 
 const randomDigits = (length: number) =>
   Array.from({ length }, () => Math.floor(Math.random() * 10)).join("");
@@ -69,18 +79,26 @@ export function useNewTraineeForm() {
   };
 
   const handleSubmit = async () => {
-    if (
-      !zone || !region || !company || !requestedBy ||
-      !trainerId || !supervisorId ||
-      !traineeUid.trim() || !fullName.trim() || !designation || !gender ||
-      !primaryEmail.trim() || !primaryPhone.trim() ||
-      !stateValue || !district
-    ) {
+    const missingRequired = firstError(
+      required(zone), required(region), required(company), required(requestedBy),
+      required(trainerId), required(supervisorId), required(traineeUid),
+      required(fullName), required(designation), required(gender),
+      required(primaryEmail), required(primaryPhone),
+      required(stateValue), required(district),
+    );
+    if (missingRequired) {
       setNotice("Please fill in all required (*) fields.");
       return;
     }
-    if (primaryPhone.trim().length !== 10) {
-      setNotice("Primary phone must be a 10 digit mobile number.");
+    const formatError = firstError(
+      email(primaryEmail, "Primary email"),
+      email(altEmail, "Alt email"),
+      mobile10(primaryPhone, "Primary phone"),
+      mobile10(altPhone, "Alt phone"),
+      pincode6(jobPincode, "Job pincode"),
+    );
+    if (formatError) {
+      setNotice(formatError);
       return;
     }
     if (!verified) {
@@ -96,18 +114,18 @@ export function useNewTraineeForm() {
     setNotice(null);
     try {
       await registerNewTrainee(adminToken, {
-        traineeUid: traineeUid.trim(),
+        traineeUid: cleanText(traineeUid, 50),
         profilePhoto,
         agencyId: agencyId || null,
-        fullName: fullName.trim(),
+        fullName: cleanText(fullName, 120),
         designation,
         gender,
         dob: dob || null,
-        primaryEmail: primaryEmail.trim(),
-        primaryPhone: primaryPhone.trim(),
-        altEmail: altEmail.trim() || null,
-        altPhone: altPhone.trim() || null,
-        address: address.trim() || null,
+        primaryEmail: normalizeEmail(primaryEmail),
+        primaryPhone: digitsOnly(primaryPhone),
+        altEmail: normalizeEmail(altEmail) || null,
+        altPhone: digitsOnly(altPhone) || null,
+        address: cleanText(address, 300) || null,
         state: stateValue,
         district,
         zone,
@@ -121,10 +139,10 @@ export function useNewTraineeForm() {
         supervisorDesignation: supervisorDesignation || null,
         joinedOn,
         jobStatus,
-        jobCity: jobCity.trim() || null,
-        jobPincode: jobPincode.trim() || null,
+        jobCity: cleanText(jobCity, 80) || null,
+        jobPincode: digitsOnly(jobPincode) || null,
         resignedOn: resignedOn || null,
-        username: traineeUid.trim(),
+        username: cleanText(traineeUid, 50),
         password,
       });
 

@@ -1,10 +1,5 @@
-import { Platform } from "react-native";
-
-// In Expo, EXPO_PUBLIC_* env vars are inlined at bundle time.
-// Set default host to your computer's local Wi-Fi IP so physical devices on Wi-Fi,
-// emulators, and web browsers can all reach FastAPI without depending on .env reload.
-const DEFAULT_HOST = "192.168.29.237";
-
-// Only used when USE_MOCK_DATA is false (see src/config/dataSource.ts).
-export const API_BASE_URL =
-  process.env.EXPO_PUBLIC_API_URL || `http://${DEFAULT_HOST}:8000`;
+// The backend URL is runtime-configurable (gear icon on the role screen) so
+// a changed PC IP / Wi-Fi never needs a rebuild - see src/config/serverUrl.ts.
+// Import the getters, not a constant: they resolve per call so an edit takes
+// effect on the next request without an app restart.
+export { getApiBaseUrl, getWsBaseUrl, DEFAULT_API_URL } from "@/config/serverUrl";

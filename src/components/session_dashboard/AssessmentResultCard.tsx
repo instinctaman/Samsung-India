@@ -13,9 +13,9 @@ type AssessmentResultCardProps = {
 };
 
 export default function AssessmentResultCard({
-  passCount: passCountProp = 14,
-  failCount: failCountProp = 4,
-  passRate: passRateProp = 82,
+  passCount: passCountProp = 0,
+  failCount: failCountProp = 0,
+  passRate: passRateProp = 0,
   hasStarted = true,
 }: AssessmentResultCardProps) {
   const passCount = hasStarted ? passCountProp : 0;

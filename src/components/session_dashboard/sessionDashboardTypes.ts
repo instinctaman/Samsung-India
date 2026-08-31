@@ -27,13 +27,15 @@ export type ProctoringStatus = {
   logs: ProctoringLog[];
 };
 
+export type ParticipantStatus = "PRESENT" | "ABSENT" | "PENDING";
+
 export type ParticipantItem = {
   id: string;
   name: string;
   employeeId: string;
   phone: string;
   attendeeType: "ASSIGNED" | "NOT ALLOCATED";
-  status: "PRESENT" | "ABSENT";
+  status: ParticipantStatus;
   inTime: string;
   outTime: string;
   proctoring?: ProctoringStatus;

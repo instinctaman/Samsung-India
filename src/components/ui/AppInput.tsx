@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import {
+  Pressable,
   StyleSheet,
   TextInput,
   View,
@@ -29,8 +30,13 @@ export default function AppInput({
   icon,
   compact = false,
   style,
+  secureTextEntry,
   ...props
 }: AppInputProps) {
+  // Any password field gets a show/hide eye toggle for free.
+  const isPassword = !!secureTextEntry;
+  const [hidden, setHidden] = useState(true);
+
   return (
     <View style={styles.container}>
       {label && (
@@ -46,12 +52,29 @@ export default function AppInput({
             styles.input,
             compact && styles.inputCompact,
             icon && styles.inputWithIcon,
+            isPassword && styles.inputWithTrailing,
             props.editable === false && styles.inputDisabled,
             style,
           ]}
           placeholderTextColor={Colors.gray400}
+          secureTextEntry={isPassword && hidden}
           {...props}
         />
+        {isPassword && (
+          <Pressable
+            style={styles.trailingBtn}
+            onPress={() => setHidden((v) => !v)}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={hidden ? "Show password" : "Hide password"}
+          >
+            <Ionicons
+              name={hidden ? "eye-off-outline" : "eye-outline"}
+              size={compact ? 16 : 18}
+              color={Colors.gray600}
+            />
+          </Pressable>
+        )}
       </View>
 
       {caption && (
@@ -104,6 +127,18 @@ const styles = StyleSheet.create({
 
   inputWithIcon: {
     paddingLeft: Spacing.lg + 16 + 8,
+  },
+
+  inputWithTrailing: {
+    paddingRight: Spacing.lg + 18 + 8,
+  },
+
+  trailingBtn: {
+    position: "absolute",
+    right: Spacing.lg,
+    height: "100%",
+    justifyContent: "center",
+    zIndex: 1,
   },
 
   inputDisabled: {

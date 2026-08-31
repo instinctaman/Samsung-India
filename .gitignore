@@ -46,6 +46,7 @@ example
 
 # local-only DB schema exports
 mmtbtwob_tops.sql
+backend/backups/
 
 
 *.md 

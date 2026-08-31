@@ -1,5 +1,4 @@
 import json
-import uuid
 
 from sqlalchemy.orm import Session
 
@@ -64,7 +63,6 @@ def _suite_to_detail(db: Session, suite: AssessmentSuite) -> AssessmentSuiteDeta
 
 def create_assessment_suite(db: Session, payload: AssessmentSuiteCreate) -> AssessmentSuiteDetail:
     suite = AssessmentSuite(
-        assessmentSuiteUid=uuid.uuid4().hex,
         courseName=payload.title,
         examTitle=payload.title,
         description=payload.description,

@@ -24,10 +24,21 @@ def _clear_existing_if_retest_allowed(db: Session, conference_uid: str, trainee_
     return existing
 
 
+def _promote_if_pending(db: Session, existing: Attendance) -> AttendanceOut:
+    """A trainee who joined via QR/link already has a "Pending" attendance
+    row (see session_service.join_session) - check-in flips it to Present
+    rather than being a no-op."""
+    if existing.status != "Present":
+        existing.status = "Present"
+        existing.markedOn = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        attendance_repository.save(db)
+    return AttendanceOut(status=existing.status, markedOn=existing.markedOn)
+
+
 def check_in(db: Session, trainee: Trainee, payload: CheckInRequest, background_tasks: BackgroundTasks) -> AttendanceOut:
     existing = _clear_existing_if_retest_allowed(db, payload.conferenceUid, trainee.traineeUid)
     if existing:
-        return AttendanceOut(status=existing.status, markedOn=existing.markedOn)
+        return _promote_if_pending(db, existing)
 
     conference = conference_repository.get_by_uid(db, payload.conferenceUid)
 
@@ -89,7 +100,7 @@ async def check_in_secure(
 
     existing = _clear_existing_if_retest_allowed(db, conference_uid, trainee.traineeUid)
     if existing:
-        return AttendanceOut(status=existing.status, markedOn=existing.markedOn)
+        return _promote_if_pending(db, existing)
 
     conference = conference_repository.get_by_uid(db, conference_uid)
 

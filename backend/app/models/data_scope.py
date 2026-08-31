@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Enum, Integer, String
 
-from app.database.database import Base
+from app.database.connection import Base
 
 
 class DataScope(Base):

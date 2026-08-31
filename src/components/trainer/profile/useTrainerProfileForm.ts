@@ -4,6 +4,7 @@ import { useFocusEffect } from "expo-router";
 import { TrainerProfile, fetchTrainerProfile, updateTrainerProfile } from "@/api/trainerProfile";
 import { useAuth } from "@/hooks/useAuth";
 import { ProfileSectionKey, PROFILE_SECTION_FIELDS } from "./types";
+import { sanitizeProfileSection, validateProfileSection } from "./sanitizeProfile";
 
 const EMPTY_EDITING: Record<ProfileSectionKey, boolean> = {
   personal: false,
@@ -48,13 +49,22 @@ export function useTrainerProfileForm() {
 
   const saveSection = async (section: ProfileSectionKey) => {
     if (!adminToken || !profile) return;
+
+    const validationError = validateProfileSection(section, profile);
+    if (validationError) {
+      setNotice(validationError);
+      return;
+    }
+    const sanitized = sanitizeProfileSection(section, profile);
+    setProfile(sanitized);
+
     setSavingSection(section);
     setNotice(null);
     try {
       const keys = PROFILE_SECTION_FIELDS[section] as (keyof TrainerProfile)[];
       const payload: Partial<TrainerProfile> = {};
       keys.forEach((key) => {
-        (payload as Record<string, unknown>)[key] = profile[key];
+        (payload as Record<string, unknown>)[key] = sanitized[key];
       });
       const updated = await updateTrainerProfile(adminToken, payload);
       setProfile(updated);

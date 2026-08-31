@@ -1,19 +1,18 @@
 from datetime import datetime
 import json
-import pstats
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.dependencies.auth import get_current_trainee
 from app.dependencies.database import get_db
 from app.models.trainee import Trainee
-from app.schemas.session import CurrentSession, SessionHistoryItem, SessionModule
+from app.schemas.session import CurrentSession, SessionHistoryItem, SessionJoinInfo, SessionModule
 from app.services import session_service
-from backend.app.models.attendance import Attendance
-from backend.app.models.conference import Conference
-from backend.app.models.quiz import AssessmentResult
-from backend.app.services.module_flow import auto_advance_if_due, configured_modules
+from app.models.attendance import Attendance
+from app.models.conference import Conference
+from app.models.quiz import AssessmentResult
+from app.services.module_flow import auto_advance_if_due, configured_modules
 
 router = APIRouter(prefix="/sessions", tags=["sessions"])
 
@@ -168,6 +167,20 @@ def _select_current_conference(
     return None, False, None
 
 
+@router.get("/join/{code}", response_model=SessionJoinInfo)
+def get_session_join_info(code: str, db: Session = Depends(get_db)):
+    return session_service.get_join_info(db, code)
+
+
+@router.post("/join/{code}", response_model=SessionJoinInfo)
+def join_session(
+    code: str,
+    db: Session = Depends(get_db),
+    trainee: Trainee = Depends(get_current_trainee),
+):
+    return session_service.join_session(db, trainee, code)
+
+
 @router.get("/current", response_model=CurrentSession)
 def get_current_session(
     db: Session = Depends(get_db),
@@ -176,7 +189,7 @@ def get_current_session(
     conference, started, start_at = _select_current_conference(db, trainee=trainee)
     if not conference:
         raise HTTPException(
-            status_code=pstats.HTTP_404_NOT_FOUND,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="No active training session found",
         )
 

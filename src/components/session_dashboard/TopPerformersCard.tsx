@@ -7,23 +7,16 @@ import { Shadows } from "@/theme/shadows";
 import { TopPerformer } from "./sessionDashboardTypes";
 
 type TopPerformersCardProps = {
-  performers?: TopPerformer[];
+  performers: TopPerformer[];
   hasStarted?: boolean;
 };
 
-const DEFAULT_PERFORMERS: TopPerformer[] = [
-  { id: "1", name: "PRAMODHB BORI", score: 50, maxScore: 50, percentage: 100 },
-  { id: "2", name: "AMRIT KUMAR", score: 48, maxScore: 50, percentage: 96 },
-  { id: "3", name: "ANAND SINGH", score: 46, maxScore: 50, percentage: 92 },
-  { id: "4", name: "AMLESH THAKUR", score: 45, maxScore: 50, percentage: 90 },
-  { id: "5", name: "PRAMODHB BORI", score: 45, maxScore: 50, percentage: 90 },
-];
-
 export default function TopPerformersCard({
-  performers = DEFAULT_PERFORMERS,
+  performers,
   hasStarted = true,
 }: TopPerformersCardProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const hasData = performers.length > 0;
 
   return (
     <View style={styles.card}>
@@ -34,7 +27,7 @@ export default function TopPerformersCard({
           <Text style={styles.title}>TOP PERFORMERS</Text>
         </View>
 
-        {hasStarted && (
+        {hasStarted && hasData && (
           <Pressable
             style={styles.toggleBtn}
             onPress={() => setIsCollapsed((prev) => !prev)}
@@ -55,7 +48,7 @@ export default function TopPerformersCard({
       </View>
 
       {/* Empty State */}
-      {!hasStarted && (
+      {(!hasStarted || !hasData) && (
         <View style={styles.emptyState}>
           <Text style={styles.emptyTrophy}>🏆</Text>
           <Text style={styles.emptyTitle}>Leaderboard Empty</Text>
@@ -66,7 +59,7 @@ export default function TopPerformersCard({
       )}
 
       {/* List */}
-      {hasStarted && !isCollapsed && (
+      {hasStarted && hasData && !isCollapsed && (
         <View style={styles.list}>
           {performers.map((performer, index) => (
             <View key={`${performer.id}-${index}`} style={styles.performerRow}>

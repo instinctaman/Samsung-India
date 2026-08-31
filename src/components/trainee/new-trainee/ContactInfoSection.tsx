@@ -5,6 +5,7 @@ import AppInput from "@/components/ui/AppInput";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { SectionTitle } from "@/components/training/add-training/SectionTitle";
 import { STATES } from "@/data/states";
+import { digitsOnly } from "@/utils/validation";
 import { NewTraineeForm } from "./useNewTraineeForm";
 
 export function ContactInfoSection({ form }: { form: NewTraineeForm }) {
@@ -27,7 +28,7 @@ export function ContactInfoSection({ form }: { form: NewTraineeForm }) {
         keyboardType="number-pad"
         maxLength={10}
         value={form.primaryPhone}
-        onChangeText={(v) => form.setPrimaryPhone(v.replace(/[^0-9]/g, ""))}
+        onChangeText={(v) => form.setPrimaryPhone(digitsOnly(v))}
       />
       <AppInput
         label="Alt Email"
@@ -45,7 +46,7 @@ export function ContactInfoSection({ form }: { form: NewTraineeForm }) {
         keyboardType="number-pad"
         maxLength={10}
         value={form.altPhone}
-        onChangeText={(v) => form.setAltPhone(v.replace(/[^0-9]/g, ""))}
+        onChangeText={(v) => form.setAltPhone(digitsOnly(v))}
       />
       <AppInput
         label="Permanent Address"

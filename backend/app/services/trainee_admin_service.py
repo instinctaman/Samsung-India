@@ -8,13 +8,14 @@ from app.models.trainee import Trainee
 from app.repositories import trainee_repository
 from app.routers.ws import manager as ws_manager
 from app.schemas.trainee_admin import TraineeAdminIn, TraineeAdminOut
+from app.utils.status import title_status
 
 
 def _trainee_to_admin_out(t: Trainee) -> TraineeAdminOut:
     return TraineeAdminOut(
         traineeUid=t.traineeUid,
         registeredAt=t.timestamp.strftime("%Y-%m-%d %H:%M:%S") if t.timestamp else "",
-        approvalStatus=t.status,
+        approvalStatus=title_status(t.status),
         profilePhoto=t.profilePhoto,
         agencyId=t.agencyId,
         fullName=t.name,

@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Enum, ForeignKey, Integer, text
 from sqlalchemy.orm import relationship
 
-from app.database.database import Base
+from app.database.connection import Base
 
 
 class UserPermission(Base):

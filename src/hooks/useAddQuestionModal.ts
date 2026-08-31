@@ -6,6 +6,7 @@ import {
   QuestionOption,
   addAssessmentQuestion,
 } from "@/api/training";
+import { cleanText, digitsOnly, firstError, intInRange, required } from "@/utils/validation";
 
 const DEFAULT_OPTIONS: QuestionOption[] = [
   { id: "1", text: "" },
@@ -56,11 +57,19 @@ export function useAddQuestionModal({ adminToken, suiteUid, onAdded }: UseAddQue
   };
 
   const handleSave = async () => {
-    if (!adminToken || !question.trim()) {
-      setError("Question text is required.");
+    const validationError = firstError(
+      required(question, "Question text"),
+      intInRange(points, 1, 100, "Points", true),
+      intInRange(timerSeconds, 5, 600, "Timer (seconds)", true),
+    );
+    if (validationError) {
+      setError(validationError);
       return;
     }
-    const cleanOptions = options.filter((o) => o.text.trim());
+    if (!adminToken) return;
+    const cleanOptions = options
+      .map((opt) => ({ ...opt, text: cleanText(opt.text, 300) }))
+      .filter((opt) => opt.text);
     if (cleanOptions.length < 2) {
       setError("Please provide at least 2 options.");
       return;
@@ -69,10 +78,10 @@ export function useAddQuestionModal({ adminToken, suiteUid, onAdded }: UseAddQue
     setError(null);
     try {
       const updated = await addAssessmentQuestion(adminToken, suiteUid, {
-        question: question.trim(),
+        question: cleanText(question, 500),
         questionType,
-        points: Number(points) || 1,
-        timerSeconds: Number(timerSeconds) || 30,
+        points: Number(digitsOnly(points)) || 1,
+        timerSeconds: Number(digitsOnly(timerSeconds)) || 30,
         options: cleanOptions,
         correctAnswer,
       });

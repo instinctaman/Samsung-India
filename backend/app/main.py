@@ -35,7 +35,7 @@ app.mount("/media", StaticFiles(directory=MEDIA_ROOT), name="media")
 # ALLOWED_ORIGINS env var; defaults to common local Expo web dev ports.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.allowed_origins_list,
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],

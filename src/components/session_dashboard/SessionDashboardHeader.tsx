@@ -12,6 +12,7 @@ type SessionDashboardHeaderProps = {
   timestamp?: string;
   isClosed?: boolean;
   hasStarted?: boolean;
+  isLive?: boolean;
   isApproved?: boolean;
   loading?: boolean;
   onBack: () => void;
@@ -28,6 +29,7 @@ export default function SessionDashboardHeader({
   timestamp = "Generated: 29 July 2026, 11:09 AM",
   isClosed = false,
   hasStarted = true,
+  isLive = false,
   isApproved = true,
   loading = false,
   onBack,
@@ -84,16 +86,18 @@ export default function SessionDashboardHeader({
               <Text style={styles.squareBtnText}>Copy Link</Text>
             </Pressable>
 
-            <Pressable
-              style={styles.headerSquareBtn}
-              onPress={onShowQR}
-              hitSlop={6}
-              accessibilityRole="button"
-              accessibilityLabel="Show QR"
-            >
-              <Ionicons name="qr-code-outline" size={16} color={Colors.white} />
-              <Text style={styles.squareBtnText}>Show QR</Text>
-            </Pressable>
+            {isLive && (
+              <Pressable
+                style={styles.headerSquareBtn}
+                onPress={onShowQR}
+                hitSlop={6}
+                accessibilityRole="button"
+                accessibilityLabel="Show QR"
+              >
+                <Ionicons name="qr-code-outline" size={16} color={Colors.white} />
+                <Text style={styles.squareBtnText}>Show QR</Text>
+              </Pressable>
+            )}
           </View>
         </View>
 

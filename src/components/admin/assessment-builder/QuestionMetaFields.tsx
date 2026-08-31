@@ -5,6 +5,7 @@ import AppSelect from "@/components/ui/AppSelect";
 import AppText from "@/components/ui/AppText";
 import { Fonts } from "@/theme/fonts";
 import { FontWeight } from "@/theme/fontWeight";
+import { digitsOnly } from "@/utils/validation";
 import { QUESTION_TYPE_LABELS, QUESTION_TYPE_OPTIONS } from "./constants";
 
 type QuestionMetaFieldsProps = {
@@ -43,7 +44,13 @@ export default function QuestionMetaFields({
         <AppText style={styles.fieldLabel} weight={FontWeight.medium}>
           Pts
         </AppText>
-        <AppInput placeholder="1" keyboardType="number-pad" value={points} onChangeText={setPoints} />
+        <AppInput
+          placeholder="1"
+          keyboardType="number-pad"
+          maxLength={3}
+          value={points}
+          onChangeText={(v) => setPoints(digitsOnly(v))}
+        />
       </View>
       <View style={styles.sheetQuarter}>
         <AppText style={styles.fieldLabel} weight={FontWeight.medium}>
@@ -52,8 +59,9 @@ export default function QuestionMetaFields({
         <AppInput
           placeholder="30"
           keyboardType="number-pad"
+          maxLength={3}
           value={timerSeconds}
-          onChangeText={setTimerSeconds}
+          onChangeText={(v) => setTimerSeconds(digitsOnly(v))}
         />
       </View>
     </View>

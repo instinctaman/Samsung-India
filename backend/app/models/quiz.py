@@ -1,5 +1,3 @@
-import uuid
-
 from sqlalchemy import Column, DateTime, Integer, Numeric, String, Text, text
 from sqlalchemy.sql import func
 
@@ -85,7 +83,7 @@ class Assessment(Base):
     __tablename__ = "assessment"
 
     id = Column(Integer, primary_key=True, index=True)
-    assessmentUid = Column(String(100), default=lambda: uuid.uuid4().hex)
+    assessmentUid = Column(String(100))
     assessmentSuiteUid = Column(String(100), index=True)
     conferenceUid = Column(String(100), index=True)
     traineeUid = Column(String(100), index=True)
@@ -117,7 +115,7 @@ class AssessmentResult(Base):
     __tablename__ = "assessment_results"
 
     id = Column(Integer, primary_key=True, index=True)
-    resultUid = Column(String(50), default=lambda: uuid.uuid4().hex)
+    resultUid = Column(String(50))
     conferenceUid = Column(String(50), index=True)
     traineeUid = Column(String(50), index=True)
     assessmentSuiteUid = Column(String(50), index=True)

@@ -30,10 +30,13 @@ export default function SessionDashboardScreen() {
     handleCopyLink,
     handleStartSession,
     handleConfirmStartSession,
+    handleMarkAttendance,
+    handleAdvanceModule,
     handleEndSession,
     handleBottomNavSelect,
     isSessionClosed,
     showSessionData,
+    isLive,
     isApproved,
   } = useSessionDashboardScreen();
 
@@ -43,6 +46,7 @@ export default function SessionDashboardScreen() {
         conferenceUid={conferenceUid}
         isClosed={isSessionClosed}
         hasStarted={showSessionData}
+        isLive={isLive}
         isApproved={isApproved}
         loading={loading}
         timestamp={generatedAt}
@@ -61,6 +65,8 @@ export default function SessionDashboardScreen() {
         showSessionData={showSessionData}
         refreshing={refreshing}
         onRefresh={() => loadData("refresh")}
+        onAdvanceModule={handleAdvanceModule}
+        onMarkAttendance={handleMarkAttendance}
         onEndSession={handleEndSession}
         onLeaderboard={() => router.push({ pathname: "/quiz_leaderboard", params: { conferenceUid } })}
       />

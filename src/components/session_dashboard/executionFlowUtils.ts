@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 
-import { ExecutionFlowItem, ExecutionFlowStatus } from "@/api/training";
+import { ExecutionFlowStatus } from "@/api/training";
 
 export type ModuleVisual = {
   icon: keyof typeof Ionicons.glyphMap;
@@ -38,18 +38,4 @@ export function formatElapsed(totalSeconds: number): string {
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = Math.floor(totalSeconds % 60);
   return hours > 0 ? `${hours}h ${minutes}m ${seconds}s` : `${minutes}m ${seconds}s`;
-}
-
-// Running modules don't carry a fixed elapsedSeconds yet, so it's derived
-// live from startedAt on every render (the screen already polls every 5s).
-export function getElapsedDisplay(item: ExecutionFlowItem): string | null {
-  if (item.elapsedSeconds != null) return formatElapsed(item.elapsedSeconds);
-  if (item.status === "Running" && item.startedAt) {
-    const startedMs = new Date(item.startedAt.replace(" ", "T")).getTime();
-    if (!isNaN(startedMs)) {
-      const seconds = Math.max(0, Math.floor((Date.now() - startedMs) / 1000));
-      return formatElapsed(seconds);
-    }
-  }
-  return null;
 }

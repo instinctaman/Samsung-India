@@ -1,5 +1,3 @@
-import uuid
-
 from sqlalchemy import BigInteger, Column, Date, DateTime, Integer, String, Text, text
 from sqlalchemy.sql import func
 
@@ -15,9 +13,7 @@ class Trainee(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    traineeUid = Column(
-        String(100), unique=True, nullable=False, default=lambda: uuid.uuid4().hex
-    )
+    traineeUid = Column(String(100), unique=True, nullable=False)
 
     name = Column(String(100), nullable=False)
     email = Column(String(100), unique=True, nullable=False)

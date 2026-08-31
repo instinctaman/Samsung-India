@@ -1,5 +1,4 @@
 import json
-import uuid
 from datetime import datetime
 from typing import List, Optional
 
@@ -18,8 +17,8 @@ from app.schemas.assessment import (
     SubmitRequest,
     SubmitResult,
 )
-from backend.app.models.quiz import Assessment, AssessmentResult, AssessmentSuite, Question
-from backend.app.services import assessment_service
+from app.models.quiz import Assessment, AssessmentResult, AssessmentSuite, Question
+from app.services import assessment_service
 
 router = APIRouter(prefix="/assessments", tags=["assessments"])
 
@@ -66,7 +65,6 @@ def submit_assessment(
 
         db.add(
             Assessment(
-                assessmentUid=uuid.uuid4().hex,
                 assessmentSuiteUid=suite_uid,
                 conferenceUid=payload.conferenceUid,
                 traineeUid=trainee.traineeUid,
@@ -88,7 +86,6 @@ def submit_assessment(
 
     db.add(
         AssessmentResult(
-            resultUid=uuid.uuid4().hex,
             conferenceUid=payload.conferenceUid,
             traineeUid=trainee.traineeUid,
             assessmentSuiteUid=suite_uid,

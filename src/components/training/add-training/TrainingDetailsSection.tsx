@@ -8,6 +8,7 @@ import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { Colors } from "@/theme/colors";
 import { Fonts } from "@/theme/fonts";
 import { Spacing } from "@/theme/spacing";
+import { digitsOnly } from "@/utils/validation";
 import { DateTimeField } from "./DateTimeField";
 import { SectionTitle } from "./SectionTitle";
 import {
@@ -98,8 +99,9 @@ export function TrainingDetailsSection({ form }: { form: AddTrainingForm }) {
         placeholder="Enter Batch Size"
         icon="people-outline"
         keyboardType="number-pad"
+        maxLength={6}
         value={form.batchSize}
-        onChangeText={form.setBatchSize}
+        onChangeText={(v) => form.setBatchSize(digitsOnly(v))}
       />
     </AppCard>
   );

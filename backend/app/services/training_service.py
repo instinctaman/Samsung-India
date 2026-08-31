@@ -1,5 +1,4 @@
 import json
-import uuid
 from collections import defaultdict
 from datetime import date, datetime
 from typing import Optional
@@ -24,6 +23,7 @@ from app.repositories import (
     trainee_repository,
 )
 from app.routers.ws import manager as ws_manager
+from app.utils.status import title_status
 from app.utils.validators import validate_image_upload
 from app.schemas.training import (
     AssessmentSummary,
@@ -34,6 +34,7 @@ from app.schemas.training import (
     ExecutionFlowItem,
     PendingSessionItem,
     SessionDashboardOut,
+    SessionHeroStat,
     TopPerformer,
     TraineeRow,
     TrainerAgendaResponse,
@@ -86,6 +87,69 @@ def _execution_flow(db: Session, conference: Conference) -> list[ExecutionFlowIt
 
 def activity_log_list(db: Session, conference_uid: str) -> list[ConferenceActivityLog]:
     return activity_log_repository.list_for_conference(db, conference_uid)
+
+
+def _suite_for_module(conference: Conference, module_key: str) -> Optional[str]:
+    """Which assessment suite a module runs against. Only STANDARD_TEST and
+    LIVE_QUIZ have one."""
+    if module_key == "STANDARD_TEST":
+        return conference.postAssessmentUid
+    if module_key == "LIVE_QUIZ" and conference.sessionConfig:
+        try:
+            return json.loads(conference.sessionConfig).get("liveQuiz", {}).get("assessmentSuiteUid")
+        except ValueError:
+            return None
+    return None
+
+
+def _active_module_question_count(db: Session, conference: Conference) -> Optional[int]:
+    """Question count of the currently-live module's suite - drives the
+    "Targeted N QPs" pill on the Active Module card."""
+    suite_uid = _suite_for_module(conference, conference.activeModuleId or "")
+    if not suite_uid:
+        return None
+    return assessment_repository.count_questions_for_suite(db, suite_uid)
+
+
+def _session_heroes(db: Session, conference: Conference) -> list[SessionHeroStat]:
+    """Per-module quiz/test summary (participants, average %, best %, top
+    scorer) for the Session Heroes cards - from the latest attempt each
+    trainee made on that module's suite."""
+    hero_modules = [m for m in ("LIVE_QUIZ", "STANDARD_TEST") if m in configured_modules(conference)]
+    if not hero_modules:
+        return []
+
+    all_results = assessment_repository.list_results_for_conferences(db, [conference.conferenceUid])
+    latest_by_suite: dict[str, dict[str, object]] = {}
+    for r in all_results:  # ordered attemptNumber desc -> first seen per trainee is latest
+        latest_by_suite.setdefault(r.assessmentSuiteUid, {}).setdefault(r.traineeUid, r)
+
+    per_module = []
+    for module_key in hero_modules:
+        suite_uid = _suite_for_module(conference, module_key)
+        rows = list(latest_by_suite.get(suite_uid, {}).values()) if suite_uid else []
+        best = max(rows, key=lambda r: float(r.percentage)) if rows else None
+        per_module.append((module_key, rows, best))
+
+    best_uids = {best.traineeUid for _, _, best in per_module if best}
+    names = (
+        {t.traineeUid: t.name for t in trainee_repository.get_by_uids(db, best_uids)} if best_uids else {}
+    )
+
+    heroes: list[SessionHeroStat] = []
+    for module_key, rows, best in per_module:
+        pcts = [float(r.percentage) for r in rows]
+        heroes.append(
+            SessionHeroStat(
+                moduleKey=module_key,
+                label=MODULE_LABELS.get(module_key, module_key),
+                participants=len(rows),
+                averagePercent=round(sum(pcts) / len(pcts), 1) if pcts else 0.0,
+                bestPercent=round(max(pcts), 1) if pcts else 0.0,
+                topName=names.get(best.traineeUid) if best else None,
+            )
+        )
+    return heroes
 
 
 def _pair_runs(
@@ -171,7 +235,6 @@ def create_training(db: Session, payload: TrainingCreate, background_tasks: Back
             session_config["survey"] = payload.sessionFlow.survey.model_dump(exclude_none=True)
 
     conference = Conference(
-        conferenceUid=uuid.uuid4().hex,
         zone=payload.zone,
         region=payload.region,
         company=payload.company,
@@ -268,8 +331,8 @@ def _to_agenda_item(
         hoid=conference.trainerEmployeeId,
         conferenceDate=conference.conferenceDate,
         conferenceTime=conference.conferenceTime,
-        conferenceStatus=conference.conferenceStatus,
-        approvalStatus=conference.status,
+        conferenceStatus=title_status(conference.conferenceStatus),
+        approvalStatus=title_status(conference.status),
         location=", ".join(filter(None, [conference.district, conference.state])) or None,
         batchSize=conference.batchSize,
         trainingType=conference.trainingType,
@@ -383,7 +446,7 @@ def list_pending_trainings(db: Session) -> list[PendingSessionItem]:
             trainerName=c.trainerName,
             conferenceDate=c.conferenceDate,
             conferenceTime=c.conferenceTime,
-            status=c.status,
+            status=title_status(c.status),
         )
         for c in conferences
     ]
@@ -426,6 +489,11 @@ def _build_dashboard(db: Session, conference: Conference) -> SessionDashboardOut
 
     attendance_rows = attendance_repository.list_for_conference(db, conference_uid)
     present_trainee_uids = {a.traineeUid for a in attendance_rows if a.status == "Present"}
+    # Participants = trainees who joined via QR/link ("Joined") or have a real
+    # attendance event ("Present"/"Absent"). The pre-seeded roster "Pending"
+    # rows are deliberately excluded - the master list is who actually turned
+    # up / signed in, not the whole assigned roster.
+    participating_uids = {a.traineeUid for a in attendance_rows if a.status != "Pending"}
 
     result_rows: list = []
     if conference.postAssessmentUid:
@@ -438,18 +506,35 @@ def _build_dashboard(db: Session, conference: Conference) -> SessionDashboardOut
     for result in result_rows:
         latest_result_by_trainee.setdefault(result.traineeUid, result)
 
-    participant_uids = present_trainee_uids | set(latest_result_by_trainee.keys())
+    participant_uids = participating_uids | set(latest_result_by_trainee.keys())
     trainees_by_uid = {t.traineeUid: t for t in trainee_repository.get_by_uids(db, participant_uids)}
 
     attendance_by_trainee = {a.traineeUid: a for a in attendance_rows}
+
+    def _row_status(uid: str) -> str:
+        att = attendance_by_trainee.get(uid)
+        if att is None:
+            return "Attempted"
+        if att.status == "Present":
+            return "Present"
+        if att.status == "Absent":
+            return "Absent"
+        return "Pending"  # "Joined" - on the list, not checked in yet
 
     trainee_rows = [
         TraineeRow(
             traineeUid=uid,
             name=trainees_by_uid[uid].name if uid in trainees_by_uid else "Unknown Trainee",
+            employeeId=trainees_by_uid[uid].employee_id if uid in trainees_by_uid else None,
             phone=trainees_by_uid[uid].phone if uid in trainees_by_uid else None,
             profilePhoto=trainees_by_uid[uid].profilePhoto if uid in trainees_by_uid else None,
-            status="Present" if uid in present_trainee_uids else "Attempted",
+            audienceType=(
+                "ASSIGNED"
+                if uid in trainees_by_uid
+                and trainees_by_uid[uid].trainerEmployeeId == conference.trainerEmployeeId
+                else "NOT ALLOCATED"
+            ),
+            status=_row_status(uid),
             markedOn=attendance_by_trainee[uid].markedOn if uid in attendance_by_trainee else None,
             checkOutTime=(
                 attendance_by_trainee[uid].checkOutTime.strftime("%Y-%m-%d %H:%M:%S")
@@ -487,9 +572,10 @@ def _build_dashboard(db: Session, conference: Conference) -> SessionDashboardOut
         conferenceTime=conference.conferenceTime,
         trainerName=conference.trainerName,
         location=", ".join(filter(None, [conference.district, conference.state])) or None,
-        conferenceStatus=conference.conferenceStatus,
-        approvalStatus=conference.status,
+        conferenceStatus=title_status(conference.conferenceStatus),
+        approvalStatus=title_status(conference.status),
         activeModuleId=conference.activeModuleId,
+        activeModuleQuestionCount=_active_module_question_count(db, conference),
         actualStartedAt=conference.actualStartedAt.isoformat() if conference.actualStartedAt else None,
         actualEndedAt=conference.actualEndedAt.isoformat() if conference.actualEndedAt else None,
         runtimeSeconds=runtime_seconds,
@@ -501,6 +587,8 @@ def _build_dashboard(db: Session, conference: Conference) -> SessionDashboardOut
             TopPerformer(
                 traineeUid=r.traineeUid,
                 name=trainees_by_uid[r.traineeUid].name if r.traineeUid in trainees_by_uid else "Unknown Trainee",
+                score=float(r.totalScore),
+                maxScore=float(r.maxScore),
                 percentage=float(r.percentage),
             )
             for r in top_performers
@@ -508,6 +596,7 @@ def _build_dashboard(db: Session, conference: Conference) -> SessionDashboardOut
         trainees=trainee_rows,
         executionFlow=_execution_flow(db, conference),
         auditLog=_audit_log(db, conference),
+        sessionHeroes=_session_heroes(db, conference),
     )
 
 
@@ -520,7 +609,7 @@ async def start_training(db: Session, admin: Admin, conference_uid: str, photo: 
     conference = _get_owned_conference(db, admin, conference_uid)
     if conference.conferenceEndsOn is not None:
         raise conflict("This session has already ended")
-    if conference.status != "Approved":
+    if title_status(conference.status) != "Approved":
         raise forbidden("This session hasn't been approved by an admin yet")
 
     # The trainer must capture a check-in photo to start the session - same

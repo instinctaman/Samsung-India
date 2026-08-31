@@ -1,6 +1,14 @@
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
+from app.schemas._common import (
+    OptDateLikeStr,
+    OptDigitStr,
+    OptEmailLike,
+    OptShortStr,
+    OptTextStr,
+)
 
 
 class TrainerProfileOut(BaseModel):
@@ -67,47 +75,47 @@ class TrainerProfileUpdate(BaseModel):
     frontend), and `model_dump(exclude_unset=True)` is used to apply only
     what was actually sent."""
 
-    name: Optional[str] = None
-    email: Optional[str] = None
-    mobileNumber: Optional[str] = None
-    altPhone: Optional[str] = None
-    gender: Optional[str] = None
-    dob: Optional[str] = None
+    name: OptShortStr = None
+    email: OptEmailLike = None
+    mobileNumber: OptDigitStr = None
+    altPhone: OptDigitStr = None
+    gender: OptShortStr = None
+    dob: OptDateLikeStr = None
 
-    city: Optional[str] = None
-    district: Optional[str] = None
-    state: Optional[str] = None
-    pincode: Optional[str] = None
-    landmark: Optional[str] = None
+    city: OptShortStr = None
+    district: OptShortStr = None
+    state: OptShortStr = None
+    pincode: OptDigitStr = None
+    landmark: OptShortStr = None
     permanentSameAsLocal: Optional[bool] = None
 
-    aadharNumber: Optional[str] = None
-    aadharFile: Optional[str] = None
-    profilePicture: Optional[str] = None
-    about: Optional[str] = None
-    resume: Optional[str] = None
-    otherDocument: Optional[str] = None
+    aadharNumber: OptDigitStr = None
+    aadharFile: OptShortStr = None
+    profilePicture: OptShortStr = None
+    about: OptTextStr = None
+    resume: OptShortStr = None
+    otherDocument: OptShortStr = None
 
-    facebookUsername: Optional[str] = None
-    twitterUsername: Optional[str] = None
-    instagramUsername: Optional[str] = None
-    linkedinUsername: Optional[str] = None
-    youtubeUsername: Optional[str] = None
-    github: Optional[str] = None
+    facebookUsername: OptShortStr = None
+    twitterUsername: OptShortStr = None
+    instagramUsername: OptShortStr = None
+    linkedinUsername: OptShortStr = None
+    youtubeUsername: OptShortStr = None
+    github: OptShortStr = None
 
-    jobStatus: Optional[str] = None
-    joinedOn: Optional[str] = None
-    role: Optional[str] = None
-    designation: Optional[str] = None
-    salary: Optional[str] = None
-    companyEmail: Optional[str] = None
-    visitingCard: Optional[str] = None
-    idCard: Optional[str] = None
-    offerLetter: Optional[str] = None
-    letterhead: Optional[str] = None
-    promocode: Optional[str] = None
+    jobStatus: OptShortStr = None
+    joinedOn: OptDateLikeStr = None
+    role: OptShortStr = None
+    designation: OptShortStr = None
+    salary: OptDigitStr = None
+    companyEmail: OptEmailLike = None
+    visitingCard: OptShortStr = None
+    idCard: OptShortStr = None
+    offerLetter: OptShortStr = None
+    letterhead: OptShortStr = None
+    promocode: OptShortStr = None
 
-    username: Optional[str] = None
-    password: Optional[str] = None
-    remarks: Optional[str] = None
+    username: OptShortStr = None
+    password: Optional[str] = Field(default=None, max_length=128)
+    remarks: OptTextStr = None
     agreedToTerms: Optional[bool] = None
