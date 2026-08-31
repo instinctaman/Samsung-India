@@ -64,13 +64,13 @@ export default function Starter1() {
     try {
       if (BYPASS_LOGIN) {
         setSession(createDevelopmentSession(trimmed));
-        router.replace("/session");
+        router.replace("/trainee_dashboard" as any);
         return;
       }
 
       const session = await loginTrainee(trimmed);
       setSession(session);
-      router.push("/session");
+      router.push("/trainee_dashboard" as any);
     } catch (err) {
       setError(
         err instanceof ApiError

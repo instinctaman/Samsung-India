@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
+import { QuizSocketClient } from "@/services/quizSocket";
 import { Colors } from "@/theme/colors";
 import { Shadows } from "@/theme/shadows";
 import { LiveStudioQuestion } from "./sessionDashboardTypes";
@@ -10,6 +11,8 @@ type LiveStudioCardProps = {
   questions?: LiveStudioQuestion[];
   systemId?: string;
   isSystemLive?: boolean;
+  conferenceUid?: string;
+  trainerName?: string;
   onTestSound?: () => void;
   onBroadcast?: (questionId: string) => void;
   onLaunchNext?: () => void;
@@ -21,33 +24,33 @@ type LiveStudioCardProps = {
 const DEFAULT_QUESTIONS: LiveStudioQuestion[] = [
   {
     id: "4",
-    qNumber: "Q4",
-    timerSecs: 45,
-    questionText: "[AR] Identify the INCORRECT device feature in live demo of Galaxy A55 5G.",
+    qNumber: "Q1",
+    timerSecs: 30,
+    questionText: "What is Galaxy AI's primary photo-editing feature on Galaxy S24/S25 series?",
   },
   {
     id: "7",
-    qNumber: "Q7",
-    timerSecs: 45,
-    questionText: "[AR] Identify the dimension / specs in live demo of Galaxy A35 5G.",
+    qNumber: "Q2",
+    timerSecs: 30,
+    questionText: "Which processor powers the Samsung Galaxy S24 Ultra in India?",
   },
   {
     id: "8",
-    qNumber: "Q8",
-    timerSecs: 45,
-    questionText: "[AR] Identify the CORRECT features in live demo of Galaxy A55 5G.",
+    qNumber: "Q3",
+    timerSecs: 30,
+    questionText: "How many years of OS & security updates are guaranteed for Galaxy S24 series?",
   },
   {
     id: "9",
-    qNumber: "Q9",
-    timerSecs: 45,
-    questionText: "[AR] Identify the INCORRECT device in live demo of Galaxy A35 5G.",
+    qNumber: "Q4",
+    timerSecs: 30,
+    questionText: "Which feature allows instant Google search by drawing a circle on the screen?",
   },
   {
     id: "10",
-    qNumber: "Q10",
-    timerSecs: 45,
-    questionText: "[AR] Identify the INCORRECT display in live demo of Galaxy A55 5G.",
+    qNumber: "Q5",
+    timerSecs: 30,
+    questionText: "What is the peak brightness (in nits) of the Dynamic AMOLED 2X display on Galaxy S24 Ultra?",
   },
 ];
 
@@ -55,6 +58,8 @@ export default function LiveStudioCard({
   questions = DEFAULT_QUESTIONS,
   systemId = "AS5896215",
   isSystemLive = true,
+  conferenceUid = "CONF25456581",
+  trainerName = "Trainer",
   onTestSound,
   onBroadcast,
   onLaunchNext,
@@ -62,13 +67,111 @@ export default function LiveStudioCard({
   onLeaderboard,
   onLobby,
 }: LiveStudioCardProps) {
-  const [broadcastedIds, setBroadcastedIds] = useState<Record<string, boolean>>(
-    {}
-  );
+  const [broadcastedId, setBroadcastedId] = useState<string | null>(null);
+  const [activeQIndex, setActiveQIndex] = useState<number>(0);
+  const [studioState, setStudioState] = useState<string>("LOBBY");
+  const [connectedCount, setConnectedCount] = useState<number>(0);
+  const [responseCount, setResponseCount] = useState<number>(0);
+  const [optionCounts, setOptionCounts] = useState<Record<string, number>>({});
+  const socketRef = useRef<QuizSocketClient | null>(null);
 
-  const handleBroadcastClick = (id: string) => {
-    setBroadcastedIds((prev) => ({ ...prev, [id]: !prev[id] }));
-    onBroadcast?.(id);
+  useEffect(() => {
+    if (!conferenceUid) return;
+
+    const socket = new QuizSocketClient(conferenceUid, "trainer", trainerName);
+    socketRef.current = socket;
+
+    socket.on("ROOM_STATE", (payload: any) => {
+      if (payload.room) {
+        setStudioState(payload.room.state || "LOBBY");
+        setConnectedCount(payload.room.connectedTrainees || 0);
+        setResponseCount(payload.room.totalResponses || 0);
+        setOptionCounts(payload.room.optionCounts || {});
+      }
+    });
+
+    socket.on("ATTENDEE_UPDATE", (payload: any) => {
+      setConnectedCount(payload.connectedTrainees || 0);
+    });
+
+    socket.on("RESPONSE_STATS_UPDATE", (payload: any) => {
+      if (payload.stats) {
+        setResponseCount(payload.stats.totalResponses || 0);
+        setOptionCounts(payload.stats.optionCounts || {});
+      }
+    });
+
+    socket.on("QUESTION_LAUNCHED", (payload: any) => {
+      setStudioState("ACTIVE");
+      if (payload.question) {
+        setBroadcastedId(payload.question.id);
+      }
+    });
+
+    socket.on("SHOW_LEADERBOARD", () => {
+      setStudioState("LEADERBOARD");
+    });
+
+    socket.on("RETURN_TO_LOBBY", () => {
+      setStudioState("LOBBY");
+      setBroadcastedId(null);
+    });
+
+    socket.connect();
+
+    return () => {
+      socket.disconnect();
+      socketRef.current = null;
+    };
+  }, [conferenceUid, trainerName]);
+
+  const handleBroadcastClick = (q: LiveStudioQuestion, index: number) => {
+    setActiveQIndex(index);
+    setBroadcastedId(q.id);
+    setStudioState("ACTIVE");
+    if (socketRef.current) {
+      socketRef.current.startQuestion(
+        {
+          id: q.id,
+          qNumber: q.qNumber,
+          questionText: q.questionText,
+          timerSecs: q.timerSecs,
+          index,
+        },
+        q.timerSecs
+      );
+    }
+    onBroadcast?.(q.id);
+  };
+
+  const handleLaunchNext = () => {
+    const nextIdx = (activeQIndex + 1) % questions.length;
+    const nextQ = questions[nextIdx];
+    if (nextQ) {
+      handleBroadcastClick(nextQ, nextIdx);
+    }
+    onLaunchNext?.();
+  };
+
+  const handleStopTimer = () => {
+    if (socketRef.current) {
+      socketRef.current.stopTimer();
+    }
+    onStopTimer?.();
+  };
+
+  const handleLeaderboard = () => {
+    if (socketRef.current) {
+      socketRef.current.showLeaderboard();
+    }
+    onLeaderboard?.();
+  };
+
+  const handleLobby = () => {
+    if (socketRef.current) {
+      socketRef.current.returnToLobby();
+    }
+    onLobby?.();
   };
 
   return (
@@ -91,7 +194,7 @@ export default function LiveStudioCard({
           <View style={[styles.headerPill, isSystemLive && styles.headerGreenPill]}>
             <Ionicons name="wifi" size={9} color={Colors.white} />
             <Text style={styles.headerPillText}>
-              {isSystemLive ? "System Live" : "System Offline"}
+              {connectedCount > 0 ? `${connectedCount} Attendees` : isSystemLive ? "System Live" : "System Offline"}
             </Text>
           </View>
         </View>
@@ -101,28 +204,30 @@ export default function LiveStudioCard({
       <View style={styles.summaryBoxesRow}>
         <View style={styles.summaryBox}>
           <Text style={styles.summaryBoxLabel}>STATE</Text>
-          <Text style={[styles.summaryBoxValue, { color: "#2563EB" }]}>
-            CLOSED
+          <Text style={[styles.summaryBoxValue, { color: studioState === "ACTIVE" ? "#10B981" : "#2563EB" }]}>
+            {studioState}
           </Text>
         </View>
 
         <View style={styles.summaryBox}>
           <Text style={styles.summaryBoxLabel}>ACTIVE Q-ID</Text>
-          <Text style={styles.summaryBoxValue}>0</Text>
+          <Text style={styles.summaryBoxValue}>
+            {studioState === "ACTIVE" ? `Q${activeQIndex + 1}` : "-"}
+          </Text>
         </View>
 
         <View style={[styles.summaryBox, styles.summaryBoxHighlighted]}>
           <Text style={styles.summaryBoxLabel}>RESPONSES</Text>
           <Text style={[styles.summaryBoxValue, { color: "#10B981" }]}>
-            10
+            {responseCount}
           </Text>
         </View>
       </View>
 
       {/* Questions List */}
       <View style={styles.questionsList}>
-        {questions.map((q) => {
-          const isSent = broadcastedIds[q.id];
+        {questions.map((q, idx) => {
+          const isSent = broadcastedId === q.id;
           return (
             <View key={q.id} style={styles.questionRow}>
               <View style={styles.qBadgesCol}>
@@ -144,7 +249,7 @@ export default function LiveStudioCard({
                   styles.broadcastBtn,
                   isSent && styles.broadcastBtnActive,
                 ]}
-                onPress={() => handleBroadcastClick(q.id)}
+                onPress={() => handleBroadcastClick(q, idx)}
               >
                 <Ionicons
                   name={isSent ? "checkmark-circle" : "play"}
@@ -164,7 +269,7 @@ export default function LiveStudioCard({
       <View style={styles.bottomActionsRow}>
         <Pressable
           style={[styles.bottomBtn, { backgroundColor: "#0066FF" }]}
-          onPress={onLaunchNext}
+          onPress={handleLaunchNext}
         >
           <Ionicons name="play" size={11} color={Colors.white} />
           <Text style={styles.bottomBtnText}>LAUNCH NEXT</Text>
@@ -172,7 +277,7 @@ export default function LiveStudioCard({
 
         <Pressable
           style={[styles.bottomBtn, { backgroundColor: "#EF4444" }]}
-          onPress={onStopTimer}
+          onPress={handleStopTimer}
         >
           <Ionicons name="stop" size={11} color={Colors.white} />
           <Text style={styles.bottomBtnText}>STOP TIMER</Text>
@@ -180,7 +285,7 @@ export default function LiveStudioCard({
 
         <Pressable
           style={[styles.bottomBtn, { backgroundColor: "#EAB308" }]}
-          onPress={onLeaderboard}
+          onPress={handleLeaderboard}
         >
           <Ionicons name="trophy" size={11} color={Colors.white} />
           <Text style={styles.bottomBtnText}>LEADERBOARD</Text>
@@ -188,7 +293,7 @@ export default function LiveStudioCard({
 
         <Pressable
           style={[styles.bottomBtn, { backgroundColor: "#374151" }]}
-          onPress={onLobby}
+          onPress={handleLobby}
         >
           <Ionicons name="pause" size={11} color={Colors.white} />
           <Text style={styles.bottomBtnText}>LOBBY</Text>

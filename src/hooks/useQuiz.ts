@@ -9,6 +9,7 @@ import {
   submitAssessment,
 } from "@/api/assessment";
 import { useAuth } from "@/hooks/useAuth";
+import { QuizSocketClient } from "@/services/quizSocket";
 
 export const QUESTION_SECONDS = 30;
 export const RESULT_DISPLAY_SECONDS = 3500;
@@ -19,7 +20,7 @@ export type QuizResultType = "correct" | "incorrect" | "timeout";
 
 export function useQuiz() {
   const router = useRouter();
-  const { token } = useAuth();
+  const { trainee, token } = useAuth();
   const { conferenceUid, suiteUid } = useLocalSearchParams<{
     conferenceUid: string;
     suiteUid: string;
@@ -40,11 +41,14 @@ export function useQuiz() {
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [result, setResult] = useState<AssessmentResult | null>(null);
+  const [isSocketConnected, setIsSocketConnected] = useState(false);
 
   const question = questions[questionIndex];
   const autoNextTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const selectedOptionIdRef = useRef<string | null>(null);
   const isProcessingExpiryRef = useRef<boolean>(false);
+  const socketRef = useRef<QuizSocketClient | null>(null);
+  const startTimeRef = useRef<number>(Date.now());
 
   // Keep ref updated to prevent stale closures during countdown
   useEffect(() => {
@@ -141,6 +145,117 @@ export function useQuiz() {
     };
   }, [token, suiteUid]);
 
+  // Final submit handler with duplicate protection and API call
+  const finishQuiz = useCallback(async () => {
+    clearAutoTimeouts();
+    if (!token || !suiteUid || !conferenceUid || submitting || hasSubmitted)
+      return;
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const data = await submitAssessment(
+        token,
+        suiteUid,
+        conferenceUid,
+        questions.map((q, idx) => ({
+          questionId: q.id,
+          selectedOption: answers[idx] ?? null,
+        })),
+      );
+      setResult(data);
+      setHasSubmitted(true);
+      setPhase("leaderboard");
+    } catch (err) {
+      setSubmitError(
+        err instanceof ApiError ? err.message : "Couldn't submit the quiz.",
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  }, [clearAutoTimeouts, token, suiteUid, conferenceUid, submitting, hasSubmitted, questions, answers]);
+
+  // WebSocket synchronization with Trainer
+  useEffect(() => {
+    if (!conferenceUid) return;
+
+    const traineeUid = trainee?.employee_id || (trainee?.phone ? String(trainee.phone) : "trainee");
+    const socket = new QuizSocketClient(
+      conferenceUid,
+      "trainee",
+      trainee?.name || "Trainee",
+      traineeUid,
+    );
+    socketRef.current = socket;
+
+    socket.on("open", () => {
+      setIsSocketConnected(true);
+    });
+
+    socket.on("close", () => {
+      setIsSocketConnected(false);
+    });
+
+    socket.on("ROOM_STATE", (payload: any) => {
+      if (payload.state === "LOBBY") {
+        setPhase("waiting");
+      } else if (payload.state === "QUESTION_ACTIVE" && payload.activeQuestion) {
+        setQuestionIndex(payload.activeQuestionIndex || 0);
+        setSelectedOptionId(null);
+        selectedOptionIdRef.current = null;
+        setSeconds(payload.remainingSeconds || QUESTION_SECONDS);
+        startTimeRef.current = Date.now();
+        setPhase("active");
+      }
+    });
+
+    socket.on("QUESTION_ACTIVE", (payload: any) => {
+      clearAutoTimeouts();
+      if (typeof payload.questionIndex === "number") {
+        setQuestionIndex(payload.questionIndex);
+      }
+      setSelectedOptionId(null);
+      selectedOptionIdRef.current = null;
+      setSeconds(payload.timerSecs || QUESTION_SECONDS);
+      startTimeRef.current = Date.now();
+      setPhase("active");
+    });
+
+    socket.on("TIMER_STOPPED", () => {
+      setSeconds(0);
+      handleTimerExpired();
+    });
+
+    socket.on("QUESTION_REVEAL", (_payload: any) => {
+      clearAutoTimeouts();
+      finalizeQuestion(questionIndex, selectedOptionIdRef.current);
+    });
+
+    socket.on("SHOW_LEADERBOARD", () => {
+      finishQuiz();
+    });
+
+    socket.on("RETURN_TO_LOBBY", () => {
+      setPhase("waiting");
+    });
+
+    socket.connect();
+
+    return () => {
+      socket.disconnect();
+      socketRef.current = null;
+    };
+  }, [
+    conferenceUid,
+    trainee?.name,
+    trainee?.employee_id,
+    trainee?.phone,
+    finalizeQuestion,
+    finishQuiz,
+    handleTimerExpired,
+    clearAutoTimeouts,
+    questionIndex,
+  ]);
+
   // 1. Active Question 30-second Countdown Timer
   useEffect(() => {
     if (phase !== "active" || !question) return;
@@ -161,11 +276,15 @@ export function useQuiz() {
     return () => clearInterval(timer);
   }, [phase, questionIndex, question, handleTimerExpired]);
 
-  // Trainee selects or changes an option during 30s (DOES NOT submit immediately)
+  // Trainee selects or changes an option during 30s
   const handleSelectOption = (optionId: string) => {
     if (phase !== "active" || !question) return;
     setSelectedOptionId(optionId);
     selectedOptionIdRef.current = optionId;
+    const timeTaken = (Date.now() - startTimeRef.current) / 1000;
+    if (socketRef.current) {
+      socketRef.current.submitAnswer(optionId, timeTaken);
+    }
   };
 
   // 2. Automated Transition: Result -> Waiting (for Q1, Q2, Q3) OR Result -> Assessment Map (after Q4)
@@ -223,35 +342,6 @@ export function useQuiz() {
     setPhase("active");
   };
 
-  // Final submit handler with duplicate protection and API call
-  const finishQuiz = async () => {
-    clearAutoTimeouts();
-    if (!token || !suiteUid || !conferenceUid || submitting || hasSubmitted)
-      return;
-    setSubmitting(true);
-    setSubmitError(null);
-    try {
-      const data = await submitAssessment(
-        token,
-        suiteUid,
-        conferenceUid,
-        questions.map((q, idx) => ({
-          questionId: q.id,
-          selectedOption: answers[idx] ?? null,
-        })),
-      );
-      setResult(data);
-      setHasSubmitted(true);
-      setPhase("leaderboard");
-    } catch (err) {
-      setSubmitError(
-        err instanceof ApiError ? err.message : "Couldn't submit the quiz.",
-      );
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
   const handleContinueAfterResults = () => {
     router.replace({
       pathname: "/session_detail",
@@ -275,6 +365,8 @@ export function useQuiz() {
         correct: String(result.correctCount),
         total: String(result.totalQuestions),
         accuracy: String(accuracy),
+        conferenceUid: conferenceUid || undefined,
+        suiteUid: suiteUid || undefined,
       },
     });
   };

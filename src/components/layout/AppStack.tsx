@@ -23,6 +23,7 @@ export function AppStack() {
       <Stack.Screen name="post_test" />
       <Stack.Screen name="survey" />
       <Stack.Screen name="profile" />
+      <Stack.Screen name="trainee_dashboard" />
     </Stack>
   );
 }

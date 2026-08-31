@@ -12,6 +12,7 @@ import AppText from "@/components/ui/AppText";
 import { Colors } from "@/theme/colors";
 import { Radius } from "@/theme/radius";
 import { FontWeight } from "@/theme/typography";
+import { resolveMediaUrl } from "@/utils";
 
 const AVATAR_BY_GENDER: Record<string, ImageSourcePropType> = {
   male: require("@/assets/images/user_img/default_male.png"),
@@ -46,8 +47,9 @@ export default function TrainingSessionHeader({
   date = "06 Jun 2026",
   location = "New Delhi",
 }: TrainingSessionHeaderProps) {
-  const avatar: ImageSourcePropType = profilePhoto
-    ? { uri: profilePhoto }
+  const photoUrl = resolveMediaUrl(profilePhoto);
+  const avatar: ImageSourcePropType = photoUrl
+    ? { uri: photoUrl }
     : (AVATAR_BY_GENDER[gender?.toLowerCase() ?? ""] ?? DEFAULT_AVATAR);
 
   const isConfirmed =

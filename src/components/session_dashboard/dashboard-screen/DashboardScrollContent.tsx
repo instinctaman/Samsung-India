@@ -15,6 +15,7 @@ import LiveStudioSection from "./LiveStudioSection";
 import RuntimeAndQuizSection from "./RuntimeAndQuizSection";
 
 type DashboardScrollContentProps = {
+  conferenceUid?: string;
   data: SessionDashboard | null;
   isSessionClosed: boolean;
   showSessionData: boolean;
@@ -25,6 +26,7 @@ type DashboardScrollContentProps = {
 };
 
 export default function DashboardScrollContent({
+  conferenceUid,
   data,
   isSessionClosed,
   showSessionData,
@@ -78,7 +80,14 @@ export default function DashboardScrollContent({
 
       <ExecutionFlowCard executionFlow={data?.executionFlow ?? []} auditLog={data?.auditLog ?? []} hasStarted={showSessionData} />
 
-      {showSessionData && <LiveStudioSection onLeaderboard={onLeaderboard} onRefresh={onRefresh} />}
+      {showSessionData && (
+        <LiveStudioSection
+          conferenceUid={conferenceUid}
+          trainerName={data?.trainerName ?? undefined}
+          onLeaderboard={onLeaderboard}
+          onRefresh={onRefresh}
+        />
+      )}
     </ScrollView>
   );
 }

@@ -46,6 +46,7 @@ export default function SessionDashboardScreen() {
       />
 
       <DashboardScrollContent
+        conferenceUid={conferenceUid}
         data={data}
         isSessionClosed={isSessionClosed}
         showSessionData={showSessionData}
