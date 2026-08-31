@@ -1,10 +1,12 @@
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
+from app.schemas._common import IdStr
 
 
 class CheckInRequest(BaseModel):
-    conferenceUid: str
+    conferenceUid: IdStr
 
 
 class AttendanceOut(BaseModel):
@@ -14,9 +16,9 @@ class AttendanceOut(BaseModel):
 
 
 class VerifyLocationRequest(BaseModel):
-    conferenceUid: str
-    latitude: float
-    longitude: float
+    conferenceUid: IdStr
+    latitude: float = Field(ge=-90, le=90)
+    longitude: float = Field(ge=-180, le=180)
 
 
 class VerifyLocationOut(BaseModel):

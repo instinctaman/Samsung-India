@@ -1,4 +1,3 @@
-import { TrainingAgendaItem } from "@/api/training";
 import { DatePreset } from "@/components/trainer/DateDrop";
 
 export type { DatePreset };
@@ -39,29 +38,9 @@ export type DashboardStats = {
   pendingPercentage: number;
 };
 
-export function calculateDashboardStats(agenda: TrainingAgendaItem[]): DashboardStats {
-  const totalSessions = agenda.length;
-  const completed = agenda.filter((item) => item.conferenceStatus === "Completed").length;
-  const pending = totalSessions - completed;
-
-  // Sum trainees based on batch size or calculate
-  const totalTrainees = agenda.reduce((sum, item) => {
-    const size = parseInt(item.batchSize || "0", 10);
-    return sum + (isNaN(size) ? 0 : size);
-  }, 0);
-
-  const executedPercentage = totalSessions > 0 ? Math.round((completed / totalSessions) * 100) : 0;
-  const pendingPercentage = totalSessions > 0 ? Math.round((pending / totalSessions) * 100) : 0;
-
-  return {
-    totalTrainees: totalTrainees > 0 ? totalTrainees : 356,
-    totalSessions,
-    completed,
-    pending,
-    executedPercentage,
-    pendingPercentage,
-  };
-}
+// All of `DashboardStats` is computed server-side now (see
+// `TrainerAgendaResponse` in api/training.ts) and just read off the
+// fetch response - no client-side derivation left to do here.
 
 export type SessionStatusType = "completed" | "in_progress" | "upcoming";
 

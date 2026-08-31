@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { StyleSheet, View, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import AppCard from "@/components/ui/AppCard";
 import AuthHeader from "@/components/common/AppHeader";
@@ -14,6 +14,7 @@ import SecurityFooter from "@/components/common/SecurityFooter";
 import { Colors } from "@/theme/colors";
 import { Fonts } from "@/theme/fonts";
 import { ApiError, AuthSession, loginTrainee } from "@/api/auth";
+import { joinSession } from "@/api/session";
 import { useAuth } from "@/hooks/useAuth";
 
 const BYPASS_LOGIN = process.env.EXPO_PUBLIC_BYPASS_LOGIN === "true";
@@ -44,6 +45,9 @@ function createDevelopmentSession(phone: string): AuthSession {
 
 export default function Starter1() {
   const router = useRouter();
+  // Present when the user got here from a scanned session QR
+  // (samsungindia://join/<code> -> join screen -> "Continue to Login").
+  const { join } = useLocalSearchParams<{ join?: string }>();
   const { setSession } = useAuth();
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
@@ -70,7 +74,15 @@ export default function Starter1() {
 
       const session = await loginTrainee(trimmed);
       setSession(session);
-      router.push("/trainee_dashboard" as any);
+      if (join) {
+        // Bind this trainee to the scanned session before landing on it.
+        try {
+          await joinSession(join, session.access_token);
+        } catch {
+          // Non-fatal: they still reach /session, just without the bind.
+        }
+      }
+      router.replace("/session");
     } catch (err) {
       setError(
         err instanceof ApiError
@@ -129,6 +141,7 @@ export default function Starter1() {
           <RegisterSheet
             visible={isRegisterOpen}
             onClose={closeRegister}
+            joinCode={join}
           />
           {/* <RegisterBottomSheet
           ref={bottomSheetRef}

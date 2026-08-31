@@ -7,6 +7,12 @@
     "icon": "./assets/images/icon.png",
     "scheme": "samsungindia",
     "userInterfaceStyle": "light",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/a2846bf3-9cb5-40eb-8bad-db3e6325906f"
+    },
     "ios": {
       "icon": "./assets/expo.icon",
       "infoPlist": {
@@ -61,7 +67,15 @@
         }
       ],
       "@react-native-community/datetimepicker",
-      "expo-sharing"
+      "expo-sharing",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

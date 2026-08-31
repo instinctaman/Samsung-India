@@ -1,4 +1,4 @@
-import { API_BASE_URL } from "@/constants/api";
+import { getApiBaseUrl } from "@/constants/api";
 
 export function resolveMediaUrl(path: string | null | undefined): string | null {
   if (!path) return null;
@@ -10,7 +10,7 @@ export function resolveMediaUrl(path: string | null | undefined): string | null 
   ) {
     return path;
   }
-  const cleanBase = API_BASE_URL.replace(/\/api\/?$/, "").replace(/\/+$/, "");
+  const cleanBase = getApiBaseUrl().replace(/\/api\/?$/, "").replace(/\/+$/, "");
   const cleanPath = path.startsWith("/") ? path : `/${path}`;
   return `${cleanBase}${cleanPath}`;
 }

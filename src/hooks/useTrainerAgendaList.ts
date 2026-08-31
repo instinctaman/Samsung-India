@@ -1,13 +1,18 @@
 /**
  * useTrainerAgendaList Hook
- * Manages fetching trainer agenda sessions with support for filtering
- * pending-only sessions or viewing all sessions, with focus effect and pull-to-refresh.
+ * Manages fetching trainer agenda sessions, with focus effect,
+ * pull-to-refresh, and a live "training_created" push while focused.
+ * `filterPendingOnly` picks which half of the approval split to show:
+ * `true` for the Pending Training List (awaiting admin review), `false`
+ * for the Training List (already approved - Scheduled/Ongoing/Completed).
+ * Rejected trainings show in neither.
  */
 
 import { useCallback, useState } from "react";
 import { useFocusEffect } from "expo-router";
 import { useAuth } from "@/hooks/useAuth";
 import { TrainingAgendaItem, fetchTrainerAgenda } from "@/api/training";
+import { subscribe } from "@/services/liveEvents";
 
 export function useTrainerAgendaList(filterPendingOnly = false) {
   const { adminToken } = useAuth();
@@ -16,22 +21,25 @@ export function useTrainerAgendaList(filterPendingOnly = false) {
   const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(
-    async (mode: "load" | "refresh" = "load") => {
+    async (mode: "load" | "refresh" | "silent" = "load") => {
       if (!adminToken) return;
       if (mode === "refresh") setRefreshing(true);
-      else setLoading(true);
+      else if (mode === "load") setLoading(true);
       try {
-        const data = await fetchTrainerAgenda(adminToken);
+        // Both callers (Training List, Pending Training List) want this
+        // trainer's complete history, not the agenda endpoint's default
+        // today-only scope - see all_sessions on GET /admin/trainings.
+        const data = await fetchTrainerAgenda(adminToken, { all: true });
         setItems(
-          filterPendingOnly
-            ? data.filter((item) => item.approvalStatus === "Pending")
-            : data,
+          data.trainings.filter((item) =>
+            filterPendingOnly ? item.approvalStatus === "Pending" : item.approvalStatus === "Approved",
+          ),
         );
       } catch {
-        setItems([]);
+        if (mode !== "silent") setItems([]);
       } finally {
         if (mode === "refresh") setRefreshing(false);
-        else setLoading(false);
+        else if (mode === "load") setLoading(false);
       }
     },
     [adminToken, filterPendingOnly],
@@ -40,6 +48,8 @@ export function useTrainerAgendaList(filterPendingOnly = false) {
   useFocusEffect(
     useCallback(() => {
       load();
+      const unsubscribe = subscribe("training_created", () => load("silent"));
+      return unsubscribe;
     }, [load]),
   );
 

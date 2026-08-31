@@ -4,6 +4,7 @@ import AppInput from "@/components/ui/AppInput";
 import AppText from "@/components/ui/AppText";
 import { Colors } from "@/theme/colors";
 import { Fonts } from "@/theme/fonts";
+import { digitsOnly } from "@/utils/validation";
 import { TrainerProfileForm } from "./useTrainerProfileForm";
 import { ProfileSection } from "./ProfileSection";
 
@@ -38,7 +39,8 @@ export function DocumentsSection({ form }: { form: TrainerProfileForm }) {
         value={profile.aadharNumber}
         editable={isEditing}
         keyboardType="number-pad"
-        onChangeText={(v) => setField("aadharNumber", v)}
+        maxLength={12}
+        onChangeText={(v) => setField("aadharNumber", digitsOnly(v))}
       />
       <FileFieldLabel label="Aadhar (File)" />
       <AppInput

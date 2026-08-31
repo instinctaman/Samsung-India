@@ -1,3 +1,8 @@
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, UploadFile
+from sqlalchemy.orm import Session
+
+from app.dependencies.auth import get_current_trainee
+from app.dependencies.database import get_db
 import math
 import uuid
 from datetime import datetime
@@ -17,8 +22,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.media import ALLOWED_IMAGE_CONTENT_TYPES, MAX_UPLOAD_BYTES, media_subdir
-from app.core.security import get_current_trainee
-from app.database.database import get_db
+from app.dependencies.auth import get_current_trainee
 from app.models.attendance import Attendance
 from app.models.attendance_log import AttendanceLog
 from app.models.conference import Conference
@@ -29,30 +33,16 @@ from app.schemas.attendance import (
     VerifyLocationOut,
     VerifyLocationRequest,
 )
+from app.services import attendance_service
+from app.utils.helpers import distance_meters
 
 router = APIRouter(prefix="/attendance", tags=["attendance"])
-
-
-def _distance_meters(
-    lat1: Optional[float], lng1: Optional[float], lat2: Optional[float], lng2: Optional[float]
-) -> Optional[float]:
-    """Great-circle distance between two lat/lng points, in meters."""
-    if lat1 is None or lng1 is None or lat2 is None or lng2 is None:
-        return None
-
-    earth_radius_m = 6_371_000
-    phi1, phi2 = math.radians(lat1), math.radians(lat2)
-    d_phi = math.radians(lat2 - lat1)
-    d_lambda = math.radians(lng2 - lng1)
-
-    a = math.sin(d_phi / 2) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(d_lambda / 2) ** 2
-    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-    return earth_radius_m * c
 
 
 @router.post("/check-in", response_model=AttendanceOut)
 def check_in(
     payload: CheckInRequest,
+    background_tasks: BackgroundTasks,
     request: Request,
     db: Session = Depends(get_db),
     trainee: Trainee = Depends(get_current_trainee),
@@ -136,31 +126,12 @@ def verify_location(
     db: Session = Depends(get_db),
     _trainee: Trainee = Depends(get_current_trainee),
 ):
-    """First step of the geofenced check-in flow (see check_in_secure) - lets
-    the "Location Verified" screen show the trainee's distance from the venue
-    before they move on to the face-capture step. Informational only: it
-    never blocks the flow, it just reports the distance."""
-    conference = (
-        db.query(Conference)
-        .filter(Conference.conferenceUid == payload.conferenceUid)
-        .first()
-    )
-    if not conference:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
-
-    venue_lat = float(conference.geoLatitude) if conference.geoLatitude is not None else None
-    venue_lng = float(conference.geoLongitude) if conference.geoLongitude is not None else None
-    distance = _distance_meters(payload.latitude, payload.longitude, venue_lat, venue_lng)
-
-    return VerifyLocationOut(
-        distanceMeters=distance,
-        withinRadius=(distance <= conference.geoRadius) if distance is not None and conference.geoRadius else None,
-        venueLabel=", ".join(filter(None, [conference.district, conference.state])) or None,
-    )
+    return attendance_service.verify_location(db, payload)
 
 
 @router.post("/check-in/secure", response_model=AttendanceOut)
 async def check_in_secure(
+    background_tasks: BackgroundTasks,
     request: Request,
     conferenceUid: str = Form(...),
     latitude: float = Form(...),
@@ -226,7 +197,7 @@ async def check_in_secure(
 
     venue_lat = float(conference.geoLatitude) if conference and conference.geoLatitude is not None else None
     venue_lng = float(conference.geoLongitude) if conference and conference.geoLongitude is not None else None
-    distance = _distance_meters(latitude, longitude, venue_lat, venue_lng)
+    distance = distance_meters(latitude, longitude, venue_lat, venue_lng)
 
     photo_dir = media_subdir("attendance_photos")
     filename = f"{uuid.uuid4().hex}.{extension}"

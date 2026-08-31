@@ -1,7 +1,7 @@
-from sqlalchemy import Column, DateTime, Integer, Numeric, String, Text, text
+from sqlalchemy import BigInteger, Column, DateTime, Integer, Numeric, String, Text, text
 from sqlalchemy.sql import func
 
-from app.database.database import Base
+from app.database.connection import Base
 
 
 class Conference(Base):
@@ -28,6 +28,12 @@ class Conference(Base):
     conferenceTime = Column(String(100))
     conferenceStatus = Column(String(100), nullable=False, server_default=text("'Scheduled'"))
     activeModuleId = Column(String(50))
+    # Real-time Live Quiz state: IDLE, WAITING, QUESTION_LIVE, LEADERBOARD,
+    # FINISHED. Not driven by any code yet - see module_flow.py, which still
+    # only detects Live Quiz via sessionConfig.
+    liveQuizState = Column(String(50), nullable=False, server_default=text("'IDLE'"))
+    liveQuestionId = Column(String(100))
+    liveTimerEndsAt = Column(BigInteger, server_default=text("0"))
     actualStartedAt = Column(DateTime)
     actualEndedAt = Column(DateTime)
     enableCheckIn = Column(Integer, server_default=text("0"))
@@ -57,7 +63,13 @@ class Conference(Base):
     sessionConfig = Column(Text)
     checklistUid = Column(String(255))
 
+    # Photo captured from the trainer when they hit "Start Session" - maps
+    # onto the real table's already-existing (previously unused) column, so
+    # no migration/ALTER TABLE is needed for this.
+    startConferenceImage = Column(String(300))
+
     updatedBy = Column(String(100))
+    updationOn = Column(DateTime)
     status = Column(String(100), nullable=False, server_default=text("'Pending'"))
     auditStatus = Column(String(50), server_default=text("'Pending'"))
     remarks = Column(Text)

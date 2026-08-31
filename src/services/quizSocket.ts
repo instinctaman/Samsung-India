@@ -1,11 +1,7 @@
-import { API_BASE_URL } from "@/constants/api";
+import { getWsBaseUrl } from "@/constants/api";
 
 export function getWebSocketBaseUrl(): string {
-  const httpUrl = API_BASE_URL;
-  if (httpUrl.startsWith("https://")) {
-    return httpUrl.replace("https://", "wss://");
-  }
-  return httpUrl.replace("http://", "ws://");
+  return getWsBaseUrl();
 }
 
 export type QuizSocketEvent =

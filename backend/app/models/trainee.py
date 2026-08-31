@@ -1,9 +1,7 @@
-import uuid
-
 from sqlalchemy import BigInteger, Column, Date, DateTime, Integer, String, Text, text
 from sqlalchemy.sql import func
 
-from app.database.database import Base
+from app.database.connection import Base
 
 
 class Trainee(Base):
@@ -15,9 +13,7 @@ class Trainee(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    traineeUid = Column(
-        String(100), unique=True, nullable=False, default=lambda: uuid.uuid4().hex
-    )
+    traineeUid = Column(String(100), unique=True, nullable=False)
 
     name = Column(String(100), nullable=False)
     email = Column(String(100), unique=True, nullable=False)
@@ -31,11 +27,10 @@ class Trainee(Base):
     state = Column(String(100))
     profilePhoto = Column(String(255))
 
-    # Genuinely present on the real table - added via migration on top of
-    # the legacy dump because the registration form collects it and no
-    # original column maps to a trainee's own employee ID
-    # (`trainerEmployeeId` is the trainer's, not the trainee's).
-    employee_id = Column(String(100))
+    # The real table's employee-ID column is confusingly just named `uid`
+    # (not to be confused with `traineeUid`, our app-generated identifier).
+    # Mapped here under the more descriptive `employee_id` attribute name.
+    employee_id = Column("uid", String(100))
 
     status = Column(String(100), nullable=False, server_default=text("'Pending'"))
     timestamp = Column(DateTime, server_default=func.now(), nullable=False)

@@ -1,8 +1,13 @@
+/** "2h 05m 07s" - always h/m/s, zero when the session hasn't started. */
+export function formatDurationHMS(seconds: number | null | undefined): string {
+  const s = Math.max(0, Math.floor(seconds ?? 0));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  return `${h}h ${String(m).padStart(2, "0")}m ${String(s % 60).padStart(2, "0")}s`;
+}
+
 export function formatRuntimeLabel(seconds: number | null | undefined): string {
-  if (seconds == null) return "Runtime : 02h 31m";
-  const hours = String(Math.floor(seconds / 3600)).padStart(2, "0");
-  const minutes = String(Math.floor((seconds % 3600) / 60)).padStart(2, "0");
-  return `Runtime : ${hours}h ${minutes}m`;
+  return `Runtime : ${formatDurationHMS(seconds)}`;
 }
 
 export function formatGeneratedTimestamp(d: Date): string {

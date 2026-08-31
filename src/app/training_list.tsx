@@ -19,7 +19,7 @@ export default function TrainingListScreen() {
       onEdit={(row) => router.push({ pathname: "/session_dashboard", params: { conferenceUid: row.conferenceUid } })}
       statusColumn={conferenceStatusColumn()}
       exportFileName="training-list"
-      emptyLabel="No trainings yet. Sessions you create will show up here, approved or not."
+      emptyLabel="No trainings yet. Sessions show up here once an admin approves them - check Pending Training List until then."
     />
   );
 }

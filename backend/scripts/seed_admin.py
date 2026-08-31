@@ -1,5 +1,5 @@
-"""One-off script to seed demo admin/trainer accounts. Run with:
-venv/Scripts/python.exe seed_admin.py
+"""One-off script to seed demo admin/trainer accounts. Run from backend/ with:
+venv/Scripts/python.exe scripts/seed_admin.py
 
 `demoadmin` seeds into the legacy `admin` table (admin-panel accounts).
 `demotrainer` seeds into BOTH `admin` and `agencyteam` - login checks
@@ -8,8 +8,13 @@ it authenticate either way while `agencyteam` becomes the org-authoritative
 source for real trainers going forward.
 """
 
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 from app.core.security import hash_password
-from app.database.database import SessionLocal
+from app.database.connection import SessionLocal
 from app.models.admin import Admin
 from app.models.agency_team import AgencyTeam
 

@@ -12,7 +12,7 @@ type LiveStudioCardProps = {
   systemId?: string;
   isSystemLive?: boolean;
   conferenceUid?: string;
-  trainerName?: string;
+  trainerName?: string | null;
   onTestSound?: () => void;
   onBroadcast?: (questionId: string) => void;
   onLaunchNext?: () => void;
@@ -78,7 +78,7 @@ export default function LiveStudioCard({
   useEffect(() => {
     if (!conferenceUid) return;
 
-    const socket = new QuizSocketClient(conferenceUid, "trainer", trainerName);
+    const socket = new QuizSocketClient(conferenceUid, "trainer", trainerName || "Trainer");
     socketRef.current = socket;
 
     socket.on("ROOM_STATE", (payload: any) => {

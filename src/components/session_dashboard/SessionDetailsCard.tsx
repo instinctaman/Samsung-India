@@ -11,27 +11,24 @@ type SessionDetailsCardProps = {
   trainerName?: string;
   runtime?: string;
   conferenceStatus?: string;
-  hasStarted?: boolean;
 };
 
-function getStatusPresentation(isClosed: boolean): { label: string; bg: string; color: string } {
-  return isClosed
-    ? { label: "Session Closed", bg: "#111827", color: Colors.white }
-    : { label: "Scheduled", bg: "#111827", color: Colors.white };
+function getStatusPresentation(status: string): { label: string; bg: string; color: string } {
+  const s = status.toLowerCase();
+  if (s === "completed") return { label: "Session Closed", bg: "#111827", color: Colors.white };
+  if (s === "ongoing" || s === "live") return { label: "In Progress", bg: "#059669", color: Colors.white };
+  return { label: "Scheduled", bg: "#111827", color: Colors.white };
 }
 
 export default function SessionDetailsCard({
   topic = "Webinar",
   date = "20 Jul 2026",
   trainerName = "Demo Trainer",
-  runtime = "Runtime : 02h 31m",
+  runtime = "Runtime : 0h 00m 00s",
   conferenceStatus = "Ongoing",
-  hasStarted = true,
 }: SessionDetailsCardProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const isClosed = conferenceStatus.toLowerCase() === "completed";
-  const showStatusRow = isClosed || !hasStarted;
-  const statusPresentation = getStatusPresentation(isClosed);
+  const statusPresentation = getStatusPresentation(conferenceStatus);
 
   return (
     <View style={styles.card}>
@@ -115,26 +112,22 @@ export default function SessionDetailsCard({
             </Text>
           </View>
 
-          {/* Row 4: Status — shown before the session has been started
-              (Scheduled) and once it's actually closed (Session Closed) */}
-          {showStatusRow && (
-            <>
-              <View style={styles.divider} />
-              <View style={styles.row}>
-                <View style={styles.leftCol}>
-                  <View style={styles.iconBox}>
-                    <Ionicons name="shield-checkmark-outline" size={16} color="#0066FF" />
-                  </View>
-                  <Text style={styles.label}>Status</Text>
-                </View>
-                <View style={[styles.statusPill, { backgroundColor: statusPresentation.bg }]}>
-                  <Text style={[styles.statusPillText, { color: statusPresentation.color }]}>
-                    {statusPresentation.label}
-                  </Text>
-                </View>
+          {/* Row 4: Status — Scheduled / In Progress / Session Closed,
+              straight from the backend's conferenceStatus */}
+          <View style={styles.divider} />
+          <View style={styles.row}>
+            <View style={styles.leftCol}>
+              <View style={styles.iconBox}>
+                <Ionicons name="shield-checkmark-outline" size={16} color="#0066FF" />
               </View>
-            </>
-          )}
+              <Text style={styles.label}>Status</Text>
+            </View>
+            <View style={[styles.statusPill, { backgroundColor: statusPresentation.bg }]}>
+              <Text style={[styles.statusPillText, { color: statusPresentation.color }]}>
+                {statusPresentation.label}
+              </Text>
+            </View>
+          </View>
 
           {/* Bottom Runtime Pill */}
           <View style={styles.bottomPillWrapper}>

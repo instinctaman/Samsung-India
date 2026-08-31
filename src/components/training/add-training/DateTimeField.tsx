@@ -19,6 +19,7 @@ export function DateTimeField({
   plain = false,
   disabled = false,
   compact = false,
+  minimumDate,
 }: {
   label?: string;
   value: string;
@@ -30,6 +31,9 @@ export function DateTimeField({
   disabled?: boolean;
   // Smaller height/padding for tight layouts like the sessions filter panel.
   compact?: boolean;
+  // Earliest selectable date - e.g. today, so training dates can't be
+  // backdated.
+  minimumDate?: Date;
 }) {
   const [showPicker, setShowPicker] = useState(false);
 
@@ -40,6 +44,7 @@ export function DateTimeField({
         value: new Date(),
         mode,
         is24Hour: false,
+        minimumDate,
         onChange: (_event, selected) => {
           if (selected) onChange(mode === "date" ? formatDate(selected) : formatTime(selected));
         },
@@ -89,6 +94,7 @@ export function DateTimeField({
             value={new Date()}
             mode={mode}
             display="spinner"
+            minimumDate={minimumDate}
             onChange={(_event, selected) => {
               if (selected) onChange(mode === "date" ? formatDate(selected) : formatTime(selected));
             }}

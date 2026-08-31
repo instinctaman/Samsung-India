@@ -9,6 +9,7 @@ import { Colors } from "@/theme/colors";
 import { Fonts } from "@/theme/fonts";
 import { Radius } from "@/theme/radius";
 import { Shadows } from "@/theme/shadows";
+import { digitsOnly } from "@/utils/validation";
 import { CATEGORY_OPTIONS, TYPE_OPTIONS } from "./constants";
 import SuiteField from "./SuiteField";
 
@@ -75,8 +76,9 @@ export default function SuiteFormCard({
           <AppInput
             placeholder="30"
             keyboardType="number-pad"
+            maxLength={3}
             value={testTime}
-            onChangeText={setTestTime}
+            onChangeText={(v) => setTestTime(digitsOnly(v))}
           />
         </SuiteField>
         <SuiteField label="Type" readonlyValue={suite?.type}>

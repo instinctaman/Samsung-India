@@ -19,9 +19,9 @@ export default function TrainerDashboardScreen() {
     setDateDropOpen,
     datePreset,
     dateRange,
-    agenda,
     refreshing,
     stats,
+    recentCompleted,
     loadAgenda,
     applyDateRange,
     handleLogout,
@@ -34,12 +34,13 @@ export default function TrainerDashboardScreen() {
     <>
       <SafeAreaView style={styles.container} edges={["top"]}>
         <TrainerDashboardScrollContent
-          adminName={admin?.name ?? "Demo Trainer"}
+          adminName={admin?.name ?? ""}
+          companyId={admin?.offerId ?? admin?.username ?? ""}
           dateRange={dateRange}
           datePreset={datePreset}
           onApplyDateRange={applyDateRange}
           stats={stats}
-          agenda={agenda}
+          recentCompleted={recentCompleted}
           refreshing={refreshing}
           onRefresh={() => loadAgenda("refresh")}
           onOpenProfile={() => router.push("/trainer_profile")}
@@ -50,7 +51,7 @@ export default function TrainerDashboardScreen() {
         <DashboardBottomNav activeTab={activeTab} onSelectTab={handleBottomNavSelect} />
       </SafeAreaView>
 
-      <TrainerMoreMenu visible={menuOpen} onClose={closePanels} dateRange={dateRange} />
+      <TrainerMoreMenu visible={menuOpen} onClose={closePanels} />
 
       <AppModal visible={dateDropOpen} onClose={() => setDateDropOpen(false)} position="top" contentStyle={styles.dateDropPanel} closeOnOverlayPress>
         <DateDrop range={dateRange} preset={datePreset} onApply={applyDateRange} />

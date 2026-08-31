@@ -1,4 +1,5 @@
 import AppInput from "@/components/ui/AppInput";
+import { digitsOnly } from "@/utils/validation";
 import { TrainerProfileForm } from "./useTrainerProfileForm";
 import { ProfileSection } from "./ProfileSection";
 
@@ -27,6 +28,8 @@ export function PersonalDetailsSection({ form }: { form: TrainerProfileForm }) {
         label="Email *"
         value={profile.email}
         editable={isEditing}
+        keyboardType="email-address"
+        autoCapitalize="none"
         onChangeText={(v) => setField("email", v)}
       />
       <AppInput
@@ -35,7 +38,8 @@ export function PersonalDetailsSection({ form }: { form: TrainerProfileForm }) {
         value={profile.mobileNumber}
         editable={isEditing}
         keyboardType="phone-pad"
-        onChangeText={(v) => setField("mobileNumber", v)}
+        maxLength={10}
+        onChangeText={(v) => setField("mobileNumber", digitsOnly(v))}
       />
       <AppInput
         compact
@@ -43,7 +47,8 @@ export function PersonalDetailsSection({ form }: { form: TrainerProfileForm }) {
         value={profile.altPhone}
         editable={isEditing}
         keyboardType="phone-pad"
-        onChangeText={(v) => setField("altPhone", v)}
+        maxLength={10}
+        onChangeText={(v) => setField("altPhone", digitsOnly(v))}
       />
       <AppInput
         compact

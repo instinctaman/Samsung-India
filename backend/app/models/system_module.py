@@ -2,7 +2,7 @@ from sqlalchemy import Column, DateTime, Integer, String
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 
-from app.database.database import Base
+from app.database.connection import Base
 
 
 class SystemModule(Base):

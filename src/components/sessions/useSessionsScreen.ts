@@ -6,11 +6,11 @@ import { DashboardTab } from "@/components/trainer/dashboard/DashboardBottomNav"
 import { useAuth } from "@/hooks/useAuth";
 import {
   DEFAULT_SESSION_FILTERS,
-  MOCK_SESSIONS,
   SessionFilters,
   SessionTab,
   filterSessions,
   getUniqueOptions,
+  sortSessions,
 } from "./sessionsUtils";
 
 export function useSessionsScreen() {
@@ -50,18 +50,20 @@ export function useSessionsScreen() {
 
       try {
         if (adminToken) {
-          const data = await fetchTrainerAgenda(adminToken, { start: params.start, end: params.end });
-          if (data && data.length > 0) {
-            setSessions(data);
-          } else {
-            // Fallback to rich mock sessions matching reference image
-            setSessions(MOCK_SESSIONS);
-          }
+          // With no explicit start/end (e.g. arriving via "View Reports",
+          // which pushes here with only `tab`), request this trainer's
+          // complete history rather than the agenda endpoint's default
+          // today-only scope.
+          const data = await fetchTrainerAgenda(
+            adminToken,
+            params.start && params.end ? { start: params.start, end: params.end } : { all: true },
+          );
+          setSessions(data.trainings);
         } else {
-          setSessions(MOCK_SESSIONS);
+          setSessions([]);
         }
       } catch {
-        setSessions(MOCK_SESSIONS);
+        setSessions([]);
       } finally {
         if (mode === "refresh") setRefreshing(false);
         else setLoading(false);
@@ -77,7 +79,7 @@ export function useSessionsScreen() {
   );
 
   const filteredSessions = useMemo(
-    () => filterSessions(sessions, activeTab, searchQuery, filters),
+    () => sortSessions(filterSessions(sessions, activeTab, searchQuery, filters)),
     [sessions, activeTab, searchQuery, filters],
   );
 

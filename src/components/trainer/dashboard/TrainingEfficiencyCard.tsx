@@ -17,11 +17,8 @@ export default function TrainingEfficiencyCard({
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
 
-  // Percentage calculations
-  const executedPercent =
-    stats.executedPercentage > 0 ? stats.executedPercentage : 30;
-  const pendingPercent =
-    stats.pendingPercentage > 0 ? stats.pendingPercentage : 70;
+  const executedPercent = stats.executedPercentage;
+  const pendingPercent = stats.pendingPercentage;
 
   const blueDash = (circumference * pendingPercent) / 100;
   const greenDash = (circumference * executedPercent) / 100;
@@ -70,7 +67,7 @@ export default function TrainingEfficiencyCard({
 
           <View style={styles.chartCenterText}>
             
-            <Text style={styles.centerValue}>{stats.totalSessions || 30}</Text>
+            <Text style={styles.centerValue}>{stats.totalSessions}</Text>
             <Text style={styles.centerLabel}>Total</Text>
             <Text style={styles.centerLabel}> Sessions</Text>
           </View>
@@ -91,7 +88,7 @@ export default function TrainingEfficiencyCard({
             </View>
             <View style={styles.valueRow}>
               <Text style={styles.executedValue}>
-                {stats.completed || 4}{" "}
+                {stats.completed}{" "}
                 <Text style={styles.executedPercentText}>
                   ({executedPercent}%)
                 </Text>
@@ -120,7 +117,7 @@ export default function TrainingEfficiencyCard({
             </View>
             <View style={styles.valueRow}>
               <Text style={styles.pendingValue}>
-                {stats.pending || 26}{" "}
+                {stats.pending}{" "}
                 <Text style={styles.pendingPercentText}>
                   ({pendingPercent}%)
                 </Text>

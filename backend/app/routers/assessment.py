@@ -1,5 +1,4 @@
 import json
-import uuid
 from datetime import datetime
 from typing import List, Optional
 
@@ -7,9 +6,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from app.core.security import get_current_trainee
-from app.database.database import get_db
-from app.models.quiz import Assessment, AssessmentResult, AssessmentSuite, Question
+from app.dependencies.auth import get_current_trainee
+from app.dependencies.database import get_db
 from app.models.trainee import Trainee
 from app.schemas.assessment import (
     AssessmentQuestionsOut,
@@ -19,6 +17,8 @@ from app.schemas.assessment import (
     SubmitRequest,
     SubmitResult,
 )
+from app.models.quiz import Assessment, AssessmentResult, AssessmentSuite, Question
+from app.services import assessment_service
 
 router = APIRouter(prefix="/assessments", tags=["assessments"])
 
@@ -29,38 +29,7 @@ def get_questions(
     db: Session = Depends(get_db),
     trainee: Trainee = Depends(get_current_trainee),
 ):
-    questions = (
-        db.query(Question)
-        .filter(Question.assessmentSuiteUid == suite_uid)
-        .order_by(Question.sort_order)
-        .all()
-    )
-    if not questions:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="No questions found for this assessment",
-        )
-
-    suite = (
-        db.query(AssessmentSuite)
-        .filter(AssessmentSuite.assessmentSuiteUid == suite_uid)
-        .first()
-    )
-
-    return AssessmentQuestionsOut(
-        title=(suite.examTitle or suite.courseName) if suite else None,
-        testTime=suite.testTime if suite else None,
-        questions=[
-            QuestionOut(
-                id=q.id,
-                question=q.question or "",
-                question_type=q.question_type,
-                sort_order=q.sort_order or 0,
-                options=json.loads(q.options) if q.options else [],
-            )
-            for q in questions
-        ],
-    )
+    return assessment_service.get_questions(db, suite_uid)
 
 
 @router.post("/{suite_uid}/submit", response_model=SubmitResult)
@@ -96,7 +65,6 @@ def submit_assessment(
 
         db.add(
             Assessment(
-                assessmentUid=uuid.uuid4().hex,
                 assessmentSuiteUid=suite_uid,
                 conferenceUid=payload.conferenceUid,
                 traineeUid=trainee.traineeUid,
@@ -118,7 +86,6 @@ def submit_assessment(
 
     db.add(
         AssessmentResult(
-            resultUid=uuid.uuid4().hex,
             conferenceUid=payload.conferenceUid,
             traineeUid=trainee.traineeUid,
             assessmentSuiteUid=suite_uid,

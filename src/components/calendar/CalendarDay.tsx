@@ -43,6 +43,7 @@ export default function CalendarDay({
           isInRange && !isSelected && styles.textInRange,
           isCurrentDay && !isSelected && styles.textToday,
           isSelected && styles.textSelected,
+          disabled && !isSelected && styles.textDisabled,
         ]}
       >
         {dayNumber}
@@ -80,6 +81,9 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   textOutside: {
+    color: "#D1D5DB",
+  },
+  textDisabled: {
     color: "#D1D5DB",
   },
   textToday: {

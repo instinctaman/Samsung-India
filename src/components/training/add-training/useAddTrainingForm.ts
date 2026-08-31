@@ -4,9 +4,24 @@ import { useRouter } from "expo-router";
 import { SelectOption } from "@/components/ui/SearchableSelect";
 import { STATES } from "@/data/states";
 import { useAuth } from "@/hooks/useAuth";
-import { ApiError, AssessmentSuiteOut, ModuleConfig, createTraining, fetchAssessmentSuites } from "@/api/training";
-import { DEFAULT_CATEGORY_OPTIONS, DEFAULT_QUESTION_SET_OPTIONS, ModuleKey } from "./constants";
+import {
+  ApiError,
+  AssessmentSuiteOut,
+  ModuleConfig,
+  createTraining,
+  fetchAssessmentSuites,
+  fetchChecklistItems,
+  fetchTrainers,
+  fetchVenues,
+} from "@/api/training";
+import {
+  DEFAULT_CATEGORY_OPTIONS,
+  DEFAULT_QUESTION_SET_OPTIONS,
+  MODULE_LABELS,
+  ModuleKey,
+} from "./constants";
 import { parseTimeToMinutes, toPayloadModule } from "./formatting";
+import { cleanText, digitsOnly, firstError, intInRange } from "@/utils/validation";
 
 export type EvaluationModuleState = Omit<ModuleConfig, "questionCount"> & {
   enabled: boolean;
@@ -39,6 +54,8 @@ export function useAddTrainingForm() {
   const [isResidential, setIsResidential] = useState(false);
   const [conferenceDate, setConferenceDate] = useState("");
   const [conferenceTime, setConferenceTime] = useState("");
+  // Only shown/used when isResidential is on - a multi-day program's last day.
+  const [trainingEndDate, setTrainingEndDate] = useState("");
   const [trainingHub, setTrainingHub] = useState("");
   const [audience, setAudience] = useState("");
   const [sessionType, setSessionType] = useState("");
@@ -63,13 +80,29 @@ export function useAddTrainingForm() {
   const [notice, setNotice] = useState<string | null>(null);
 
   const [assessmentSuites, setAssessmentSuites] = useState<AssessmentSuiteOut[]>([]);
+  const [trainerOptions, setTrainerOptions] = useState<SelectOption[]>([]);
+  const [checklistOptions, setChecklistOptions] = useState<SelectOption[]>([]);
+  const [venueOptions, setVenueOptions] = useState<SelectOption[]>([]);
 
   useEffect(() => {
     if (!adminToken) return;
     fetchAssessmentSuites(adminToken)
       .then(setAssessmentSuites)
       .catch(() => setAssessmentSuites([]));
+    fetchTrainers(adminToken)
+      .then(setTrainerOptions)
+      .catch(() => setTrainerOptions([]));
+    fetchChecklistItems(adminToken)
+      .then(setChecklistOptions)
+      .catch(() => setChecklistOptions([]));
   }, [adminToken]);
+
+  // Venue is gated on District, so its options are re-fetched (scoped
+  // server-side) each time the trainer picks a different district.
+  useEffect(() => {
+    const load = adminToken && district ? fetchVenues(adminToken, district) : Promise.resolve([]);
+    load.then(setVenueOptions).catch(() => setVenueOptions([]));
+  }, [adminToken, district]);
 
   const categoryOptions: SelectOption[] = useMemo(() => {
     const merged = new Map<string, SelectOption>();
@@ -88,6 +121,11 @@ export function useAddTrainingForm() {
   };
 
   const selectedState = useMemo(() => STATES.find((item) => item.value === stateValue), [stateValue]);
+
+  const toggleResidential = (value: boolean) => {
+    setIsResidential(value);
+    if (!value) setTrainingEndDate("");
+  };
 
   const toggleModule = (key: ModuleKey) => {
     setModules((prev) => ({ ...prev, [key]: { ...prev[key], enabled: !prev[key].enabled } }));
@@ -147,6 +185,14 @@ export function useAddTrainingForm() {
       setNotice("Training date and start time are required.");
       return;
     }
+    if (isResidential && !trainingEndDate) {
+      setNotice("End date is required for a residential program.");
+      return;
+    }
+    if (isResidential && trainingEndDate < conferenceDate) {
+      setNotice("End date can't be before the training date.");
+      return;
+    }
     if (!agreeTerms) {
       setNotice("Please agree to the Terms & Conditions to continue.");
       return;
@@ -161,14 +207,36 @@ export function useAddTrainingForm() {
       return;
     }
 
+    const numberError = firstError(
+      intInRange(batchSize, 1, 100000, "Batch size"),
+      ...(["standardTest", "liveQuiz", "survey"] as ModuleKey[])
+        .filter((key) => modules[key].enabled && modules[key].assessmentSuiteUid)
+        .map((key) => {
+          const suite = assessmentSuites.find(
+            (item) => item.assessmentSuiteUid === modules[key].assessmentSuiteUid,
+          );
+          return intInRange(
+            modules[key].questionCount,
+            1,
+            suite?.noOfQuestion ?? 999,
+            `${MODULE_LABELS[key]} question count`,
+            true,
+          );
+        }),
+    );
+    if (numberError) {
+      setNotice(numberError);
+      return;
+    }
+
     setSubmitting(true);
     setNotice(null);
     try {
       await createTraining(adminToken, {
-        zone: zone || undefined,
-        region: region || undefined,
-        company: company || undefined,
-        requestedBy: requestedBy || undefined,
+        zone: cleanText(zone, 100) || undefined,
+        region: cleanText(region, 100) || undefined,
+        company: cleanText(company, 120) || undefined,
+        requestedBy: cleanText(requestedBy, 120) || undefined,
         trainerEmployeeId: trainerId || undefined,
         trainerName: trainerName || undefined,
         state: selectedState?.label,
@@ -177,11 +245,12 @@ export function useAddTrainingForm() {
         isResidential,
         conferenceDate,
         conferenceTime,
+        trainingEndDate: isResidential ? trainingEndDate : undefined,
         trainingHub: trainingHub || undefined,
         audience: audience || undefined,
         sessionType: sessionType || undefined,
         trainingType: trainingType || undefined,
-        batchSize: batchSize || undefined,
+        batchSize: digitsOnly(batchSize) || undefined,
         sessionFlow: {
           attendance: attendanceEnabled
             ? { checkInOpens: checkInOpens || undefined, checkOutCloses: checkOutCloses || undefined, geoFencing }
@@ -216,14 +285,17 @@ export function useAddTrainingForm() {
 
     trainerId, setTrainerId,
     trainerName, setTrainerName,
+    trainerOptions,
     stateValue, setStateValue,
     district, setDistrict,
     venue, setVenue,
+    venueOptions,
     selectedState,
 
-    isResidential, setIsResidential,
+    isResidential, setIsResidential, toggleResidential,
     conferenceDate, setConferenceDate,
     conferenceTime, setConferenceTime,
+    trainingEndDate, setTrainingEndDate,
     trainingHub, setTrainingHub,
     audience, setAudience,
     sessionType, setSessionType,
@@ -237,6 +309,7 @@ export function useAddTrainingForm() {
 
     modules, toggleModule, updateModule,
     categoryOptions, questionSetOptionsFor, assessmentSuites,
+    checklistOptions,
 
     checklist, setChecklist,
     agreeTerms, setAgreeTerms,

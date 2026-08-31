@@ -11,7 +11,7 @@ import { Shadows } from "@/theme/shadows";
 
 type DashboardHeaderProps = {
   name: string;
-  companyId?: string | null;
+  companyId: string;
   avatarUri?: string | null;
   onOpenProfile: () => void;
   onLogout: () => void;
@@ -19,7 +19,7 @@ type DashboardHeaderProps = {
 
 export default function DashboardHeader({
   name,
-  companyId = "2020045897",
+  companyId,
   avatarUri,
   onOpenProfile,
   onLogout,
@@ -58,7 +58,7 @@ export default function DashboardHeader({
               color={Colors.white}
               weight={FontWeight.bold}
             >
-              {companyId || "2020045897"}
+              {companyId}
             </AppText>
           </View>
         </View>

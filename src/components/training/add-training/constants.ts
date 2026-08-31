@@ -38,16 +38,6 @@ export const TRAINER_OPTIONS: SelectOption[] = [
   { label: "9585478000 - GANESH", value: "9585478000" },
 ];
 
-// No per-district venue dataset exists yet - a generic list stands in until
-// one does, gated the same way District is gated on State (see mockup).
-export const VENUE_OPTIONS: SelectOption[] = [
-  "Main Auditorium",
-  "Conference Hall A",
-  "Conference Hall B",
-  "Training Room 1",
-  "Training Room 2",
-].map((v) => ({ label: v, value: v }));
-
 export const TRAINING_HUB_OPTIONS: SelectOption[] = ["Delhi", "Not Assigned", "BOLPUR", "ALIPURDUAR", "BONGAIGAON", "BAHARAMPUR"].map(
   (v) => ({ label: v, value: v })
 );
@@ -68,16 +58,6 @@ export const TRAINING_TYPE_OPTIONS: SelectOption[] = ["Webinar", "Product Traini
   label: v,
   value: v,
 }));
-export const CHECKLIST_OPTIONS = [
-  "Hall",
-  "Projector",
-  "Microphone Set",
-  "Attendance Sheet",
-  "Feedback Forms",
-  "ID Cards",
-  "Refreshments",
-  "Banner/Standee",
-];
 export const UNLOCK_CONDITIONS = ["Automatic", "Manual Broadcast"];
 
 export const DEFAULT_CATEGORY_OPTIONS: SelectOption[] = ["POST TEST", "SAMSUMG S25", "Survey", "Quiz"].map((v) => ({

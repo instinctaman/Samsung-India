@@ -1,9 +1,7 @@
-import uuid
-
 from sqlalchemy import BigInteger, Column, DateTime, Integer, String, Text, text
 from sqlalchemy.sql import func
 
-from app.database.database import Base
+from app.database.connection import Base
 
 
 class Booking(Base):
@@ -13,7 +11,7 @@ class Booking(Base):
     __tablename__ = "booking"
 
     id = Column(Integer, primary_key=True, index=True)
-    bookingUid = Column(String(100), unique=True, default=lambda: uuid.uuid4().hex)
+    bookingUid = Column(String(100), unique=True)
 
     # Organisational context
     zone = Column(String(50))

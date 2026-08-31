@@ -1,0 +1,90 @@
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from jose import JWTError, jwt
+from sqlalchemy.orm import Session
+
+from app.core.config import settings
+from app.dependencies.database import get_db
+from app.models.admin import Admin
+from app.models.agency_team import AgencyTeam
+from app.models.trainee import Trainee
+from app.repositories import admin_repository, trainee_repository
+
+bearer_scheme = HTTPBearer()
+
+
+def get_current_trainee(
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+    db: Session = Depends(get_db),
+) -> Trainee:
+    unauthorized = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Invalid or expired session",
+    )
+
+    try:
+        payload = jwt.decode(
+            credentials.credentials,
+            settings.SECRET_KEY,
+            algorithms=[settings.ALGORITHM],
+        )
+    except JWTError:
+        raise unauthorized
+
+    try:
+        phone = int(payload.get("sub"))
+    except (TypeError, ValueError):
+        raise unauthorized
+
+    trainee = trainee_repository.get_by_phone(db, phone)
+    if not trainee:
+        raise unauthorized
+
+    return trainee
+
+
+def get_current_admin(
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+    db: Session = Depends(get_db),
+) -> Admin | AgencyTeam:
+    unauthorized = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Invalid or expired session",
+    )
+
+    try:
+        payload = jwt.decode(
+            credentials.credentials,
+            settings.SECRET_KEY,
+            algorithms=[settings.ALGORITHM],
+        )
+    except JWTError:
+        raise unauthorized
+
+    subject = payload.get("sub") or ""
+
+    if subject.startswith("admin:"):
+        admin = admin_repository.get_admin_by_username(db, subject.removeprefix("admin:"))
+        if not admin:
+            raise unauthorized
+        return admin
+
+    if subject.startswith("agencyteam:"):
+        agent = admin_repository.get_agency_by_username(db, subject.removeprefix("agencyteam:"))
+        if not agent:
+            raise unauthorized
+        return agent
+
+    raise unauthorized
+
+
+def require_admin_role(admin: Admin | AgencyTeam = Depends(get_current_admin)) -> Admin:
+    """Same auth as get_current_admin, but only lets role="admin" accounts
+    through - for the admin-only review/assessment-builder endpoints that
+    a trainer account must not be able to reach."""
+    if getattr(admin, "role", None) != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This action requires an admin account",
+        )
+    return admin

@@ -10,9 +10,8 @@ export const toApiDate = (d: Date) =>
 
 // Shared by the bottom nav's "More" menu and the dashboard's quick-actions
 // panel, which uses slightly different (pluralized) labels for a few items.
-export function useTrainerNavigate(dateRange?: { start: Date; end: Date }) {
+export function useTrainerNavigate() {
   const router = useRouter();
-  const range = dateRange ?? { start: new Date(), end: new Date() };
 
   return (label: string) => {
     if (label === "Add New Trainings" || label === "New Training") {
@@ -34,15 +33,14 @@ export function useTrainerNavigate(dateRange?: { start: Date; end: Date }) {
     } else if (label === "Pending Attendance") {
       router.push("/pending_attendance");
     } else if (label === "View Sessions") {
-      router.push({
-        pathname: "/sessions",
-        params: { start: toApiDate(range.start), end: toApiDate(range.end) },
-      });
+      // No date params - lands on the Sessions screen's own "All" default,
+      // not silently scoped to whatever the dashboard calendar's current
+      // range happens to be.
+      router.push("/sessions");
     } else if (label === "View Reports") {
-      router.push({
-        pathname: "/sessions",
-        params: { start: toApiDate(range.start), end: toApiDate(range.end), tab: "completed" },
-      });
+      // Same reasoning as "View Sessions" above - only the tab is forced
+      // (Completed), no incidental date scoping.
+      router.push({ pathname: "/sessions", params: { tab: "completed" } });
     }
   };
 }
@@ -50,11 +48,10 @@ export function useTrainerNavigate(dateRange?: { start: Date; end: Date }) {
 type TrainerMoreMenuProps = {
   visible: boolean;
   onClose: () => void;
-  dateRange?: { start: Date; end: Date };
 };
 
-export default function TrainerMoreMenu({ visible, onClose, dateRange }: TrainerMoreMenuProps) {
-  const handleNavigate = useTrainerNavigate(dateRange);
+export default function TrainerMoreMenu({ visible, onClose }: TrainerMoreMenuProps) {
+  const handleNavigate = useTrainerNavigate();
 
   return (
     <AppModal visible={visible} onClose={onClose} position="bottom" contentStyle={styles.sheet}>

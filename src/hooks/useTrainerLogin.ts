@@ -7,6 +7,7 @@ import { useState } from "react";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/hooks/useAuth";
 import { ApiError, loginAdmin } from "@/api/admin";
+import { cleanText } from "@/utils/validation";
 
 export function useTrainerLogin(initialReason?: string) {
   const router = useRouter();
@@ -22,7 +23,8 @@ export function useTrainerLogin(initialReason?: string) {
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
-    if (!username.trim() || !password) {
+    const cleanUsername = cleanText(username, 100);
+    if (!cleanUsername || !password) {
       setNotice("Enter your username and password.");
       return;
     }
@@ -30,7 +32,7 @@ export function useTrainerLogin(initialReason?: string) {
     setLoading(true);
     setNotice(null);
     try {
-      const session = await loginAdmin(username.trim(), password);
+      const session = await loginAdmin(cleanUsername, password);
       setAdminSession(session);
       if (session.admin.role === "admin") {
         router.replace("/admin_dashboard");

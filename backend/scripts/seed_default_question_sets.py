@@ -5,13 +5,17 @@ exact same `default:<name>` UID the frontend already generates for them.
 
 Without this, picking one of those display-only options produces a
 conference whose `postAssessmentUid` points at nothing - the module can
-unlock fine, but the trainee gets a 404 loading the test. Run with:
-venv/Scripts/python.exe seed_default_question_sets.py
+unlock fine, but the trainee gets a 404 loading the test. Run from backend/ with:
+venv/Scripts/python.exe scripts/seed_default_question_sets.py
 """
 
 import json
+import sys
+from pathlib import Path
 
-from app.database.database import SessionLocal
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from app.database.connection import SessionLocal
 from app.models.quiz import AssessmentSuite, Question
 
 GENERIC_QUESTIONS = [

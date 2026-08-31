@@ -1,40 +1,11 @@
-import { useCallback, useState } from "react";
-import { useFocusEffect, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 
 import { TraineeListView } from "@/components/trainee/TraineeListView";
-import { useAuth } from "@/hooks/useAuth";
-import { TraineeListItem, fetchTraineeList } from "@/api/trainee";
+import { useTraineeList } from "@/hooks/useTraineeList";
 
 export default function PendingTraineeScreen() {
   const router = useRouter();
-  const { adminToken } = useAuth();
-  const [items, setItems] = useState<TraineeListItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-
-  const load = useCallback(
-    async (mode: "load" | "refresh" = "load") => {
-      if (!adminToken) return;
-      if (mode === "refresh") setRefreshing(true);
-      else setLoading(true);
-      try {
-        const data = await fetchTraineeList(adminToken);
-        setItems(data.filter((item) => item.approvalStatus === "Pending"));
-      } catch {
-        setItems([]);
-      } finally {
-        if (mode === "refresh") setRefreshing(false);
-        else setLoading(false);
-      }
-    },
-    [adminToken]
-  );
-
-  useFocusEffect(
-    useCallback(() => {
-      load();
-    }, [load])
-  );
+  const { items, loading, refreshing, refresh } = useTraineeList(true);
 
   return (
     <TraineeListView
@@ -43,7 +14,7 @@ export default function PendingTraineeScreen() {
       items={items}
       loading={loading}
       refreshing={refreshing}
-      onRefresh={() => load("refresh")}
+      onRefresh={refresh}
       onBack={() => router.back()}
       onEdit={() => router.push("/session_dashboard")}
       exportFileName="pending-trainee-list"

@@ -49,7 +49,7 @@ export function buildTrainingListColumns(
     },
     statusColumn,
     { key: "trainingsId", header: "Trainings ID", minWidth: 118, exportValue: (row) => row.conferenceUid },
-    { key: "totalPax", header: "Total Pax (Trainer)", minWidth: 100, exportValue: (row) => String(row.totalPax ?? 0) },
+    { key: "totalPax", header: "Total Pax (Trainer)", minWidth: 100, exportValue: (row) => String(row.traineeCount ?? 0) },
     { key: "trainerName", header: "Trainer Name", minWidth: 118, exportValue: (row) => row.trainerName ?? "--" },
     { key: "hoid", header: "HOID", minWidth: 96, exportValue: (row) => row.hoid ?? "--" },
     {

@@ -6,6 +6,7 @@ export type AdminAccount = {
   username: string;
   name: string;
   role: string;
+  offerId?: string | null;
 };
 
 export type AdminAuthSession = {

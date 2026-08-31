@@ -1,6 +1,4 @@
-import { USE_MOCK_DATA } from "@/config/dataSource";
 import { apiRequest, apiUpload } from "./client";
-import * as mock from "./mockService";
 
 export type AttendanceRecord = {
   status: string;
@@ -9,7 +7,6 @@ export type AttendanceRecord = {
 };
 
 export function checkIn(token: string, conferenceUid: string) {
-  if (USE_MOCK_DATA) return mock.checkIn(token, conferenceUid);
   return apiRequest<AttendanceRecord>("/attendance/check-in", {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
@@ -24,7 +21,6 @@ export type VerifyLocationResult = {
 };
 
 export function verifyLocation(token: string, conferenceUid: string, latitude: number, longitude: number) {
-  if (USE_MOCK_DATA) return mock.verifyLocation(token, conferenceUid, latitude, longitude);
   return apiRequest<VerifyLocationResult>("/attendance/verify-location", {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
@@ -40,7 +36,6 @@ export type SecureCheckInPayload = {
 };
 
 export function secureCheckIn(token: string, payload: SecureCheckInPayload) {
-  if (USE_MOCK_DATA) return mock.secureCheckIn(token, payload);
   const formData = new FormData();
   formData.append("conferenceUid", payload.conferenceUid);
   formData.append("latitude", String(payload.latitude));

@@ -240,7 +240,7 @@ export default function DataTable<T>({
                           {column.render ? (
                             column.render(row, absoluteIndex)
                           ) : (
-                            <AppText style={styles.bodyCellText} numberOfLines={1}>
+                            <AppText style={styles.bodyCellText}>
                               {column.exportValue ? column.exportValue(row, absoluteIndex) : ""}
                             </AppText>
                           )}

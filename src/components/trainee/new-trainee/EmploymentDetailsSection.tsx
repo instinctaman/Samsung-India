@@ -5,6 +5,7 @@ import AppInput from "@/components/ui/AppInput";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { DateTimeField } from "@/components/training/add-training/DateTimeField";
 import { SectionTitle } from "@/components/training/add-training/SectionTitle";
+import { digitsOnly } from "@/utils/validation";
 import { JOB_STATUS_OPTIONS } from "./constants";
 import { NewTraineeForm } from "./useNewTraineeForm";
 
@@ -36,7 +37,7 @@ export function EmploymentDetailsSection({ form }: { form: NewTraineeForm }) {
         keyboardType="number-pad"
         maxLength={6}
         value={form.jobPincode}
-        onChangeText={(v) => form.setJobPincode(v.replace(/[^0-9]/g, ""))}
+        onChangeText={(v) => form.setJobPincode(digitsOnly(v))}
       />
       <DateTimeField
         label="Resigned On"

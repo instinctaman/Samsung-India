@@ -12,6 +12,8 @@ type SessionDashboardHeaderProps = {
   timestamp?: string;
   isClosed?: boolean;
   hasStarted?: boolean;
+  isLive?: boolean;
+  isApproved?: boolean;
   loading?: boolean;
   onBack: () => void;
   onCopyLink: () => void;
@@ -27,6 +29,8 @@ export default function SessionDashboardHeader({
   timestamp = "Generated: 29 July 2026, 11:09 AM",
   isClosed = false,
   hasStarted = true,
+  isLive = false,
+  isApproved = true,
   loading = false,
   onBack,
   onCopyLink,
@@ -82,16 +86,18 @@ export default function SessionDashboardHeader({
               <Text style={styles.squareBtnText}>Copy Link</Text>
             </Pressable>
 
-            <Pressable
-              style={styles.headerSquareBtn}
-              onPress={onShowQR}
-              hitSlop={6}
-              accessibilityRole="button"
-              accessibilityLabel="Show QR"
-            >
-              <Ionicons name="qr-code-outline" size={16} color={Colors.white} />
-              <Text style={styles.squareBtnText}>Show QR</Text>
-            </Pressable>
+            {isLive && (
+              <Pressable
+                style={styles.headerSquareBtn}
+                onPress={onShowQR}
+                hitSlop={6}
+                accessibilityRole="button"
+                accessibilityLabel="Show QR"
+              >
+                <Ionicons name="qr-code-outline" size={16} color={Colors.white} />
+                <Text style={styles.squareBtnText}>Show QR</Text>
+              </Pressable>
+            )}
           </View>
         </View>
 
@@ -132,6 +138,11 @@ export default function SessionDashboardHeader({
           ) : isClosed ? (
             <View style={[styles.endSessionBtn, styles.sessionClosedBtn]}>
               <Text style={styles.endSessionBtnText}>Session Closed</Text>
+            </View>
+          ) : !hasStarted && !isApproved ? (
+            <View style={[styles.endSessionBtn, styles.sessionPendingBtn]}>
+              <Ionicons name="time-outline" size={12} color="#92400E" />
+              <Text style={[styles.endSessionBtnText, styles.sessionPendingBtnText]}>Awaiting Approval</Text>
             </View>
           ) : !hasStarted ? (
             <Pressable
@@ -298,6 +309,12 @@ const styles = StyleSheet.create({
   },
   startSessionBtn: {
     backgroundColor: Colors.success,
+  },
+  sessionPendingBtn: {
+    backgroundColor: "#FEF3C7",
+  },
+  sessionPendingBtnText: {
+    color: "#92400E",
   },
   sessionLoadingBtn: {
     backgroundColor: "#E5E7EB",

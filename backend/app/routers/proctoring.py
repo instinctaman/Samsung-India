@@ -1,7 +1,7 @@
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.core.security import get_current_trainee
+from app.dependencies.auth import get_current_trainee
 from app.models.trainee import Trainee
 from app.schemas.proctoring import FaceCheckRequest, FaceCheckResult
 from app.services.face_detection import count_faces

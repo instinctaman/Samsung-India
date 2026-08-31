@@ -9,9 +9,11 @@ import {
   SessionHeroesCard,
   TopPerformersCard,
 } from "@/components/session_dashboard";
+import { useLiveRuntime } from "@/hooks/useLiveRuntime";
 import { Colors } from "@/theme/colors";
-import { formatRuntimeLabel } from "./formatting";
+import { formatDurationHMS, formatRuntimeLabel } from "./formatting";
 import LiveStudioSection from "./LiveStudioSection";
+import { participantsFromTrainees } from "./participantMapper";
 import RuntimeAndQuizSection from "./RuntimeAndQuizSection";
 
 type DashboardScrollContentProps = {
@@ -21,6 +23,8 @@ type DashboardScrollContentProps = {
   showSessionData: boolean;
   refreshing: boolean;
   onRefresh: () => void;
+  onAdvanceModule: () => void;
+  onMarkAttendance: (traineeUid: string, status: "Present" | "Absent") => void;
   onEndSession: () => void;
   onLeaderboard: () => void;
 };
@@ -32,9 +36,14 @@ export default function DashboardScrollContent({
   showSessionData,
   refreshing,
   onRefresh,
+  onAdvanceModule,
+  onMarkAttendance,
   onEndSession,
   onLeaderboard,
 }: DashboardScrollContentProps) {
+  const runtimeSeconds = useLiveRuntime(data?.actualStartedAt, data?.actualEndedAt);
+  const participants = participantsFromTrainees(data?.trainees ?? []);
+
   return (
     <ScrollView
       contentContainerStyle={styles.scrollContent}
@@ -47,9 +56,8 @@ export default function DashboardScrollContent({
         topic={data?.trainingType || "Webinar"}
         date={data?.conferenceDate || "20 Jul 2026"}
         trainerName={data?.trainerName || "Demo Trainer"}
-        runtime={formatRuntimeLabel(data?.runtimeSeconds)}
-        conferenceStatus={data?.conferenceStatus || "Ongoing"}
-        hasStarted={showSessionData}
+        runtime={formatRuntimeLabel(runtimeSeconds)}
+        conferenceStatus={data?.conferenceStatus || "Scheduled"}
       />
 
       <AudienceBreakdownCard
@@ -64,28 +72,52 @@ export default function DashboardScrollContent({
       />
 
       <AssessmentResultCard
-        passCount={data?.assessment?.pass ?? 14}
-        failCount={data?.assessment?.fail ?? 4}
+        passCount={data?.assessment?.pass ?? 0}
+        failCount={data?.assessment?.fail ?? 0}
         passRate={
-          data?.assessment?.totalAttempts ? Math.round((data.assessment.pass / data.assessment.totalAttempts) * 100) : 82
+          data?.assessment?.totalAttempts
+            ? Math.round((data.assessment.pass / data.assessment.totalAttempts) * 100)
+            : 0
         }
         hasStarted={showSessionData}
       />
 
-      <TopPerformersCard hasStarted={showSessionData} />
+      <TopPerformersCard
+        performers={(data?.topPerformers ?? []).map((p) => ({
+          id: p.traineeUid,
+          name: p.name,
+          score: Math.round(p.score),
+          maxScore: Math.round(p.maxScore),
+          percentage: Math.round(p.percentage),
+        }))}
+        hasStarted={showSessionData}
+      />
 
-      <SessionHeroesCard isSessionClosed={isSessionClosed} hasStarted={showSessionData} />
+      <SessionHeroesCard
+        heroes={data?.sessionHeroes ?? []}
+        isSessionClosed={isSessionClosed}
+        hasStarted={showSessionData}
+      />
 
-      {showSessionData && <RuntimeAndQuizSection activeModuleId={data?.activeModuleId} onEndQuiz={onEndSession} />}
+      {showSessionData && (
+        <RuntimeAndQuizSection
+          data={data}
+          actualRuntime={formatDurationHMS(runtimeSeconds)}
+          onAdvanceModule={onAdvanceModule}
+          onEndSession={onEndSession}
+        />
+      )}
 
       <ExecutionFlowCard executionFlow={data?.executionFlow ?? []} auditLog={data?.auditLog ?? []} hasStarted={showSessionData} />
 
       {showSessionData && (
         <LiveStudioSection
           conferenceUid={conferenceUid}
-          trainerName={data?.trainerName ?? undefined}
+          trainerName={data?.trainerName}
+          participants={participants}
           onLeaderboard={onLeaderboard}
           onRefresh={onRefresh}
+          onMarkAttendance={onMarkAttendance}
         />
       )}
     </ScrollView>

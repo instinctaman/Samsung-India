@@ -1,9 +1,7 @@
-import uuid
-
 from sqlalchemy import BigInteger, Column, DateTime, Integer, String, Text, text
 from sqlalchemy.sql import func
 
-from app.database.database import Base
+from app.database.connection import Base
 
 
 class Accounts(Base):
@@ -14,7 +12,7 @@ class Accounts(Base):
     __tablename__ = "accounts"
 
     id = Column(Integer, primary_key=True, index=True)
-    accountsUid = Column(String(100), unique=True, default=lambda: uuid.uuid4().hex)
+    accountsUid = Column(String(100), unique=True)
 
     # Venue details
     venueName = Column(String(100))

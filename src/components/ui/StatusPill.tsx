@@ -26,10 +26,10 @@ export function StatusPill({ label, tone }: { label: string; tone: StatusTone })
     <View style={[styles.pill, { backgroundColor: TONE_BACKGROUND[tone] }]}>
       <AppText
         variant="overline"
+        size={8}
         color={TONE_TEXT[tone]}
         weight={FontWeight.semiBold}
         align="center"
-        numberOfLines={1}
       >
         {label}
       </AppText>
@@ -39,11 +39,11 @@ export function StatusPill({ label, tone }: { label: string; tone: StatusTone })
 
 const styles = StyleSheet.create({
   pill: {
-    width: 60,
+    alignSelf: "center",
     alignItems: "center",
     justifyContent: "center",
     borderRadius: Radius.md,
-    paddingHorizontal: 6,
+    paddingHorizontal: 8,
     paddingVertical: 4,
   },
 });

@@ -1,16 +1,17 @@
-import json
 from datetime import datetime
+import json
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.core.security import get_current_trainee
-from app.database.database import get_db
+from app.dependencies.auth import get_current_trainee
+from app.dependencies.database import get_db
+from app.models.trainee import Trainee
+from app.schemas.session import CurrentSession, SessionHistoryItem, SessionJoinInfo, SessionModule
+from app.services import session_service
 from app.models.attendance import Attendance
 from app.models.conference import Conference
 from app.models.quiz import AssessmentResult
-from app.models.trainee import Trainee
-from app.schemas.session import CurrentSession, SessionHistoryItem, SessionModule
 from app.services.module_flow import auto_advance_if_due, configured_modules
 
 router = APIRouter(prefix="/sessions", tags=["sessions"])
@@ -166,6 +167,20 @@ def _select_current_conference(
     return None, False, None
 
 
+@router.get("/join/{code}", response_model=SessionJoinInfo)
+def get_session_join_info(code: str, db: Session = Depends(get_db)):
+    return session_service.get_join_info(db, code)
+
+
+@router.post("/join/{code}", response_model=SessionJoinInfo)
+def join_session(
+    code: str,
+    db: Session = Depends(get_db),
+    trainee: Trainee = Depends(get_current_trainee),
+):
+    return session_service.join_session(db, trainee, code)
+
+
 @router.get("/current", response_model=CurrentSession)
 def get_current_session(
     db: Session = Depends(get_db),
@@ -319,48 +334,4 @@ def get_session_history(
     db: Session = Depends(get_db),
     trainee: Trainee = Depends(get_current_trainee),
 ):
-    """The trainee's past sessions with their attendance/result, for the
-    "Recent Sessions" popup on the session detail screen."""
-    attendance_rows = db.query(Attendance).filter(Attendance.traineeUid == trainee.traineeUid).all()
-    result_rows = (
-        db.query(AssessmentResult)
-        .filter(AssessmentResult.traineeUid == trainee.traineeUid)
-        .order_by(AssessmentResult.submittedAt.desc())
-        .all()
-    )
-
-    conference_uids = {a.conferenceUid for a in attendance_rows} | {r.conferenceUid for r in result_rows}
-    if not conference_uids:
-        return []
-
-    conferences = (
-        db.query(Conference)
-        .filter(Conference.conferenceUid.in_(conference_uids))
-        .order_by(Conference.timestamp.desc())
-        .limit(limit)
-        .all()
-    )
-
-    attendance_by_conference = {a.conferenceUid: a for a in attendance_rows}
-    # Rows are already ordered by submittedAt desc, so the first one seen
-    # per conference is that trainee's most recent result there.
-    latest_result_by_conference: dict[str, AssessmentResult] = {}
-    for result in result_rows:
-        latest_result_by_conference.setdefault(result.conferenceUid, result)
-
-    items: list[SessionHistoryItem] = []
-    for conference in conferences:
-        attendance = attendance_by_conference.get(conference.conferenceUid)
-        result = latest_result_by_conference.get(conference.conferenceUid)
-        items.append(
-            SessionHistoryItem(
-                conferenceUid=conference.conferenceUid,
-                title=conference.suiteTitle or conference.trainingType or "Training Session",
-                date=conference.conferenceDate,
-                trainerName=conference.trainerName,
-                attendanceStatus=attendance.status if attendance else None,
-                score=f"{float(result.percentage):g}%" if result else None,
-                passed=(float(result.percentage) >= PASS_THRESHOLD_PERCENT) if result else None,
-            )
-        )
-    return items
+    return session_service.get_session_history(db, trainee, limit)

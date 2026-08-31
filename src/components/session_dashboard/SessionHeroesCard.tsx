@@ -1,153 +1,85 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
+import { SessionHeroStat } from "@/api/training";
 import { Colors } from "@/theme/colors";
 import { Shadows } from "@/theme/shadows";
 
 type SessionHeroesCardProps = {
-  onSelectQuizHero?: () => void;
-  onSelectTestHero?: () => void;
-  // Only reflects the completed Test Module Hero results once the session
-  // itself is closed (i.e. opened via "Report"); otherwise shows the
-  // original still-locked placeholder state.
+  heroes: SessionHeroStat[];
   isSessionClosed?: boolean;
   hasStarted?: boolean;
 };
 
-export default function SessionHeroesCard({
-  onSelectQuizHero,
-  onSelectTestHero,
-  isSessionClosed = false,
-  hasStarted = true,
-}: SessionHeroesCardProps) {
-  const isStandby = !hasStarted && !isSessionClosed;
+const VISUAL: Record<string, { icon: keyof typeof Ionicons.glyphMap; bg: string; color: string }> = {
+  LIVE_QUIZ: { icon: "rocket", bg: "#FEE2E2", color: "#EF4444" },
+  STANDARD_TEST: { icon: "clipboard", bg: "#EFF6FF", color: "#0066FF" },
+};
 
+function Metric({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.metricItem}>
+      <Text style={styles.metricLabel}>{label}</Text>
+      <Text style={styles.metricValue}>{value}</Text>
+    </View>
+  );
+}
+
+export default function SessionHeroesCard({ heroes, hasStarted = true }: SessionHeroesCardProps) {
   return (
     <View style={styles.container}>
       <Text style={styles.sectionTitle}>SESSION HEROES</Text>
 
-      {/* Hero Card 1: LIVE QUIZ HERO */}
-      <Pressable
-        style={styles.heroCard}
-        onPress={onSelectQuizHero}
-        accessibilityRole="button"
-      >
-        <View style={styles.cardHeader}>
-          <View style={styles.leftTitleRow}>
-            <View style={styles.rocketIconCircle}>
-              <Ionicons name="rocket" size={18} color="#EF4444" />
-            </View>
-            <View>
-              <Text style={styles.heroTitle}>LIVE QUIZ HERO</Text>
-              <View style={styles.badgesRow}>
-                {isStandby ? (
-                  <View style={styles.darkBadge}>
-                    <Text style={styles.darkBadgeText}>Standby</Text>
+      {heroes.length === 0 && (
+        <View style={styles.heroCard}>
+          <Text style={styles.emptyText}>
+            {hasStarted
+              ? "No quiz or test module in this session."
+              : "Hero stats appear once quizzes / tests are attempted."}
+          </Text>
+        </View>
+      )}
+
+      {heroes.map((hero) => {
+        const v = VISUAL[hero.moduleKey] ?? VISUAL.STANDARD_TEST;
+        const hasScores = hero.participants > 0;
+        return (
+          <View key={hero.moduleKey} style={styles.heroCard}>
+            <View style={styles.cardHeader}>
+              <View style={styles.leftTitleRow}>
+                <View style={[styles.iconCircle, { backgroundColor: v.bg }]}>
+                  <Ionicons name={v.icon} size={18} color={v.color} />
+                </View>
+                <View>
+                  <Text style={styles.heroTitle}>{hero.label} Hero</Text>
+                  <View style={styles.badgesRow}>
+                    <View style={styles.darkBadge}>
+                      <Text style={styles.darkBadgeText}>
+                        {hasScores ? (hero.topName ?? "—") : "Standby"}
+                      </Text>
+                    </View>
+                    <View style={styles.greyBadge}>
+                      <Text style={styles.greyBadgeText}>{hero.participants} attempted</Text>
+                    </View>
                   </View>
-                ) : (
-                  <View style={styles.redDotBadge}>
-                    <View style={styles.redDot} />
-                    <Text style={styles.redBadgeText}>200 TEST</Text>
-                  </View>
-                )}
-                <View style={styles.greyBadge}>
-                  <Text style={styles.greyBadgeText}>
-                    {isStandby ? "0/0 Completed" : "COMPLETED"}
-                  </Text>
                 </View>
               </View>
             </View>
-          </View>
-          <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
-        </View>
 
-        {/* 4 Metrics Grid */}
-        <View style={styles.metricsRow}>
-          <View style={styles.metricItem}>
-            <Text style={styles.metricLabel}>Modules</Text>
-            <Text style={styles.metricValue}>{isStandby ? "0" : "01"}</Text>
-          </View>
-          <View style={styles.metricItem}>
-            <Text style={styles.metricLabel}>Participants</Text>
-            <Text style={styles.metricValue}>{isStandby ? "0" : "22"}</Text>
-          </View>
-          <View style={styles.metricItem}>
-            <Text style={styles.metricLabel}>Average</Text>
-            <Text style={styles.metricValue}>{isStandby ? "-" : "14"}</Text>
-          </View>
-          <View style={styles.metricItem}>
-            <Text style={styles.metricLabel}>Best</Text>
-            <Text style={styles.metricValue}>{isStandby ? "-" : "30"}</Text>
-          </View>
-        </View>
-      </Pressable>
-
-      {/* Hero Card 2: Test Module Hero */}
-      <Pressable
-        style={styles.heroCard}
-        onPress={onSelectTestHero}
-        accessibilityRole="button"
-      >
-        <View style={styles.cardHeader}>
-          <View style={styles.leftTitleRow}>
-            <View style={styles.clipboardIconCircle}>
-              <Ionicons name="clipboard" size={18} color="#0066FF" />
-            </View>
-            <View>
-              <Text style={styles.heroTitle}>Test Module Hero</Text>
-              <View style={styles.badgesRow}>
-                <View style={styles.darkBadge}>
-                  <Text style={styles.darkBadgeText}>
-                    {isSessionClosed || isStandby ? "Standby" : "LOCKED"}
-                  </Text>
-                </View>
-                <View style={styles.greyBadge}>
-                  <Text style={styles.greyBadgeText}>
-                    {isSessionClosed || isStandby ? "0/1 Completed" : "COMPLETED"}
-                  </Text>
-                </View>
-              </View>
+            <View style={styles.metricsRow}>
+              <Metric label="Participants" value={hasScores ? String(hero.participants) : "-"} />
+              <Metric label="Average" value={hasScores ? `${hero.averagePercent}%` : "-"} />
+              <Metric label="Best" value={hasScores ? `${hero.bestPercent}%` : "-"} />
             </View>
           </View>
-          <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
-        </View>
-
-        {/* 4 Metrics Grid */}
-        <View style={styles.metricsRow}>
-          <View style={styles.metricItem}>
-            <Text style={styles.metricLabel}>Modules</Text>
-            <Text style={styles.metricValue}>{isStandby ? "1" : "01"}</Text>
-          </View>
-          <View style={styles.metricItem}>
-            <Text style={styles.metricLabel}>Participants</Text>
-            <Text style={styles.metricValue}>
-              {isStandby ? "0" : isSessionClosed ? "20" : "-"}
-            </Text>
-          </View>
-          <View style={styles.metricItem}>
-            <Text style={styles.metricLabel}>Average</Text>
-            <Text style={styles.metricValue}>
-              {isStandby ? "-" : isSessionClosed ? "18" : "-"}
-            </Text>
-          </View>
-          <View style={styles.metricItem}>
-            <Text style={styles.metricLabel}>Best</Text>
-            <Text style={styles.metricValue}>
-              {isStandby ? "-" : isSessionClosed ? "28" : "-"}
-            </Text>
-          </View>
-        </View>
-      </Pressable>
+        );
+      })}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    marginHorizontal: 14,
-    marginTop: 12,
-    gap: 8,
-  },
+  container: { marginHorizontal: 14, marginTop: 12, gap: 8 },
   sectionTitle: {
     fontSize: 12.5,
     fontWeight: "800",
@@ -163,85 +95,16 @@ const styles = StyleSheet.create({
     padding: 12,
     ...Shadows.card,
   },
-  cardHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  leftTitleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  rocketIconCircle: {
-    width: 38,
-    height: 38,
-    borderRadius: 10,
-    backgroundColor: "#FEE2E2",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  clipboardIconCircle: {
-    width: 38,
-    height: 38,
-    borderRadius: 10,
-    backgroundColor: "#EFF6FF",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  heroTitle: {
-    fontSize: 13,
-    fontWeight: "800",
-    color: "#111827",
-  },
-  badgesRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    marginTop: 3,
-  },
-  redDotBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    backgroundColor: "#FEE2E2",
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  redDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: "#EF4444",
-  },
-  redBadgeText: {
-    fontSize: 8,
-    fontWeight: "700",
-    color: "#EF4444",
-  },
-  greyBadge: {
-    backgroundColor: "#F3F4F6",
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  greyBadgeText: {
-    fontSize: 8,
-    fontWeight: "600",
-    color: "#6B7280",
-  },
-  darkBadge: {
-    backgroundColor: "#1F2937",
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  darkBadgeText: {
-    fontSize: 8,
-    fontWeight: "700",
-    color: Colors.white,
-  },
+  emptyText: { fontSize: 11, color: "#6B7280", textAlign: "center", paddingVertical: 8 },
+  cardHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  leftTitleRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+  iconCircle: { width: 38, height: 38, borderRadius: 10, alignItems: "center", justifyContent: "center" },
+  heroTitle: { fontSize: 13, fontWeight: "800", color: "#111827" },
+  badgesRow: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 3 },
+  greyBadge: { backgroundColor: "#F3F4F6", paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
+  greyBadgeText: { fontSize: 8, fontWeight: "600", color: "#6B7280" },
+  darkBadge: { backgroundColor: "#1F2937", paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
+  darkBadgeText: { fontSize: 8, fontWeight: "700", color: Colors.white },
   metricsRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -251,19 +114,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     marginTop: 10,
   },
-  metricItem: {
-    flex: 1,
-    alignItems: "center",
-  },
-  metricLabel: {
-    fontSize: 9,
-    color: "#6B7280",
-    fontWeight: "500",
-  },
-  metricValue: {
-    fontSize: 13.5,
-    fontWeight: "800",
-    color: "#111827",
-    marginTop: 2,
-  },
+  metricItem: { flex: 1, alignItems: "center" },
+  metricLabel: { fontSize: 9, color: "#6B7280", fontWeight: "500" },
+  metricValue: { fontSize: 13.5, fontWeight: "800", color: "#111827", marginTop: 2 },
 });

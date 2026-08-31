@@ -10,7 +10,11 @@ import { Radius } from "@/theme/radius";
 import { Spacing } from "@/theme/spacing";
 import AppModal from "@/components/ui/AppModal";
 
-export type SelectOption = { label: string; value: string };
+// `name` is optional - only pickers whose `label` isn't itself the plain
+// display name (e.g. the trainer picker prefixes an employee ID onto
+// `label`) set it, for callers that need the bare name rather than the
+// display string.
+export type SelectOption = { label: string; value: string; name?: string };
 
 type SearchableSelectProps = {
   label?: string;
@@ -126,7 +130,7 @@ type SearchableMultiSelectProps = {
   title?: string;
   placeholder?: string;
   values: string[];
-  options: string[];
+  options: SelectOption[];
   onChange: (values: string[]) => void;
   // Smaller height/padding for tight layouts like dense multi-field forms.
   compact?: boolean;
@@ -144,13 +148,14 @@ export function SearchableMultiSelect({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
 
+  const labelFor = (value: string) => options.find((o) => o.value === value)?.label ?? value;
   const filtered = useMemo(
-    () => options.filter((o) => o.toLowerCase().includes(query.toLowerCase())),
+    () => options.filter((o) => o.label.toLowerCase().includes(query.toLowerCase())),
     [options, query]
   );
 
-  const toggle = (item: string) => {
-    onChange(values.includes(item) ? values.filter((v) => v !== item) : [...values, item]);
+  const toggle = (value: string) => {
+    onChange(values.includes(value) ? values.filter((v) => v !== value) : [...values, value]);
   };
 
   return (
@@ -168,7 +173,7 @@ export function SearchableMultiSelect({
         }}
       >
         <AppText style={[styles.triggerText, compact && styles.triggerTextCompact]} color={values.length ? Colors.black : Colors.gray400} numberOfLines={1}>
-          {values.length ? values.join(", ") : placeholder}
+          {values.length ? values.map(labelFor).join(", ") : placeholder}
         </AppText>
         <Ionicons name="chevron-down" size={compact ? 14 : 16} color={Colors.gray600} />
       </Pressable>
@@ -177,7 +182,7 @@ export function SearchableMultiSelect({
         <View style={styles.chipRow}>
           {values.map((item) => (
             <Pressable key={item} style={styles.chip} onPress={() => toggle(item)}>
-              <AppText style={styles.chipLabel} color={Colors.mainColour1}>{item}</AppText>
+              <AppText style={styles.chipLabel} color={Colors.mainColour1}>{labelFor(item)}</AppText>
               <Ionicons name="close" size={13} color={Colors.mainColour1} />
             </Pressable>
           ))}
@@ -204,11 +209,11 @@ export function SearchableMultiSelect({
           />
         </View>
         <ScrollView style={styles.list} keyboardShouldPersistTaps="handled">
-          {filtered.map((item) => {
-            const active = values.includes(item);
+          {filtered.map((option) => {
+            const active = values.includes(option.value);
             return (
-              <Pressable key={item} style={[styles.row, active && styles.rowActive]} onPress={() => toggle(item)}>
-                <AppText style={styles.rowText} color={active ? Colors.white : Colors.black}>{item}</AppText>
+              <Pressable key={option.value} style={[styles.row, active && styles.rowActive]} onPress={() => toggle(option.value)}>
+                <AppText style={styles.rowText} color={active ? Colors.white : Colors.black}>{option.label}</AppText>
                 {active && <Ionicons name="checkmark" size={16} color={Colors.white} />}
               </Pressable>
             );

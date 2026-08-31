@@ -14,7 +14,7 @@ type SessionRuntimeCardProps = {
 };
 
 export default function SessionRuntimeCard({
-  actualRuntime = "4h 42m 46s",
+  actualRuntime = "0h 00m 00s",
   assignedTime = "00h 42m",
   consumedTime = "04h 22m",
   timeUsedPercent = 92,
