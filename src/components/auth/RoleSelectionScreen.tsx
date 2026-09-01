@@ -40,15 +40,6 @@ export default function RoleSelectionScreen() {
                   Choose your role to continue
                 </AppText>
                 <View style={styles.titleUnderline} />
-                <Pressable
-                  style={styles.scanBtn}
-                  onPress={() => router.push("/scan")}
-                  hitSlop={10}
-                  accessibilityRole="button"
-                  accessibilityLabel="Scan session QR to join"
-                >
-                  <Ionicons name="scan-outline" size={22} color={Colors.mainColour1} />
-                </Pressable>
               </View>
 
               <RoleLoginCard
@@ -63,7 +54,7 @@ export default function RoleSelectionScreen() {
                 tone="green"
                 title="Participant Login"
                 subtitle="Attempt tests, track progress and improve your skills."
-                onPress={() => router.push("/participant_login")}
+                onPress={() => router.push("/scan")}
               />
 
               <SocialLoginRow />
@@ -98,9 +89,8 @@ const styles = StyleSheet.create({
   },
   card: { width: "95%" },
   body: { padding: 20, gap: 12 },
-  titleSection: { alignItems: "center", marginBottom: 4, position: "relative", alignSelf: "stretch" },
+  titleSection: { alignItems: "center", marginBottom: 4 },
   titleSubtitle: { marginTop: 2 },
-  scanBtn: { position: "absolute", right: 0, top: 0, padding: 4 },
   titleUnderline: {
     width: 36,
     height: 3,

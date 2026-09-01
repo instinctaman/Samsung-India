@@ -10,7 +10,8 @@ import { Colors } from "@/theme/colors";
 import { useQrScanner } from "./useQrScanner";
 
 export default function QrScannerView() {
-  const { granted, canAskAgain, requestPermission, error, handleScanned, onClose } = useQrScanner();
+  const { granted, canAskAgain, requestPermission, error, handleScanned, onClose, onManualLogin } =
+    useQrScanner();
 
   return (
     <View style={styles.container}>
@@ -49,6 +50,10 @@ export default function QrScannerView() {
             )}
           </View>
         )}
+
+        <Pressable style={styles.manualBtn} onPress={onManualLogin} hitSlop={8}>
+          <AppText style={styles.manualText}>Enter Company ID / Phone instead</AppText>
+        </Pressable>
       </SafeAreaView>
     </View>
   );
@@ -58,6 +63,8 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#000000" },
   overlay: { flex: 1, alignItems: "center", justifyContent: "center", padding: 24 },
   closeBtn: { position: "absolute", top: 12, left: 12, padding: 8 },
+  manualBtn: { position: "absolute", bottom: 28, alignSelf: "center", padding: 8 },
+  manualText: { color: Colors.white, fontSize: 13, textDecorationLine: "underline" },
   center: { alignItems: "center", gap: 16 },
   frame: {
     width: 220,

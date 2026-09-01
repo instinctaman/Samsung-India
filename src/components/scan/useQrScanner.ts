@@ -5,11 +5,12 @@ import { useCameraPermissions, type BarcodeScanningResult } from "expo-camera";
 import { parseJoinCode } from "./parseJoinCode";
 
 /**
- * Backs the in-app QR scanner (`app/scan.tsx`). Reads a session QR with
- * expo-camera, pulls the conference code out of it, and hands off to the
- * join screen - the same place a `samsungindia://join/<code>` deep link
- * lands, so from there the flow (preview -> login/register -> session) is
- * unchanged.
+ * Backs the in-app QR scanner (`app/scan.tsx`) - the participant entry
+ * point. Reads a session QR with expo-camera, pulls the conference code
+ * out of it, and hands off to the join screen (the same place a
+ * `samsungindia://join/<code>` deep link lands, so the rest of the flow -
+ * preview -> login/register -> session - is unchanged). A participant with
+ * no QR can fall through to the plain login form.
  */
 export function useQrScanner() {
   const router = useRouter();
@@ -38,5 +39,6 @@ export function useQrScanner() {
     error,
     handleScanned,
     onClose: () => router.back(),
+    onManualLogin: () => router.replace("/participant_login"),
   };
 }

@@ -87,30 +87,17 @@ export function useTraineeHome() {
         if (hasAttendanceRecorded) {
           setSessionFlowState("ATTENDANCE_RECORDED");
           data.flowState = "ATTENDANCE_RECORDED";
-          data.modules = data.modules.map((m) => {
-            if (m.key === "ATTENDANCE") {
-              return {
-                ...m,
-                isCompleted: true,
-                isLive: false,
-                completedAt: m.completedAt ?? "10:25",
-                ranDuration: m.ranDuration ?? "Ran : 45m 3s",
-              };
-            }
-            if (
-              m.key === "LIVE_QUIZ" &&
-              !m.isCompleted &&
-              !params.quiz &&
-              !params.postTest &&
-              !params.survey
-            ) {
-              return {
-                ...m,
-                isLive: true,
-              };
-            }
-            return m;
-          });
+          data.modules = data.modules.map((m) =>
+            m.key === "ATTENDANCE"
+              ? {
+                  ...m,
+                  isCompleted: true,
+                  isLive: false,
+                  completedAt: m.completedAt ?? "10:25",
+                  ranDuration: m.ranDuration ?? "Ran : 45m 3s",
+                }
+              : m,
+          );
         }
 
         if (params.survey === "completed") {
@@ -223,13 +210,8 @@ export function useTraineeHome() {
                 ranDuration: params.duration ?? m.ranDuration ?? "Ran : 1h 50m",
               };
             }
-            if (m.key === "SURVEY") {
-              return {
-                ...m,
-                isLive: true,
-                isCompleted: false,
-              };
-            }
+            // SURVEY stays whatever the backend reports - it only goes live
+            // once the trainer starts the Survey module.
             return m;
           });
         } else if (params.quiz === "completed") {
@@ -253,12 +235,8 @@ export function useTraineeHome() {
                 ranDuration: params.duration ?? m.ranDuration ?? "Ran : 1h 55m",
               };
             }
-            if (m.key === "STANDARD_TEST") {
-              return {
-                ...m,
-                isLive: true,
-              };
-            }
+            // STANDARD_TEST stays whatever the backend reports - it only goes
+            // live once the trainer starts the Standard Test module.
             return m;
           });
         } else if (
@@ -364,18 +342,22 @@ export function useTraineeHome() {
       const isAttendanceCompleted =
         isAttendance && currentFlow === "ATTENDANCE_RECORDED";
 
+      // `module.isLive` from the backend is the ONLY source of truth for
+      // whether a module is live - it's true only once the trainer has
+      // started that module (conference.activeModuleId === module.key).
+      // No module auto-goes-live off the trainee's own progress any more.
+      // (Attendance also drops the instant it's recorded locally, before
+      // the next poll catches up.)
       const isLiveModule = isAttendance
-        ? currentFlow !== "ATTENDANCE_RECORDED"
-        : currentFlow === "ATTENDANCE_RECORDED"
-          ? module.isLive || (module.key === "LIVE_QUIZ" && !module.isCompleted)
-          : false;
+        ? module.isLive && currentFlow !== "ATTENDANCE_RECORDED"
+        : module.isLive;
 
       return {
         id: module.key,
         key: module.key,
-        startTime: module.time ?? "09:00",
-        endTime: module.endTime ?? "10:00",
-        duration: module.duration ?? (isAttendance ? "1h" : "2h"),
+        startTime: module.time ?? "--",
+        endTime: module.endTime ?? "",
+        duration: module.duration ?? "--",
         type: module.name,
         title: "Session Activity",
         isLive: notStarted ? false : isLiveModule,
@@ -427,6 +409,7 @@ export function useTraineeHome() {
           conferenceUid: session.conferenceUid,
           title: session.title,
           location: session.location ?? "",
+          date: session.date ?? "",
           time: attendanceModule?.time ?? "",
           endTime: attendanceModule?.endTime ?? "",
         },
@@ -440,6 +423,7 @@ export function useTraineeHome() {
           conferenceUid: session.conferenceUid,
           title: session.title,
           location: session.location ?? "",
+          date: session.date ?? "",
           time: attendanceModule?.time ?? "",
           endTime: attendanceModule?.endTime ?? "",
           mode: "entry",

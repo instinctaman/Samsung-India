@@ -14,11 +14,14 @@ import { Radius } from "@/theme/radius";
 import { FontWeight } from "@/theme/typography";
 import { resolveMediaUrl } from "@/utils";
 
+// Same gender-avatar mapping as the trainee's Join Session screen
+// (components/session/join/useSessionScreen) - male / female icon by
+// `trainee.gender`, neutral face icon when it's unknown.
 const AVATAR_BY_GENDER: Record<string, ImageSourcePropType> = {
   male: require("@/assets/images/user_img/default_male.png"),
   female: require("@/assets/images/user_img/default_female.png"),
 };
-const DEFAULT_AVATAR: ImageSourcePropType = require("@/assets/images/user_img/default_male.png");
+const DEFAULT_AVATAR: ImageSourcePropType = require("@/assets/images/Icons/face_icon.png");
 
 export type TrainingSessionHeaderProps = {
   onBack?: () => void;
@@ -38,14 +41,14 @@ export type TrainingSessionHeaderProps = {
 export default function TrainingSessionHeader({
   onBack,
   onLogout,
-  userName = "Tushar Prajapati",
+  userName = "Trainee",
   gender,
   profilePhoto,
   confirmationStatus = "Not Confirmed",
-  sessionType = "One-Day Session",
+  sessionType = "Training",
   title = "Training Session",
-  date = "06 Jun 2026",
-  location = "New Delhi",
+  date = "--",
+  location = "--",
 }: TrainingSessionHeaderProps) {
   const photoUrl = resolveMediaUrl(profilePhoto);
   const avatar: ImageSourcePropType = photoUrl

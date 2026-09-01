@@ -10,6 +10,7 @@ import {
 } from "@/components/session";
 import { useTraineeHome } from "@/hooks/useTraineeHome";
 import { Colors } from "@/theme/colors";
+import { formatDisplayDate } from "@/utils/formatDisplayDate";
 
 export default function SessionDetailScreen() {
   const insets = useSafeAreaInsets();
@@ -45,15 +46,15 @@ export default function SessionDetailScreen() {
         <TrainingSessionHeader
           onLogout={handleLogout}
           onHistoryPress={() => setHistoryVisible(true)}
-          userName={trainee?.name ?? "Tushar Prajapati"}
+          userName={trainee?.name ?? "Trainee"}
           gender={trainee?.gender}
           profilePhoto={trainee?.profilePhoto}
           isOnline={true}
           confirmationStatus={session?.confirmationStatus ?? "Not Confirmed"}
-          sessionType={session?.sessionType ?? "One-Day Session"}
+          sessionType={session?.sessionType ?? "Training"}
           title={session?.title ?? "Training Session"}
-          date={session?.date ?? "06 Jun 2026"}
-          location={session?.location ?? "New Delhi"}
+          date={session?.date ? formatDisplayDate(session.date) : "--"}
+          location={session?.location ?? "--"}
         />
 
         <View style={styles.body}>

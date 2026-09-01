@@ -3,6 +3,7 @@ import { useRouter } from "expo-router";
 import { VerifyLocationResult } from "@/api/attendance";
 import { setAttendanceState, setSessionFlowState } from "@/api/session";
 import AccessGrantedView from "@/components/attendance/AccessGrantedView";
+import { formatDisplayDate } from "@/utils/formatDisplayDate";
 
 type AccessGrantedStepParams = {
   title?: string;
@@ -25,13 +26,13 @@ export default function AccessGrantedStep({ params, locationResult, router }: Ac
         { label: "Session", value: params.title || "Training Session", icon: "calendar-outline" },
         {
           label: "Time",
-          value: [params.time, params.endTime].filter(Boolean).join(" - ") || "--",
+          value: [params.time, params.endTime].filter(Boolean).join(" - ") || params.time || "--",
           icon: "time-outline",
         },
-        { label: "Date", value: params.date || "16 July 2026", icon: "calendar-outline" },
+        { label: "Date", value: formatDisplayDate(params.date ?? null), icon: "calendar-outline" },
         {
           label: "Location",
-          value: params.location || locationResult?.venueLabel || "Gurugram",
+          value: params.location || locationResult?.venueLabel || "--",
           icon: "location-outline",
         },
       ]}

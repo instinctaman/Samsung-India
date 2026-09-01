@@ -48,20 +48,6 @@ def list_for_trainer(
     return query.order_by(Conference.timestamp.desc()).all()
 
 
-def list_approved_active_for_trainer(db: Session, trainer_employee_id: str) -> list[Conference]:
-    """Approved conferences for this trainer that haven't ended yet - the
-    candidate pool for "which session is currently live for a trainee"."""
-    return (
-        db.query(Conference)
-        .filter(
-            Conference.status == "Approved",
-            Conference.trainerEmployeeId == trainer_employee_id,
-            Conference.conferenceEndsOn.is_(None),
-        )
-        .all()
-    )
-
-
 def list_pending(db: Session) -> list[Conference]:
     return db.query(Conference).filter(Conference.status == "Pending").order_by(Conference.timestamp.desc()).all()
 
