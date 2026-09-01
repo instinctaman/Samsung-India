@@ -8,3 +8,12 @@ export function formatDisplayDate(value: string | null): string {
   const month = date.toLocaleDateString("en-US", { month: "short" });
   return `${weekday}, ${day} ${month} ${date.getFullYear()}`;
 }
+
+export function getTodayFormattedDate(): string {
+  const date = new Date();
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = date.toLocaleDateString("en-US", { month: "short" });
+  const year = date.getFullYear();
+  return `${day} ${month} ${year}`;
+}
+

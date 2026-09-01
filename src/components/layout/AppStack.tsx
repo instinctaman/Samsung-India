@@ -32,6 +32,7 @@ export function AppStack() {
       <Stack.Screen name="participant_login" />
       <Stack.Screen name="scan" />
       <Stack.Screen name="join/[code]" />
+      <Stack.Screen name="trainee_dashboard" />
     </Stack>
   );
 }

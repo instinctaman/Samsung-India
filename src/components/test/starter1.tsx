@@ -68,21 +68,24 @@ export default function Starter1() {
     try {
       if (BYPASS_LOGIN) {
         setSession(createDevelopmentSession(trimmed));
-        router.replace("/session");
+        router.replace("/trainee_dashboard" as any);
         return;
       }
 
       const session = await loginTrainee(trimmed);
       setSession(session);
       if (join) {
-        // Bind this trainee to the scanned session before landing on it.
+        // Came from a scanned session QR - bind this trainee to that session,
+        // then land on its details screen.
         try {
           await joinSession(join, session.access_token);
         } catch {
           // Non-fatal: they still reach /session, just without the bind.
         }
+        router.replace("/session");
+      } else {
+        router.push("/trainee_dashboard" as any);
       }
-      router.replace("/session");
     } catch (err) {
       setError(
         err instanceof ApiError
