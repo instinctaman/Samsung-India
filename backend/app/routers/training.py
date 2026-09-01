@@ -13,6 +13,7 @@ from app.schemas.training import (
     AssessmentSuiteOut,
     AttendanceListItemOut,
     AttendanceMarkRequest,
+    LiveBroadcastRequest,
     PendingSessionItem,
     QuestionCreate,
     SessionDashboardOut,
@@ -20,7 +21,12 @@ from app.schemas.training import (
     TrainingCreate,
     TrainingOut,
 )
-from app.services import assessment_builder_service, trainee_admin_service, training_service
+from app.services import (
+    assessment_builder_service,
+    live_quiz_service,
+    trainee_admin_service,
+    training_service,
+)
 
 router = APIRouter(prefix="/admin", tags=["training"])
 
@@ -144,6 +150,57 @@ def advance_module(
     admin: Admin = Depends(get_current_admin),
 ):
     return training_service.advance_module(db, admin, conference_uid)
+
+
+@router.post("/trainings/{conference_uid}/live-quiz/broadcast", response_model=SessionDashboardOut)
+def live_quiz_broadcast(
+    conference_uid: str,
+    payload: LiveBroadcastRequest,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    admin: Admin = Depends(get_current_admin),
+):
+    return live_quiz_service.broadcast_question(db, admin, conference_uid, payload.questionId, background_tasks)
+
+
+@router.post("/trainings/{conference_uid}/live-quiz/stop-timer", response_model=SessionDashboardOut)
+def live_quiz_stop_timer(
+    conference_uid: str,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    admin: Admin = Depends(get_current_admin),
+):
+    return live_quiz_service.stop_timer(db, admin, conference_uid, background_tasks)
+
+
+@router.post("/trainings/{conference_uid}/live-quiz/leaderboard", response_model=SessionDashboardOut)
+def live_quiz_leaderboard(
+    conference_uid: str,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    admin: Admin = Depends(get_current_admin),
+):
+    return live_quiz_service.show_leaderboard(db, admin, conference_uid, background_tasks)
+
+
+@router.post("/trainings/{conference_uid}/live-quiz/lobby", response_model=SessionDashboardOut)
+def live_quiz_lobby(
+    conference_uid: str,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    admin: Admin = Depends(get_current_admin),
+):
+    return live_quiz_service.show_lobby(db, admin, conference_uid, background_tasks)
+
+
+@router.post("/trainings/{conference_uid}/live-quiz/finish", response_model=SessionDashboardOut)
+def live_quiz_finish(
+    conference_uid: str,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    admin: Admin = Depends(get_current_admin),
+):
+    return live_quiz_service.finish(db, admin, conference_uid, background_tasks)
 
 
 @router.post("/trainings/{conference_uid}/end", response_model=TrainingOut)

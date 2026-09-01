@@ -1,6 +1,1 @@
-INFO:     Will watch for changes in these directories: ['C:\\Users\\jay mata di\\OneDrive\\Desktop\\Samsung-India\\backend']
-INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-INFO:     Started reloader process [2804] using StatReload
-INFO:     Started server process [17532]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
+/usr/bin/bash: line 1: venv/Scripts/python.exe: No such file or directory

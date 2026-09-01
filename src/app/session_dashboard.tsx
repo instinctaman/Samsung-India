@@ -33,6 +33,7 @@ export default function SessionDashboardScreen() {
     handleMarkAttendance,
     handleAdvanceModule,
     handleEndSession,
+    liveQuizControls,
     handleBottomNavSelect,
     isSessionClosed,
     showSessionData,
@@ -68,7 +69,7 @@ export default function SessionDashboardScreen() {
         onAdvanceModule={handleAdvanceModule}
         onMarkAttendance={handleMarkAttendance}
         onEndSession={handleEndSession}
-        onLeaderboard={() => router.push({ pathname: "/quiz_leaderboard", params: { conferenceUid } })}
+        liveQuizControls={liveQuizControls}
       />
 
       <DashboardBottomNav activeTab={bottomTab} onSelectTab={handleBottomNavSelect} />

@@ -293,6 +293,38 @@ class AuditLogEntry(BaseModel):
     startedBy: Optional[str] = None
 
 
+class LiveBroadcastRequest(BaseModel):
+    questionId: int
+
+
+class LiveStudioQuestionOut(BaseModel):
+    """One question of the configured Live Quiz suite, as shown in the
+    trainer's Live Studio card while LIVE_QUIZ is the active module."""
+
+    id: int
+    order: int
+    text: str
+    timerSeconds: int
+    points: int
+    responseCount: int
+    isActive: bool
+
+
+class LiveStudioOut(BaseModel):
+    """Only populated on SessionDashboardOut when `activeModuleId == "LIVE_QUIZ"`
+    - drives the Live Studio broadcast console. `state` mirrors
+    `conference.liveQuizState`; `timerEndsAt` is epoch milliseconds."""
+
+    suiteUid: str
+    suiteTitle: str
+    state: str
+    activeQuestionId: Optional[int] = None
+    timerEndsAt: Optional[int] = None
+    participants: int
+    totalResponses: int
+    questions: list[LiveStudioQuestionOut] = []
+
+
 class SessionDashboardOut(BaseModel):
     conferenceUid: str
     title: str
@@ -319,3 +351,6 @@ class SessionDashboardOut(BaseModel):
     executionFlow: list[ExecutionFlowItem] = []
     auditLog: list[AuditLogEntry] = []
     sessionHeroes: list[SessionHeroStat] = []
+    # Only present while LIVE_QUIZ is the active module - see _live_studio in
+    # services/training_service.py.
+    liveStudio: Optional[LiveStudioOut] = None

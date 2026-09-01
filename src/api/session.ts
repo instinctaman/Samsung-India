@@ -83,6 +83,45 @@ export function joinSession(code: string, token: string) {
   });
 }
 
+// --- Live Quiz (FFF): trainee view ----------------------------------------
+
+export type LiveQuizState = "IDLE" | "WAITING" | "QUESTION_LIVE" | "LEADERBOARD" | "FINISHED" | string;
+
+export type LiveQuizQuestion = {
+  id: number;
+  text: string;
+  options: { id: string; text: string }[];
+};
+
+export type LiveQuizView = {
+  state: LiveQuizState;
+  conferenceUid: string;
+  suiteUid: string | null;
+  question: LiveQuizQuestion | null;
+  timerEndsAt: number | null;
+  alreadyAnswered: boolean;
+};
+
+export function getLiveQuizView(token: string, conferenceUid: string) {
+  return apiRequest<LiveQuizView>(
+    `/sessions/live-quiz?conferenceUid=${encodeURIComponent(conferenceUid)}`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  );
+}
+
+export function submitLiveAnswer(
+  token: string,
+  conferenceUid: string,
+  questionId: number,
+  selectedOption: string | null,
+) {
+  return apiRequest<{ accepted: boolean }>("/sessions/live-quiz/answer", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ conferenceUid, questionId, selectedOption }),
+  });
+}
+
 export type SessionHistoryItem = {
   conferenceUid: string;
   title: string;

@@ -319,6 +319,10 @@ export function useTraineeHome() {
     }, [loadSession, params.violation, params.postTest]),
   );
 
+  // The trainer hasn't started the session yet - the whole timeline renders
+  // dimmed and non-interactive, and every module falls back to "Please Wait".
+  const notStarted = session != null && !session.started;
+
   const allModulesDone =
     session != null &&
     session.modules.length > 0 &&
@@ -368,7 +372,7 @@ export function useTraineeHome() {
         duration: module.duration ?? (isAttendance ? "1h" : "2h"),
         type: module.name,
         title: "Session Activity",
-        isLive: isLiveModule,
+        isLive: notStarted ? false : isLiveModule,
         isCompleted: isAttendance ? isAttendanceCompleted : module.isCompleted,
         isMissed: module.isMissed,
         isLocked: (module as { isLocked?: boolean }).isLocked ?? false,
@@ -440,15 +444,9 @@ export function useTraineeHome() {
 
   const handleEnterLiveQuiz = () => {
     blurActiveElement();
-    const liveQuiz = session?.modules.find(
-      (module) => module.key === "LIVE_QUIZ",
-    );
     router.push({
-      pathname: "/wait",
-      params: {
-        conferenceUid: session?.conferenceUid ?? "",
-        suiteUid: liveQuiz?.assessmentSuiteUid ?? "",
-      },
+      pathname: "/live_quiz",
+      params: { conferenceUid: session?.conferenceUid ?? "" },
     });
   };
 
@@ -524,6 +522,7 @@ export function useTraineeHome() {
     refreshing,
     error,
     notAssigned,
+    notStarted,
     activeTab,
     historyVisible,
     setHistoryVisible,

@@ -162,6 +162,27 @@ export type AuditLogEntry = {
   startedBy: string | null;
 };
 
+export type LiveStudioQuestion = {
+  id: number;
+  order: number;
+  text: string;
+  timerSeconds: number;
+  points: number;
+  responseCount: number;
+  isActive: boolean;
+};
+
+export type LiveStudio = {
+  suiteUid: string;
+  suiteTitle: string;
+  state: "IDLE" | "WAITING" | "QUESTION_LIVE" | "LEADERBOARD" | "FINISHED" | string;
+  activeQuestionId: number | null;
+  timerEndsAt: number | null;
+  participants: number;
+  totalResponses: number;
+  questions: LiveStudioQuestion[];
+};
+
 export type SessionDashboard = {
   conferenceUid: string;
   title: string;
@@ -184,6 +205,8 @@ export type SessionDashboard = {
   executionFlow: ExecutionFlowItem[];
   auditLog: AuditLogEntry[];
   sessionHeroes: SessionHeroStat[];
+  // Present only while LIVE_QUIZ is the active module.
+  liveStudio: LiveStudio | null;
 };
 
 export function createTraining(token: string, payload: TrainingCreatePayload) {
@@ -233,6 +256,39 @@ export function advanceModule(token: string, conferenceUid: string) {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
   });
+}
+
+// --- Live Quiz (FFF) broadcast console --------------------------------------
+
+function liveQuizAction(token: string, conferenceUid: string, action: string, body?: unknown) {
+  return apiRequest<SessionDashboard>(
+    `/admin/trainings/${encodeURIComponent(conferenceUid)}/live-quiz/${action}`,
+    {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    },
+  );
+}
+
+export function broadcastLiveQuestion(token: string, conferenceUid: string, questionId: number) {
+  return liveQuizAction(token, conferenceUid, "broadcast", { questionId });
+}
+
+export function stopLiveTimer(token: string, conferenceUid: string) {
+  return liveQuizAction(token, conferenceUid, "stop-timer");
+}
+
+export function showLiveLeaderboard(token: string, conferenceUid: string) {
+  return liveQuizAction(token, conferenceUid, "leaderboard");
+}
+
+export function showLiveLobby(token: string, conferenceUid: string) {
+  return liveQuizAction(token, conferenceUid, "lobby");
+}
+
+export function finishLiveQuiz(token: string, conferenceUid: string) {
+  return liveQuizAction(token, conferenceUid, "finish");
 }
 
 export function markAttendance(token: string, conferenceUid: string, traineeUid: string, status: "Present" | "Absent") {

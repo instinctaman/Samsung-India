@@ -8,5 +8,7 @@ export { default as SessionRuntimeCard } from "./SessionRuntimeCard";
 export { default as ActiveModuleCard } from "./ActiveModuleCard";
 export { default as ExecutionFlowCard } from "./ExecutionFlowCard";
 export { default as LiveStudioCard } from "./LiveStudioCard";
+export { default as LiveStudioQuestionRow } from "./LiveStudioQuestionRow";
+export { default as LiveStudioActions } from "./LiveStudioActions";
 export { default as ParticipantAttendanceCard } from "./ParticipantAttendanceCard";
 export * from "./sessionDashboardTypes";

@@ -1,6 +1,7 @@
 import { RefreshControl, ScrollView, StyleSheet } from "react-native";
 
 import { SessionDashboard } from "@/api/training";
+import { LiveQuizControls } from "@/components/session_dashboard/sessionDashboardTypes";
 import {
   AssessmentResultCard,
   AudienceBreakdownCard,
@@ -25,7 +26,7 @@ type DashboardScrollContentProps = {
   onAdvanceModule: () => void;
   onMarkAttendance: (traineeUid: string, status: "Present" | "Absent") => void;
   onEndSession: () => void;
-  onLeaderboard: () => void;
+  liveQuizControls: LiveQuizControls;
 };
 
 export default function DashboardScrollContent({
@@ -37,7 +38,7 @@ export default function DashboardScrollContent({
   onAdvanceModule,
   onMarkAttendance,
   onEndSession,
-  onLeaderboard,
+  liveQuizControls,
 }: DashboardScrollContentProps) {
   const runtimeSeconds = useLiveRuntime(data?.actualStartedAt, data?.actualEndedAt);
   const participants = participantsFromTrainees(data?.trainees ?? []);
@@ -111,7 +112,8 @@ export default function DashboardScrollContent({
       {showSessionData && (
         <LiveStudioSection
           participants={participants}
-          onLeaderboard={onLeaderboard}
+          liveStudio={data?.liveStudio ?? null}
+          liveQuizControls={liveQuizControls}
           onRefresh={onRefresh}
           onMarkAttendance={onMarkAttendance}
         />

@@ -6,7 +6,7 @@ from typing import Optional
 from fastapi import BackgroundTasks, UploadFile
 from sqlalchemy.orm import Session
 
-from app.core.constants import MODULE_LABELS, PASS_THRESHOLD_PERCENT
+from app.core.constants import LIVE_QUIZ_STATE_IDLE, MODULE_LABELS, PASS_THRESHOLD_PERCENT
 from app.core.exceptions import conflict, forbidden, not_found
 from app.core.media import media_subdir
 from app.models.admin import Admin
@@ -42,7 +42,13 @@ from app.schemas.training import (
     TrainingCreate,
     TrainingOut,
 )
-from app.services.module_flow import auto_advance_if_due, configured_modules, log_module_action
+from app.services import live_quiz_service
+from app.services.module_flow import (
+    auto_advance_if_due,
+    configured_modules,
+    live_quiz_suite_uid,
+    log_module_action,
+)
 
 
 def _execution_flow(db: Session, conference: Conference) -> list[ExecutionFlowItem]:
@@ -94,11 +100,8 @@ def _suite_for_module(conference: Conference, module_key: str) -> Optional[str]:
     LIVE_QUIZ have one."""
     if module_key == "STANDARD_TEST":
         return conference.postAssessmentUid
-    if module_key == "LIVE_QUIZ" and conference.sessionConfig:
-        try:
-            return json.loads(conference.sessionConfig).get("liveQuiz", {}).get("assessmentSuiteUid")
-        except ValueError:
-            return None
+    if module_key == "LIVE_QUIZ":
+        return live_quiz_suite_uid(conference)
     return None
 
 
@@ -597,6 +600,11 @@ def _build_dashboard(db: Session, conference: Conference) -> SessionDashboardOut
         executionFlow=_execution_flow(db, conference),
         auditLog=_audit_log(db, conference),
         sessionHeroes=_session_heroes(db, conference),
+        liveStudio=(
+            live_quiz_service.build_live_studio(db, conference)
+            if conference.activeModuleId == "LIVE_QUIZ"
+            else None
+        ),
     )
 
 
@@ -633,6 +641,8 @@ async def start_training(db: Session, admin: Admin, conference_uid: str, photo: 
     modules = configured_modules(conference)
     first_module = modules[0] if modules else "ATTENDANCE"
     conference.activeModuleId = first_module
+    if first_module == "LIVE_QUIZ":
+        conference.liveQuizState = LIVE_QUIZ_STATE_IDLE
     log_module_action(db, conference.conferenceUid, first_module, "STARTED", admin.username)
 
     conference_repository.save(db, conference)
@@ -664,7 +674,14 @@ def advance_module(db: Session, admin: Admin, conference_uid: str) -> TrainingOu
         if next_index < len(modules):
             next_module = modules[next_index]
 
+    # Score the Live Quiz the moment the flow leaves it (finish_quiz is
+    # idempotent, so end_training re-calling it is harmless).
+    if current == "LIVE_QUIZ":
+        live_quiz_service.finish_quiz(db, conference)
+
     conference.activeModuleId = next_module
+    if next_module == "LIVE_QUIZ":
+        conference.liveQuizState = LIVE_QUIZ_STATE_IDLE
     if next_module:
         log_module_action(db, conference.conferenceUid, next_module, "STARTED", admin.username)
 
@@ -683,6 +700,8 @@ def end_training(db: Session, admin: Admin, conference_uid: str) -> TrainingOut:
         raise conflict("This session has already ended")
 
     if conference.activeModuleId:
+        if conference.activeModuleId == "LIVE_QUIZ":
+            live_quiz_service.finish_quiz(db, conference)
         log_module_action(db, conference.conferenceUid, conference.activeModuleId, "STOPPED", admin.username)
         conference.activeModuleId = None
 

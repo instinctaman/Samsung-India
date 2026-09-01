@@ -8,6 +8,8 @@ import { SessionActivityData } from "@/hooks/useTraineeHome";
 type Props = {
   activities?: SessionActivityData[];
   sessions?: SessionItem[];
+  /** Render greyed-out and non-interactive (trainer hasn't started the session). */
+  dimmed?: boolean;
   onMarkAttendance: () => void;
   onEnterQuiz: () => void;
   onEnterPostTest: () => void;
@@ -19,6 +21,7 @@ type Props = {
 export default function SessionTimeline({
   activities,
   sessions,
+  dimmed = false,
   onMarkAttendance,
   onEnterQuiz,
   onEnterPostTest,
@@ -51,7 +54,10 @@ export default function SessionTimeline({
       contentContainerStyle={styles.scrollContent}
       refreshControl={refreshControl}
     >
-      <View style={styles.itemList}>
+      <View
+        style={[styles.itemList, dimmed && styles.dimmed]}
+        pointerEvents={dimmed ? "none" : "auto"}
+      >
         {items.map((activity, index) => (
           <SessionTimelineItem
             key={activity.id ?? activity.key}
@@ -81,6 +87,9 @@ const styles = StyleSheet.create({
   },
   itemList: {
     gap: 14,
+  },
+  dimmed: {
+    opacity: 0.5,
   },
   footerWrap: {
     marginTop: 14,

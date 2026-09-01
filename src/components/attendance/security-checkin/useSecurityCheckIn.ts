@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ImageSourcePropType } from "react-native";
+import { Image, ImageSourcePropType } from "react-native";
 import { CameraRef, useCameraDevice, useCameraPermission, usePhotoOutput } from "react-native-vision-camera";
 
 const DEFAULT_SAMPLE_PHOTO: ImageSourcePropType = require("@/assets/images/user_img/default_male.png");
@@ -37,8 +37,11 @@ export function useSecurityCheckIn() {
       // Fallback for emulator / web / environment without active hardware camera stream
     }
 
-    // Fallback high-fidelity sample photo for development / simulators
-    setPhotoSource(DEFAULT_SAMPLE_PHOTO);
+    // Fallback sample photo for development / simulators / a camera that
+    // won't capture. Resolve the bundled asset to a real `{ uri }` so the
+    // upload paths (which need a URI, not a require() id) still work.
+    const resolved = Image.resolveAssetSource(DEFAULT_SAMPLE_PHOTO);
+    setPhotoSource(resolved?.uri ? { uri: resolved.uri } : DEFAULT_SAMPLE_PHOTO);
     setCapturing(false);
   };
 

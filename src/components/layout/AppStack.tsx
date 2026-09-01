@@ -24,8 +24,7 @@ export function AppStack() {
       <Stack.Screen name="attendance_list" />
       <Stack.Screen name="pending_attendance" />
       <Stack.Screen name="confirmed_attendance" />
-      <Stack.Screen name="wait" />
-      <Stack.Screen name="quiz" />
+      <Stack.Screen name="live_quiz" />
       <Stack.Screen name="quiz_leaderboard" />
       <Stack.Screen name="post_test" />
       <Stack.Screen name="survey" />

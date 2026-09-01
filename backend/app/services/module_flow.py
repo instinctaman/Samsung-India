@@ -9,7 +9,25 @@ from app.models.conference_activity_log import ConferenceActivityLog
 from app.repositories import activity_log_repository
 from app.utils.date_utils import parse_module_start
 
-__all__ = ["MODULE_LABELS", "configured_modules", "log_module_action", "auto_advance_if_due"]
+__all__ = [
+    "MODULE_LABELS",
+    "configured_modules",
+    "log_module_action",
+    "auto_advance_if_due",
+    "live_quiz_suite_uid",
+]
+
+
+def live_quiz_suite_uid(conference: Conference) -> str | None:
+    """The assessment suite the Live Quiz module runs against. Unlike the
+    other modules it has no dedicated Conference column - it only ever lives
+    in `sessionConfig.liveQuiz.assessmentSuiteUid`."""
+    if not conference.sessionConfig:
+        return None
+    try:
+        return json.loads(conference.sessionConfig).get("liveQuiz", {}).get("assessmentSuiteUid")
+    except (ValueError, AttributeError):
+        return None
 
 
 def configured_modules(conference: Conference) -> list[str]:
@@ -24,6 +42,15 @@ def configured_modules(conference: Conference) -> list[str]:
     if conference.surveyUid:
         modules.append("SURVEY")
     return modules
+
+
+def _finish_live_quiz_if_active(db: Session, conference: Conference) -> None:
+    """Score the Live Quiz when the flow auto-advances off it (lazy import -
+    live_quiz_service imports this module)."""
+    if conference.activeModuleId == "LIVE_QUIZ":
+        from app.services.live_quiz_service import finish_quiz
+
+        finish_quiz(db, conference)
 
 
 def log_module_action(db: Session, conference_uid: str, module_id: str, action: str, performed_by: str) -> None:
@@ -95,6 +122,7 @@ def auto_advance_if_due(db: Session, conference: Conference) -> bool:
 
         if current_index + 1 >= len(modules):
             if current_ends_at and now >= current_ends_at:
+                _finish_live_quiz_if_active(db, conference)
                 log_module_action(db, conference.conferenceUid, conference.activeModuleId, "STOPPED", AUTO_ADVANCE_PERFORMER)
                 conference.activeModuleId = None
                 conference.conferenceEndsOn = now.strftime("%Y-%m-%d %H:%M:%S")
@@ -116,6 +144,7 @@ def auto_advance_if_due(db: Session, conference: Conference) -> bool:
         if not starts_at or now < starts_at:
             break
 
+        _finish_live_quiz_if_active(db, conference)
         log_module_action(db, conference.conferenceUid, conference.activeModuleId, "STOPPED", AUTO_ADVANCE_PERFORMER)
         log_module_action(db, conference.conferenceUid, next_module, "STARTED", AUTO_ADVANCE_PERFORMER)
         conference.activeModuleId = next_module

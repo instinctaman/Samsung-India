@@ -2,16 +2,23 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import { Alert, Share } from "react-native";
 
+import { ApiError } from "@/api/client";
 import {
   SessionDashboard,
   advanceModule,
+  broadcastLiveQuestion,
   endTraining,
   fetchSessionDashboard,
+  finishLiveQuiz,
   markAttendance,
+  showLiveLeaderboard,
+  showLiveLobby,
   startTraining,
+  stopLiveTimer,
 } from "@/api/training";
 import { DashboardTab } from "@/components/trainer/dashboard/DashboardBottomNav";
 import { useAuth } from "@/hooks/useAuth";
+import { useLiveQuizChannel } from "@/hooks/useLiveQuizChannel";
 import { formatGeneratedTimestamp } from "./formatting";
 import { TrainerCheckInPhoto } from "./TrainerCheckInModal";
 
@@ -65,6 +72,30 @@ export function useSessionDashboardScreen() {
     }, [loadData]),
   );
 
+  // Live Quiz room: every broadcast/answer nudge triggers a silent refetch so
+  // the Live Studio card's questions / response counts / timer stay current
+  // without waiting for the 5s poll.
+  useLiveQuizChannel(conferenceUid, adminToken, () => loadData("silent"));
+
+  const runLiveQuizAction = useCallback(
+    async (action: (token: string, uid: string) => Promise<SessionDashboard>) => {
+      if (!adminToken) return;
+      try {
+        setData(await action(adminToken, conferenceUid));
+      } catch {
+        // Fallback / gracefully keep state.
+      }
+    },
+    [adminToken, conferenceUid],
+  );
+
+  const handleBroadcastQuestion = (questionId: number) =>
+    runLiveQuizAction((token, uid) => broadcastLiveQuestion(token, uid, questionId));
+  const handleStopLiveTimer = () => runLiveQuizAction(stopLiveTimer);
+  const handleShowLiveLeaderboard = () => runLiveQuizAction(showLiveLeaderboard);
+  const handleShowLiveLobby = () => runLiveQuizAction(showLiveLobby);
+  const handleFinishLiveQuiz = () => runLiveQuizAction(finishLiveQuiz);
+
   const handleCopyLink = async () => {
     try {
       // Same deep link the QR encodes - opens the app on the join screen
@@ -90,8 +121,11 @@ export function useSessionDashboardScreen() {
       // dashboard shouldn't show as live when nothing actually started.
       setHasStarted(true);
       loadData("silent");
-    } catch {
-      // Fallback / gracefully keep state - no blocking alert on failure.
+    } catch (err) {
+      Alert.alert(
+        "Couldn't start the session",
+        err instanceof ApiError ? err.message : "Something went wrong. Please try again.",
+      );
     }
   };
 
@@ -190,6 +224,13 @@ export function useSessionDashboardScreen() {
     handleMarkAttendance,
     handleAdvanceModule,
     handleEndSession,
+    liveQuizControls: {
+      onBroadcast: handleBroadcastQuestion,
+      onStopTimer: handleStopLiveTimer,
+      onLeaderboard: handleShowLiveLeaderboard,
+      onLobby: handleShowLiveLobby,
+      onFinish: handleFinishLiveQuiz,
+    },
     handleBottomNavSelect,
     isSessionClosed,
     showSessionData,

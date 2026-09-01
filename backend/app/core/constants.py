@@ -32,3 +32,16 @@ MODULE_CONFIG_KEY = {
 }
 
 AUTO_ADVANCE_PERFORMER = "system:auto-advance"
+
+# Live Quiz (FFF) real-time state, stored on `conference.liveQuizState`.
+# IDLE/WAITING are the lobby (module active, nothing broadcast); QUESTION_LIVE
+# means `liveQuestionId` + `liveTimerEndsAt` are set; FINISHED is terminal and
+# triggers the one-shot scoring pass. See services/live_quiz_service.py.
+LIVE_QUIZ_STATE_IDLE = "IDLE"
+LIVE_QUIZ_STATE_QUESTION_LIVE = "QUESTION_LIVE"
+LIVE_QUIZ_STATE_LEADERBOARD = "LEADERBOARD"
+LIVE_QUIZ_STATE_FINISHED = "FINISHED"
+
+# Fallback per-question countdown when a question has no `timerSeconds` in its
+# `settings` JSON blob.
+LIVE_QUIZ_DEFAULT_TIMER_SECONDS = 30

@@ -1,5 +1,6 @@
 from typing import Optional
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.models.quiz import Assessment, AssessmentResult, AssessmentSuite, Question
@@ -45,6 +46,10 @@ def count_questions_for_suite(db: Session, suite_uid: str) -> int:
     return db.query(Question).filter(Question.assessmentSuiteUid == suite_uid).count()
 
 
+def get_question(db: Session, question_id: int) -> Optional[Question]:
+    return db.query(Question).filter(Question.id == question_id).first()
+
+
 def add_question(db: Session, question: Question) -> None:
     db.add(question)
 
@@ -57,6 +62,67 @@ def delete_question(db: Session, question_id: int, suite_uid: str) -> None:
 
 def add_answer(db: Session, answer: Assessment) -> None:
     db.add(answer)
+
+
+# --- Assessment: Live Quiz per-question answers ------------------------------
+
+def get_answer(db: Session, conference_uid: str, trainee_uid: str, question_id: int) -> Optional[Assessment]:
+    return (
+        db.query(Assessment)
+        .filter(
+            Assessment.conferenceUid == conference_uid,
+            Assessment.traineeUid == trainee_uid,
+            Assessment.questionId == str(question_id),
+        )
+        .first()
+    )
+
+
+def upsert_answer(
+    db: Session,
+    *,
+    conference_uid: str,
+    trainee_uid: str,
+    suite_uid: str,
+    question_id: int,
+    selected_option: Optional[str],
+) -> None:
+    """One row per (conference, trainee, question) - a trainee changing their
+    pick before the timer locks overwrites the same row rather than stacking."""
+    existing = get_answer(db, conference_uid, trainee_uid, question_id)
+    if existing:
+        existing.selectedOption = selected_option
+    else:
+        db.add(
+            Assessment(
+                assessmentSuiteUid=suite_uid,
+                conferenceUid=conference_uid,
+                traineeUid=trainee_uid,
+                questionId=str(question_id),
+                selectedOption=selected_option,
+            )
+        )
+    db.commit()
+
+
+def list_answers_for_conference_suite(db: Session, conference_uid: str, suite_uid: str) -> list[Assessment]:
+    return (
+        db.query(Assessment)
+        .filter(Assessment.conferenceUid == conference_uid, Assessment.assessmentSuiteUid == suite_uid)
+        .all()
+    )
+
+
+def responders_by_question(db: Session, conference_uid: str, suite_uid: str) -> dict[str, int]:
+    """questionId -> number of distinct trainees who have answered it, for the
+    trainer's Live Studio per-row response counts."""
+    rows = (
+        db.query(Assessment.questionId, func.count(func.distinct(Assessment.traineeUid)))
+        .filter(Assessment.conferenceUid == conference_uid, Assessment.assessmentSuiteUid == suite_uid)
+        .group_by(Assessment.questionId)
+        .all()
+    )
+    return {question_id: count for question_id, count in rows}
 
 
 # --- AssessmentResult ----------------------------------------------------------

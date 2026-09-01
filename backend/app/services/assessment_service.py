@@ -10,6 +10,26 @@ from app.repositories import assessment_repository
 from app.schemas.assessment import AssessmentQuestionsOut, QuestionOut, SubmitRequest, SubmitResult
 
 
+def score_answers(questions: list, answers_by_qid: dict[int, str | None]) -> tuple[int, int, float, int]:
+    """Grade a set of picks against a suite's questions. `answers_by_qid` maps
+    question id -> selected option id (or None). Returns
+    (total_score, max_score, percentage, correct_count). Shared by the one-shot
+    post-test submit and the Live Quiz finish scoring pass."""
+    points_by_id = {q.id: (q.points or 0) for q in questions}
+    correct_by_id = {q.id: q.correct_answer for q in questions}
+    max_score = sum(points_by_id.values())
+
+    total_score = 0
+    correct_count = 0
+    for question_id, selected in answers_by_qid.items():
+        if selected is not None and selected == correct_by_id.get(question_id):
+            total_score += points_by_id.get(question_id, 0)
+            correct_count += 1
+
+    percentage = round((total_score / max_score) * 100, 2) if max_score else 0.0
+    return total_score, max_score, percentage, correct_count
+
+
 def get_questions(db: Session, suite_uid: str) -> AssessmentQuestionsOut:
     questions = assessment_repository.list_questions_for_suite(db, suite_uid)
     if not questions:
@@ -38,23 +58,9 @@ def submit_assessment(db: Session, trainee: Trainee, suite_uid: str, payload: Su
     if not questions:
         raise not_found("No questions found for this assessment")
 
-    points_by_id = {q.id: (q.points or 0) for q in questions}
-    correct_by_id = {q.id: q.correct_answer for q in questions}
-    max_score = sum(points_by_id.values())
-
-    total_score = 0
-    correct_count = 0
     now = datetime.now()
 
     for answer in payload.answers:
-        is_correct = (
-            answer.selectedOption is not None
-            and answer.selectedOption == correct_by_id.get(answer.questionId)
-        )
-        if is_correct:
-            total_score += points_by_id.get(answer.questionId, 0)
-            correct_count += 1
-
         assessment_repository.add_answer(
             db,
             Assessment(
@@ -66,9 +72,11 @@ def submit_assessment(db: Session, trainee: Trainee, suite_uid: str, payload: Su
             ),
         )
 
-    previous_attempts = assessment_repository.count_attempts(db, trainee.traineeUid, suite_uid)
+    total_score, max_score, percentage, correct_count = score_answers(
+        questions, {a.questionId: a.selectedOption for a in payload.answers}
+    )
 
-    percentage = round((total_score / max_score) * 100, 2) if max_score else 0.0
+    previous_attempts = assessment_repository.count_attempts(db, trainee.traineeUid, suite_uid)
 
     assessment_repository.add_result(
         db,

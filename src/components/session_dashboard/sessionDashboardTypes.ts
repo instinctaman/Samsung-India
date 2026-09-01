@@ -7,11 +7,21 @@ export type TopPerformer = {
 };
 
 export type LiveStudioQuestion = {
-  id: string;
+  id: number;
   qNumber: string;
   timerSecs: number;
   questionText: string;
-  isBroadcasted?: boolean;
+  points: number;
+  responseCount: number;
+  isActive: boolean;
+};
+
+export type LiveQuizControls = {
+  onBroadcast: (questionId: number) => void;
+  onStopTimer: () => void;
+  onLeaderboard: () => void;
+  onLobby: () => void;
+  onFinish: () => void;
 };
 
 export type ProctoringLog = {

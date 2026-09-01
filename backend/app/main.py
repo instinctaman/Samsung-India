@@ -13,7 +13,6 @@ from app.routers.assessment import router as assessment_router
 from app.routers.attendance import router as attendance_router
 from app.routers.catalog import router as catalog_router
 from app.routers.proctoring import router as proctoring_router
-from app.routers.quiz_ws import router as quiz_ws_router
 from app.routers.session import router as session_router
 from app.routers.trainee import router as trainee_router
 from app.routers.trainer import router as trainer_router
@@ -51,7 +50,6 @@ app.include_router(trainer_router)
 app.include_router(catalog_router)
 app.include_router(training_router)
 app.include_router(ws_router)
-app.include_router(quiz_ws_router)
 
 
 @app.get("/")

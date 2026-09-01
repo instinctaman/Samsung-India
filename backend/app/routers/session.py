@@ -1,14 +1,22 @@
 from datetime import datetime
 import json
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.dependencies.auth import get_current_trainee
 from app.dependencies.database import get_db
 from app.models.trainee import Trainee
-from app.schemas.session import CurrentSession, SessionHistoryItem, SessionJoinInfo, SessionModule
-from app.services import session_service
+from app.schemas.session import (
+    CurrentSession,
+    LiveAnswerRequest,
+    LiveAnswerResult,
+    LiveQuizView,
+    SessionHistoryItem,
+    SessionJoinInfo,
+    SessionModule,
+)
+from app.services import live_quiz_service, session_service
 from app.models.attendance import Attendance
 from app.models.conference import Conference
 from app.models.quiz import AssessmentResult
@@ -326,6 +334,25 @@ def get_current_session(
         attendanceGeoFencing=bool(attendance_cfg.get("geoFencing")),
         modules=modules,
     )
+
+
+@router.get("/live-quiz", response_model=LiveQuizView)
+def get_live_quiz(
+    conferenceUid: str,
+    db: Session = Depends(get_db),
+    trainee: Trainee = Depends(get_current_trainee),
+):
+    return live_quiz_service.get_live_quiz_view(db, trainee, conferenceUid)
+
+
+@router.post("/live-quiz/answer", response_model=LiveAnswerResult)
+def submit_live_quiz_answer(
+    payload: LiveAnswerRequest,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    trainee: Trainee = Depends(get_current_trainee),
+):
+    return live_quiz_service.submit_live_answer(db, trainee, payload, background_tasks)
 
 
 @router.get("/history", response_model=list[SessionHistoryItem])

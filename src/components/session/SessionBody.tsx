@@ -1,9 +1,11 @@
+import { Ionicons } from "@expo/vector-icons";
 import { ActivityIndicator, Pressable, RefreshControl, StyleSheet, View } from "react-native";
 
 import { CurrentSession } from "@/api/session";
 import { SessionActivityData } from "@/hooks/useTraineeHome";
 import AppText from "@/components/ui/AppText";
 import { Colors } from "@/theme/colors";
+import { FontWeight } from "@/theme/typography";
 import SessionNotification from "./SessionNotification";
 import SessionTimeline from "./SessionTimeline";
 import WaitingCard from "./WaitingCard";
@@ -12,6 +14,7 @@ type SessionBodyProps = {
   loading: boolean;
   session: CurrentSession | null;
   notAssigned: boolean;
+  notStarted: boolean;
   error: string | null;
   activities: SessionActivityData[];
   refreshing: boolean;
@@ -26,6 +29,7 @@ export default function SessionBody({
   loading,
   session,
   notAssigned,
+  notStarted,
   error,
   activities,
   refreshing,
@@ -71,31 +75,35 @@ export default function SessionBody({
     );
   }
 
-  if (session && !session.started) {
-    return (
-      <View style={styles.centered}>
-        <WaitingCard title="Session hasn't started yet" subtitle="Trainer will unlock soon as it's available" />
-      </View>
-    );
-  }
-
   return (
-    <SessionTimeline
-      activities={activities}
-      onMarkAttendance={onMarkAttendance}
-      onEnterQuiz={onEnterLiveQuiz}
-      onEnterPostTest={onEnterPostTest}
-      onEnterSurvey={onEnterSurvey}
-      footerComponent={<SessionNotification />}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={() => loadSession("refresh")}
-          colors={[Colors.headerBlue]}
-          tintColor={Colors.headerBlue}
-        />
-      }
-    />
+    <>
+      {notStarted && (
+        <View style={styles.notStartedBanner}>
+          <Ionicons name="hourglass-outline" size={16} color={Colors.headerBlue} />
+          <AppText variant="caption" color={Colors.headerBlue} weight={FontWeight.medium}>
+            Waiting for the trainer to start the session
+          </AppText>
+        </View>
+      )}
+
+      <SessionTimeline
+        activities={activities}
+        dimmed={notStarted}
+        onMarkAttendance={onMarkAttendance}
+        onEnterQuiz={onEnterLiveQuiz}
+        onEnterPostTest={onEnterPostTest}
+        onEnterSurvey={onEnterSurvey}
+        footerComponent={<SessionNotification />}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => loadSession("refresh")}
+            colors={[Colors.headerBlue]}
+            tintColor={Colors.headerBlue}
+          />
+        }
+      />
+    </>
   );
 }
 
@@ -112,5 +120,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 8,
     borderRadius: 8,
+  },
+  notStartedBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    backgroundColor: Colors.waitingBlueBg,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
   },
 });
