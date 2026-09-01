@@ -2,7 +2,7 @@ import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import { ImageSourcePropType } from "react-native";
 
-import { CurrentSession, getCurrentSession, isAttendanceRecorded, setSessionFlowState } from "@/api/session";
+import { CurrentSession, getCurrentSession } from "@/api/session";
 import { useAuth } from "@/hooks/useAuth";
 
 const AVATAR_BY_GENDER: Record<string, ImageSourcePropType> = {
@@ -61,12 +61,10 @@ export function useSessionScreen() {
   };
 
   const handleJoinSession = () => {
-    if (isAttendanceRecorded()) {
-      router.push({ pathname: "/session_detail", params: { flow: "ATTENDANCE_RECORDED", attendance: "completed" } });
-      return;
-    }
-    setSessionFlowState("SECURE_CHECKIN");
-    router.push({ pathname: "/session_detail", params: { flow: "SECURE_CHECKIN" } });
+    // Admission is now trainer-controlled: the trainee just enters the
+    // session screen, which shows the "waiting for the trainer" card until
+    // the trainer marks them present, then reveals the module timeline.
+    router.push({ pathname: "/session_detail" });
   };
 
   return { trainee, avatar, loading, notice, details, handleLogout, handleJoinSession };

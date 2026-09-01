@@ -31,7 +31,9 @@ export default function SessionDashboardScreen() {
     handleStartSession,
     handleConfirmStartSession,
     handleMarkAttendance,
-    handleAdvanceModule,
+    handleStartModule,
+    handleStopActiveModule,
+    handleRestartModule,
     handleEndSession,
     liveQuizControls,
     handleBottomNavSelect,
@@ -66,9 +68,10 @@ export default function SessionDashboardScreen() {
         showSessionData={showSessionData}
         refreshing={refreshing}
         onRefresh={() => loadData("refresh")}
-        onAdvanceModule={handleAdvanceModule}
+        onStartModule={handleStartModule}
+        onStopActiveModule={handleStopActiveModule}
+        onRestartModule={handleRestartModule}
         onMarkAttendance={handleMarkAttendance}
-        onEndSession={handleEndSession}
         liveQuizControls={liveQuizControls}
       />
 

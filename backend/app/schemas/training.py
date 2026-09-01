@@ -224,6 +224,16 @@ class TrainerAgendaResponse(BaseModel):
 class AudienceBreakdown(BaseModel):
     total: int
     present: int
+    absent: int = 0
+    # Joined via QR / on the list but the trainer hasn't marked them Present
+    # or Absent yet.
+    notMarked: int = 0
+    # On this trainer's roster vs. walked-in / joined by QR.
+    assigned: int = 0
+    unassigned: int = 0
+    # Participants with no earlier Present attendance in any other session -
+    # being trained for the first time.
+    fresh: int = 0
 
 
 class AssessmentSummary(BaseModel):
@@ -276,6 +286,15 @@ class ExecutionFlowItem(BaseModel):
     startedAt: Optional[str] = None
     endedAt: Optional[str] = None
     elapsedSeconds: Optional[int] = None
+    # True when the trainer may start this module now: the session is
+    # running, nothing else is live, this module hasn't run yet, and every
+    # module before it in the flow has finished. Drives the per-row Start
+    # button on the Session Dashboard's Execution Flow.
+    canStart: bool = False
+    # True when the trainer may re-run this finished module now: the session
+    # is running and nothing else is currently live. Drives the per-row
+    # Restart button.
+    canRestart: bool = False
 
 
 class AuditLogEntry(BaseModel):

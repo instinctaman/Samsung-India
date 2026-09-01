@@ -23,13 +23,13 @@ type AudienceBreakdownCardProps = {
 };
 
 export default function AudienceBreakdownCard({
-  totalAudience: totalAudienceProp = 22,
-  present: presentProp = 19,
-  notMarked: notMarkedProp = 2,
-  absent: absentProp = 1,
-  assigned: assignedProp = 10,
-  unassigned: unassignedProp = 5,
-  fresh: freshProp = 4,
+  totalAudience: totalAudienceProp = 0,
+  present: presentProp = 0,
+  notMarked: notMarkedProp = 0,
+  absent: absentProp = 0,
+  assigned: assignedProp = 0,
+  unassigned: unassignedProp = 0,
+  fresh: freshProp = 0,
   hasStarted = true,
 }: AudienceBreakdownCardProps) {
   const totalAudience = hasStarted ? totalAudienceProp : 0;

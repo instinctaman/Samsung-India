@@ -7,20 +7,23 @@ import SessionRuntimeCard from "@/components/session_dashboard/SessionRuntimeCar
 type RuntimeAndQuizSectionProps = {
   data: SessionDashboard | null;
   actualRuntime?: string;
-  onAdvanceModule: () => void;
-  onEndSession: () => void;
+  onStopActiveModule: () => void;
 };
 
 export default function RuntimeAndQuizSection({
   data,
   actualRuntime,
-  onAdvanceModule,
-  onEndSession,
+  onStopActiveModule,
 }: RuntimeAndQuizSectionProps) {
   const flow = data?.executionFlow ?? [];
-  const activeIdx = flow.findIndex((m) => m.moduleKey === data?.activeModuleId);
-  const active = activeIdx >= 0 ? flow[activeIdx] : null;
-  const next = active && activeIdx + 1 < flow.length ? flow[activeIdx + 1] : null;
+  const active = flow.find((m) => m.moduleKey === data?.activeModuleId) ?? null;
+
+  // Live progress across this session's configured modules: how many of the
+  // flow's modules have finished vs. how many it contains.
+  const completedModules = flow.filter((m) => m.status === "Completed").length;
+  const moduleCompletionPercent = flow.length
+    ? Math.round((completedModules / flow.length) * 100)
+    : 0;
 
   return (
     <Fragment>
@@ -29,16 +32,17 @@ export default function RuntimeAndQuizSection({
         assignedTime="00h 42m"
         consumedTime="04h 22m"
         timeUsedPercent={92}
-        moduleCompletionPercent={50}
+        moduleCompletionPercent={moduleCompletionPercent}
       />
 
-      <ActiveModuleCard
-        moduleLabel={active?.label ?? null}
-        startedAt={active?.startedAt ?? null}
-        questionCount={data?.activeModuleQuestionCount ?? null}
-        nextModuleLabel={next?.label ?? null}
-        onPrimaryAction={active ? onAdvanceModule : onEndSession}
-      />
+      {active && (
+        <ActiveModuleCard
+          moduleLabel={active.label}
+          startedAt={active.startedAt}
+          questionCount={data?.activeModuleQuestionCount ?? null}
+          onEndModule={onStopActiveModule}
+        />
+      )}
     </Fragment>
   );
 }

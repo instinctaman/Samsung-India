@@ -15,6 +15,7 @@ type SessionBodyProps = {
   session: CurrentSession | null;
   notAssigned: boolean;
   notStarted: boolean;
+  awaitingAdmission: boolean;
   error: string | null;
   activities: SessionActivityData[];
   refreshing: boolean;
@@ -30,6 +31,7 @@ export default function SessionBody({
   session,
   notAssigned,
   notStarted,
+  awaitingAdmission,
   error,
   activities,
   refreshing,
@@ -51,6 +53,27 @@ export default function SessionBody({
     return (
       <View style={styles.centered}>
         <WaitingCard title="No Session Assigned" subtitle="No session is assigned yet" />
+      </View>
+    );
+  }
+
+  if (awaitingAdmission) {
+    return (
+      <View style={styles.centered}>
+        <WaitingCard
+          title="Waiting for the Trainer"
+          subtitle="You'll see the session activities once the trainer marks you present."
+        />
+        <Pressable
+          style={styles.retryButton}
+          onPress={() => loadSession("refresh")}
+          accessibilityRole="button"
+          accessibilityLabel="Refresh admission status"
+        >
+          <AppText variant="label" color={Colors.white}>
+            Refresh Status
+          </AppText>
+        </Pressable>
       </View>
     );
   }

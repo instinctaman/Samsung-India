@@ -10,6 +10,7 @@ type ExecutionFlowRowProps = {
   hasStarted: boolean;
   onRestart?: (moduleKey: string) => void;
   onViewTopPerformers?: (moduleKey: string) => void;
+  onStart?: (moduleKey: string) => void;
 };
 
 export default function ExecutionFlowRow({
@@ -17,6 +18,7 @@ export default function ExecutionFlowRow({
   hasStarted,
   onRestart,
   onViewTopPerformers,
+  onStart,
 }: ExecutionFlowRowProps) {
   // Ticks every second while the module is Running; frozen once it ends.
   const seconds = useLiveRuntime(item.startedAt, item.endedAt);
@@ -24,6 +26,10 @@ export default function ExecutionFlowRow({
   const visual = getModuleVisual(item.moduleKey);
   const status = getExecutionStatusPresentation(effectiveStatus);
   const elapsed = hasStarted && effectiveStatus !== "Pending" ? formatElapsed(seconds) : null;
+  // The Start button is on every not-yet-run row, but only tappable once
+  // this module is next in line (backend `canStart`).
+  const showStart = hasStarted && effectiveStatus === "Pending";
+  const startEnabled = showStart && item.canStart;
 
   return (
     <View style={styles.row}>
@@ -42,12 +48,30 @@ export default function ExecutionFlowRow({
           <Text style={[styles.statusText, { color: status.color }]}>{status.label}</Text>
           {elapsed && <Text style={[styles.elapsedText, { color: status.color }]}>{elapsed}</Text>}
         </View>
+        {showStart && (
+          <Pressable
+            style={[styles.startBtn, !startEnabled && styles.startBtnDisabled]}
+            onPress={() => startEnabled && onStart?.(item.moduleKey)}
+            disabled={!startEnabled}
+            accessibilityRole="button"
+            accessibilityLabel={`Start ${item.label}`}
+          >
+            <Ionicons name="play" size={11} color="#FFFFFF" />
+            <Text style={styles.startBtnText}>Start</Text>
+          </Pressable>
+        )}
       </View>
 
       {hasStarted && effectiveStatus === "Completed" && (
-        <Pressable style={styles.actionBtn} onPress={() => onRestart?.(item.moduleKey)}>
-          <Ionicons name="refresh" size={12} color="#4B5563" />
-          <Text style={styles.actionText}>Restart</Text>
+        <Pressable
+          style={[styles.actionBtn, !item.canRestart && styles.actionBtnDisabled]}
+          onPress={() => item.canRestart && onRestart?.(item.moduleKey)}
+          disabled={!item.canRestart}
+          accessibilityRole="button"
+          accessibilityLabel={`Restart ${item.label}`}
+        >
+          <Ionicons name="refresh" size={12} color={item.canRestart ? "#4B5563" : "#9CA3AF"} />
+          <Text style={[styles.actionText, !item.canRestart && styles.actionTextDisabled]}>Restart</Text>
         </Pressable>
       )}
 
@@ -84,6 +108,17 @@ const styles = StyleSheet.create({
   statusPill: { alignItems: "center", paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10, gap: 2 },
   statusText: { fontSize: 9.5, fontWeight: "700" },
   elapsedText: { fontSize: 9.5, fontWeight: "600" },
+  startBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "#16A34A",
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  startBtnDisabled: { backgroundColor: "#D1D5DB" },
+  startBtnText: { fontSize: 10, fontWeight: "700", color: "#FFFFFF" },
   actionBtn: {
     flexDirection: "row",
     alignSelf: "flex-start",
@@ -96,6 +131,8 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   actionText: { fontSize: 10, fontWeight: "600", color: "#4B5563" },
+  actionBtnDisabled: { borderColor: "#E5E7EB", opacity: 0.6 },
+  actionTextDisabled: { color: "#9CA3AF" },
   actionRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   actionBtnOutline: {
     flexDirection: "row",

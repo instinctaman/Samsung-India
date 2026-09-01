@@ -6,15 +6,13 @@ import { Colors } from "@/theme/colors";
 import { Shadows } from "@/theme/shadows";
 
 type ActiveModuleCardProps = {
-  // null once every configured module has run and the session is just
-  // waiting to be closed.
-  moduleLabel: string | null;
+  moduleLabel: string;
   startedAt: string | null;
   questionCount: number | null;
-  nextModuleLabel: string | null;
-  // Ends the current module (advancing to the next one, or to "no module"
-  // if it's the last); when there's no active module, ends the session.
-  onPrimaryAction: () => void;
+  // Force-ends this module only. It does NOT start the next module (the
+  // trainer taps that module's Start button) and it does NOT end the
+  // session (only the red "End Session" button does that).
+  onEndModule: () => void;
 };
 
 function clock(totalSeconds: number): string {
@@ -28,17 +26,10 @@ export default function ActiveModuleCard({
   moduleLabel,
   startedAt,
   questionCount,
-  nextModuleLabel,
-  onPrimaryAction,
+  onEndModule,
 }: ActiveModuleCardProps) {
   const seconds = useLiveRuntime(startedAt, null);
-  const isRunning = !!moduleLabel;
-
-  const buttonLabel = !isRunning
-    ? "END SESSION"
-    : nextModuleLabel
-      ? `END ${moduleLabel.toUpperCase()}, START ${nextModuleLabel.toUpperCase()}`
-      : `END ${moduleLabel.toUpperCase()}`;
+  const buttonLabel = `END ${moduleLabel.toUpperCase()}`;
 
   return (
     <View style={styles.card}>
@@ -47,19 +38,15 @@ export default function ActiveModuleCard({
           <View style={styles.liveDot} />
           <Text style={styles.liveText}>LIVE SESSION BROADCASTING</Text>
         </View>
-        {isRunning && (
-          <View style={styles.timerPill}>
-            <Text style={styles.timerText}>{clock(seconds)}</Text>
-          </View>
-        )}
+        <View style={styles.timerPill}>
+          <Text style={styles.timerText}>{clock(seconds)}</Text>
+        </View>
       </View>
 
       <View style={styles.titleSection}>
-        <Text style={styles.activeModuleLabel}>{isRunning ? "ACTIVE MODULE" : "SESSION"}</Text>
-        <Text style={styles.moduleTitle}>
-          {isRunning ? moduleLabel : "All modules complete"}
-        </Text>
-        {isRunning && questionCount != null && (
+        <Text style={styles.activeModuleLabel}>ACTIVE MODULE</Text>
+        <Text style={styles.moduleTitle}>{moduleLabel}</Text>
+        {questionCount != null && (
           <View style={styles.pill}>
             <Text style={styles.pillText}>Targeted {questionCount} QPs</Text>
           </View>
@@ -68,7 +55,7 @@ export default function ActiveModuleCard({
 
       <Pressable
         style={styles.primaryBtn}
-        onPress={onPrimaryAction}
+        onPress={onEndModule}
         accessibilityRole="button"
         accessibilityLabel={buttonLabel}
       >

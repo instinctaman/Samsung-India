@@ -61,6 +61,12 @@
         }
       ],
       [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow $(PRODUCT_NAME) to use the camera to scan the session QR code."
+        }
+      ],
+      [
         "expo-location",
         {
           "locationWhenInUsePermission": "Allow $(PRODUCT_NAME) to access your location to verify you're at the session venue for check-in."

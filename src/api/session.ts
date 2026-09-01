@@ -42,6 +42,10 @@ export type CurrentSession = {
   trainerName: string | null;
   confirmationStatus: string;
   started: boolean;
+  // False while the session is live but the trainer hasn't marked this
+  // trainee Present yet - show the "waiting to be admitted" screen and
+  // `modules` comes back empty until then.
+  admitted?: boolean;
   startsAt: string | null;
   attendanceGeoFencing: boolean;
   securityCheckInCompleted?: boolean;

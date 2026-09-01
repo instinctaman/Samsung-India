@@ -26,6 +26,10 @@ class CurrentSession(BaseModel):
     trainerName: Optional[str] = None
     confirmationStatus: str
     started: bool = True
+    # False while the session is live but the trainer hasn't marked this
+    # trainee Present yet - the app shows the "waiting to be admitted" screen
+    # and `modules` comes back empty until they're checked in.
+    admitted: bool = True
     startsAt: Optional[str] = None
     attendanceGeoFencing: bool = False
     modules: List[SessionModule]

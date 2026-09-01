@@ -152,6 +152,35 @@ def advance_module(
     return training_service.advance_module(db, admin, conference_uid)
 
 
+@router.post("/trainings/{conference_uid}/modules/{module_key}/start", response_model=TrainingOut)
+def start_module(
+    conference_uid: str,
+    module_key: str,
+    db: Session = Depends(get_db),
+    admin: Admin = Depends(get_current_admin),
+):
+    return training_service.start_module(db, admin, conference_uid, module_key)
+
+
+@router.post("/trainings/{conference_uid}/modules/{module_key}/restart", response_model=TrainingOut)
+def restart_module(
+    conference_uid: str,
+    module_key: str,
+    db: Session = Depends(get_db),
+    admin: Admin = Depends(get_current_admin),
+):
+    return training_service.restart_module(db, admin, conference_uid, module_key)
+
+
+@router.post("/trainings/{conference_uid}/modules/stop-active", response_model=TrainingOut)
+def stop_active_module(
+    conference_uid: str,
+    db: Session = Depends(get_db),
+    admin: Admin = Depends(get_current_admin),
+):
+    return training_service.stop_active_module(db, admin, conference_uid)
+
+
 @router.post("/trainings/{conference_uid}/live-quiz/broadcast", response_model=SessionDashboardOut)
 def live_quiz_broadcast(
     conference_uid: str,

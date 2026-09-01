@@ -23,9 +23,10 @@ type DashboardScrollContentProps = {
   showSessionData: boolean;
   refreshing: boolean;
   onRefresh: () => void;
-  onAdvanceModule: () => void;
+  onStartModule: (moduleKey: string) => void;
+  onStopActiveModule: () => void;
+  onRestartModule: (moduleKey: string) => void;
   onMarkAttendance: (traineeUid: string, status: "Present" | "Absent") => void;
-  onEndSession: () => void;
   liveQuizControls: LiveQuizControls;
 };
 
@@ -35,9 +36,10 @@ export default function DashboardScrollContent({
   showSessionData,
   refreshing,
   onRefresh,
-  onAdvanceModule,
+  onStartModule,
+  onStopActiveModule,
+  onRestartModule,
   onMarkAttendance,
-  onEndSession,
   liveQuizControls,
 }: DashboardScrollContentProps) {
   const runtimeSeconds = useLiveRuntime(data?.actualStartedAt, data?.actualEndedAt);
@@ -60,19 +62,20 @@ export default function DashboardScrollContent({
       />
 
       <AudienceBreakdownCard
-        totalAudience={data?.audience?.total ?? 22}
-        present={data?.audience?.present ?? 19}
-        notMarked={2}
-        absent={data?.audience ? Math.max(0, data.audience.total - data.audience.present) : 1}
-        assigned={10}
-        unassigned={5}
-        fresh={4}
+        totalAudience={data?.audience?.total ?? 0}
+        present={data?.audience?.present ?? 0}
+        notMarked={data?.audience?.notMarked ?? 0}
+        absent={data?.audience?.absent ?? 0}
+        assigned={data?.audience?.assigned ?? 0}
+        unassigned={data?.audience?.unassigned ?? 0}
+        fresh={data?.audience?.fresh ?? 0}
         hasStarted={showSessionData}
       />
 
       <AssessmentResultCard
         passCount={data?.assessment?.pass ?? 0}
         failCount={data?.assessment?.fail ?? 0}
+        totalAttempts={data?.assessment?.totalAttempts ?? 0}
         passRate={
           data?.assessment?.totalAttempts
             ? Math.round((data.assessment.pass / data.assessment.totalAttempts) * 100)
@@ -102,12 +105,17 @@ export default function DashboardScrollContent({
         <RuntimeAndQuizSection
           data={data}
           actualRuntime={formatDurationHMS(runtimeSeconds)}
-          onAdvanceModule={onAdvanceModule}
-          onEndSession={onEndSession}
+          onStopActiveModule={onStopActiveModule}
         />
       )}
 
-      <ExecutionFlowCard executionFlow={data?.executionFlow ?? []} auditLog={data?.auditLog ?? []} hasStarted={showSessionData} />
+      <ExecutionFlowCard
+        executionFlow={data?.executionFlow ?? []}
+        auditLog={data?.auditLog ?? []}
+        hasStarted={showSessionData}
+        onStartModule={onStartModule}
+        onRestartModule={onRestartModule}
+      />
 
       {showSessionData && (
         <LiveStudioSection

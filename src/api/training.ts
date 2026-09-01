@@ -101,6 +101,14 @@ export type TrainerAgendaResponse = {
 export type AudienceBreakdown = {
   total: number;
   present: number;
+  absent: number;
+  // Joined / on the list but not yet marked Present or Absent.
+  notMarked: number;
+  // On this trainer's roster vs. walked-in / joined by QR.
+  assigned: number;
+  unassigned: number;
+  // First-timers - no earlier Present attendance in any other session.
+  fresh: number;
 };
 
 export type AssessmentSummary = {
@@ -149,6 +157,12 @@ export type ExecutionFlowItem = {
   endedAt: string | null;
   elapsedSeconds: number | null;
   assignedMinutes: number | null;
+  // Backend says this module may be started now (session live, nothing else
+  // running, every earlier module finished). Drives the per-row Start button.
+  canStart: boolean;
+  // Backend says this finished module may be re-run now (session live,
+  // nothing else running). Drives the per-row Restart button.
+  canRestart: boolean;
 };
 
 export type AuditLogEntry = {
@@ -251,11 +265,32 @@ export function endTraining(token: string, conferenceUid: string) {
   });
 }
 
-export function advanceModule(token: string, conferenceUid: string) {
-  return apiRequest<TrainingOut>(`/admin/trainings/${encodeURIComponent(conferenceUid)}/advance-module`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
-  });
+// Manually opens one module. The trainer walks the flow forward one Start
+// at a time - the backend rejects a start that's out of sequence or while
+// another module is still live.
+export function startModule(token: string, conferenceUid: string, moduleKey: string) {
+  return apiRequest<TrainingOut>(
+    `/admin/trainings/${encodeURIComponent(conferenceUid)}/modules/${encodeURIComponent(moduleKey)}/start`,
+    { method: "POST", headers: { Authorization: `Bearer ${token}` } },
+  );
+}
+
+// Force-ends the currently live module without opening the next one. Never
+// ends the session (only endTraining does that).
+export function stopActiveModule(token: string, conferenceUid: string) {
+  return apiRequest<TrainingOut>(
+    `/admin/trainings/${encodeURIComponent(conferenceUid)}/modules/stop-active`,
+    { method: "POST", headers: { Authorization: `Bearer ${token}` } },
+  );
+}
+
+// Re-runs a finished module. The backend rejects it while another module is
+// still live.
+export function restartModule(token: string, conferenceUid: string, moduleKey: string) {
+  return apiRequest<TrainingOut>(
+    `/admin/trainings/${encodeURIComponent(conferenceUid)}/modules/${encodeURIComponent(moduleKey)}/restart`,
+    { method: "POST", headers: { Authorization: `Bearer ${token}` } },
+  );
 }
 
 // --- Live Quiz (FFF) broadcast console --------------------------------------

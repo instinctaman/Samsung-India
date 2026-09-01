@@ -7,7 +7,7 @@ from fastapi import BackgroundTasks, UploadFile
 from sqlalchemy.orm import Session
 
 from app.core.constants import LIVE_QUIZ_STATE_IDLE, MODULE_LABELS, PASS_THRESHOLD_PERCENT
-from app.core.exceptions import conflict, forbidden, not_found
+from app.core.exceptions import bad_request, conflict, forbidden, not_found
 from app.core.media import media_subdir
 from app.models.admin import Admin
 from app.models.attendance import Attendance
@@ -65,29 +65,56 @@ def _execution_flow(db: Session, conference: Conference) -> list[ExecutionFlowIt
     items: list[ExecutionFlowItem] = []
     for module_key in modules:
         module_logs = logs_by_module.get(module_key, [])
-        started = next((entry for entry in module_logs if entry.action == "STARTED"), None)
-        stopped = next((entry for entry in module_logs if entry.action == "STOPPED"), None)
+        starts = [entry for entry in module_logs if entry.action == "STARTED"]
+        stops = [entry for entry in module_logs if entry.action == "STOPPED"]
 
-        if started and stopped:
-            item_status = "Completed"
-            elapsed = int((stopped.timestamp - started.timestamp).total_seconds())
-        elif started:
+        # A module can run more than once (Restart), so compare counts rather
+        # than "has a STARTED / has a STOPPED": more starts than stops means
+        # it's live right now; the latest pair is the run we report on.
+        if len(starts) > len(stops):
             item_status = "Running"
-            elapsed = int((now - started.timestamp).total_seconds())
+            first_started = starts[0]
+            last_started = starts[-1]
+            elapsed = int((now - last_started.timestamp).total_seconds())
+            started_at = first_started.timestamp.isoformat()
+            ended_at = None
+        elif starts:
+            item_status = "Completed"
+            first_started = starts[0]
+            last_stopped = stops[-1]
+            elapsed = int((last_stopped.timestamp - starts[-1].timestamp).total_seconds())
+            started_at = first_started.timestamp.isoformat()
+            ended_at = last_stopped.timestamp.isoformat()
         else:
             item_status = "Pending"
             elapsed = None
+            started_at = None
+            ended_at = None
 
         items.append(
             ExecutionFlowItem(
                 moduleKey=module_key,
                 label=MODULE_LABELS.get(module_key, module_key.title()),
                 status=item_status,
-                startedAt=started.timestamp.isoformat() if started else None,
-                endedAt=stopped.timestamp.isoformat() if stopped else None,
+                startedAt=started_at,
+                endedAt=ended_at,
                 elapsedSeconds=elapsed,
             )
         )
+
+    # `canStart`: session live, nothing else running, this module hasn't run
+    # yet, every module ahead of it is done - the trainer walks the flow
+    # forward one manual Start at a time.
+    # `canRestart`: a finished module can be re-run, but only while no other
+    # module is currently live.
+    session_idle = conference.conferenceStatus == "Ongoing" and conference.activeModuleId is None
+    for index, item in enumerate(items):
+        item.canStart = (
+            session_idle
+            and item.status == "Pending"
+            and all(earlier.status == "Completed" for earlier in items[:index])
+        )
+        item.canRestart = session_idle and item.status == "Completed"
     return items
 
 
@@ -491,7 +518,6 @@ def _build_dashboard(db: Session, conference: Conference) -> SessionDashboardOut
     conference_uid = conference.conferenceUid
 
     attendance_rows = attendance_repository.list_for_conference(db, conference_uid)
-    present_trainee_uids = {a.traineeUid for a in attendance_rows if a.status == "Present"}
     # Participants = trainees who joined via QR/link ("Joined") or have a real
     # attendance event ("Present"/"Absent"). The pre-seeded roster "Pending"
     # rows are deliberately excluded - the master list is who actually turned
@@ -553,6 +579,16 @@ def _build_dashboard(db: Session, conference: Conference) -> SessionDashboardOut
         for uid in participant_uids
     ]
 
+    # Audience breakdown - all derived from the participant rows above so the
+    # card and the Participant Master List can never disagree.
+    present_count = sum(1 for r in trainee_rows if r.status == "Present")
+    absent_count = sum(1 for r in trainee_rows if r.status == "Absent")
+    not_marked_count = sum(1 for r in trainee_rows if r.status not in ("Present", "Absent"))
+    assigned_count = sum(1 for r in trainee_rows if r.audienceType == "ASSIGNED")
+    unassigned_count = len(trainee_rows) - assigned_count
+    prior_trained = attendance_repository.list_prior_trained_uids(db, participant_uids, conference_uid)
+    fresh_count = len(participant_uids - prior_trained)
+
     pass_count = sum(
         1 for r in latest_result_by_trainee.values() if float(r.percentage) >= PASS_THRESHOLD_PERCENT
     )
@@ -582,7 +618,15 @@ def _build_dashboard(db: Session, conference: Conference) -> SessionDashboardOut
         actualStartedAt=conference.actualStartedAt.isoformat() if conference.actualStartedAt else None,
         actualEndedAt=conference.actualEndedAt.isoformat() if conference.actualEndedAt else None,
         runtimeSeconds=runtime_seconds,
-        audience=AudienceBreakdown(total=len(participant_uids), present=len(present_trainee_uids)),
+        audience=AudienceBreakdown(
+            total=len(participant_uids),
+            present=present_count,
+            absent=absent_count,
+            notMarked=not_marked_count,
+            assigned=assigned_count,
+            unassigned=unassigned_count,
+            fresh=fresh_count,
+        ),
         assessment=AssessmentSummary(
             **{"pass": pass_count}, fail=fail_count, totalAttempts=len(latest_result_by_trainee)
         ),
@@ -633,18 +677,107 @@ async def start_training(db: Session, admin: Admin, conference_uid: str, photo: 
     if conference.actualStartedAt is None:
         conference.actualStartedAt = datetime.now()
 
-    # Nothing else ever sets activeModuleId, so without this every module
-    # stays stuck on "Please wait" for trainees even once the session is
-    # Ongoing. Activate the first module the session flow actually leads
-    # with (attendance if configured - the common case - otherwise the
-    # session's own primary module, e.g. a standalone post-test session).
-    modules = configured_modules(conference)
-    first_module = modules[0] if modules else "ATTENDANCE"
-    conference.activeModuleId = first_module
-    if first_module == "LIVE_QUIZ":
-        conference.liveQuizState = LIVE_QUIZ_STATE_IDLE
-    log_module_action(db, conference.conferenceUid, first_module, "STARTED", admin.username)
+    # Starting the session no longer auto-activates a module - the trainer
+    # runs the flow forward one manual Start at a time (start_module), so
+    # `activeModuleId` stays None until they tap Start on the first module.
+    conference_repository.save(db, conference)
 
+    return TrainingOut(
+        conferenceUid=conference.conferenceUid,
+        conferenceStatus=conference.conferenceStatus,
+        status=conference.status,
+    )
+
+
+def start_module(db: Session, admin: Admin, conference_uid: str, module_key: str) -> TrainingOut:
+    """Manually opens one module. The trainer runs the flow forward one
+    Start at a time: a module can only be started once the session is live,
+    nothing else is running, this module hasn't run yet, and every module
+    ahead of it is finished. Powers the per-row Start button on the
+    Session Dashboard's Execution Flow."""
+    conference = _get_owned_conference(db, admin, conference_uid)
+    if conference.conferenceStatus != "Ongoing":
+        raise conflict("Session is not currently running")
+    if conference.activeModuleId:
+        raise conflict("Another module is still running - end it first")
+
+    modules = configured_modules(conference)
+    if module_key not in modules:
+        raise bad_request("That module isn't part of this session's flow")
+
+    logs_by_module: dict[str, set[str]] = defaultdict(set)
+    for log in activity_log_list(db, conference.conferenceUid):
+        logs_by_module[log.moduleId].add(log.action)
+
+    if "STARTED" in logs_by_module[module_key]:
+        raise conflict("That module has already run")
+    index = modules.index(module_key)
+    if any("STOPPED" not in logs_by_module[modules[i]] for i in range(index)):
+        raise conflict("Finish the earlier modules first")
+
+    conference.activeModuleId = module_key
+    if module_key == "LIVE_QUIZ":
+        conference.liveQuizState = LIVE_QUIZ_STATE_IDLE
+    log_module_action(db, conference.conferenceUid, module_key, "STARTED", admin.username)
+    conference_repository.save(db, conference)
+
+    return TrainingOut(
+        conferenceUid=conference.conferenceUid,
+        conferenceStatus=conference.conferenceStatus,
+        status=conference.status,
+    )
+
+
+def restart_module(db: Session, admin: Admin, conference_uid: str, module_key: str) -> TrainingOut:
+    """Re-opens a module that already ran. Only allowed while no other module
+    is currently live (the trainer must end the running one first). Powers
+    the per-row Restart button on the Session Dashboard's Execution Flow."""
+    conference = _get_owned_conference(db, admin, conference_uid)
+    if conference.conferenceStatus != "Ongoing":
+        raise conflict("Session is not currently running")
+    if conference.activeModuleId:
+        raise conflict("End the running module before restarting another")
+
+    modules = configured_modules(conference)
+    if module_key not in modules:
+        raise bad_request("That module isn't part of this session's flow")
+
+    ran_before = any(
+        log.action == "STARTED" and log.moduleId == module_key
+        for log in activity_log_list(db, conference.conferenceUid)
+    )
+    if not ran_before:
+        raise bad_request("That module hasn't run yet - start it instead")
+
+    conference.activeModuleId = module_key
+    if module_key == "LIVE_QUIZ":
+        conference.liveQuizState = LIVE_QUIZ_STATE_IDLE
+    log_module_action(db, conference.conferenceUid, module_key, "STARTED", admin.username)
+    conference_repository.save(db, conference)
+
+    return TrainingOut(
+        conferenceUid=conference.conferenceUid,
+        conferenceStatus=conference.conferenceStatus,
+        status=conference.status,
+    )
+
+
+def stop_active_module(db: Session, admin: Admin, conference_uid: str) -> TrainingOut:
+    """Force-ends whatever module is currently live, without opening the
+    next one - the trainer starts that manually. Never ends the session
+    itself (only end_training / the red "End Session" button does that).
+    Powers the blue Active Module card's End button."""
+    conference = _get_owned_conference(db, admin, conference_uid)
+    if conference.conferenceStatus != "Ongoing":
+        raise conflict("Session is not currently running")
+    if not conference.activeModuleId:
+        raise conflict("No module is currently running")
+
+    current = conference.activeModuleId
+    if current == "LIVE_QUIZ":
+        live_quiz_service.finish_quiz(db, conference)
+    log_module_action(db, conference.conferenceUid, current, "STOPPED", admin.username)
+    conference.activeModuleId = None
     conference_repository.save(db, conference)
 
     return TrainingOut(

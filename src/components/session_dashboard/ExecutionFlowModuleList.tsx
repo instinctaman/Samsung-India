@@ -7,6 +7,7 @@ type ExecutionFlowModuleListProps = {
   modules: ExecutionFlowItem[];
   onRestart?: (moduleKey: string) => void;
   onViewTopPerformers?: (moduleKey: string) => void;
+  onStart?: (moduleKey: string) => void;
   hasStarted?: boolean;
 };
 
@@ -14,6 +15,7 @@ export default function ExecutionFlowModuleList({
   modules,
   onRestart,
   onViewTopPerformers,
+  onStart,
   hasStarted = true,
 }: ExecutionFlowModuleListProps) {
   if (modules.length === 0) {
@@ -29,6 +31,7 @@ export default function ExecutionFlowModuleList({
           hasStarted={hasStarted}
           onRestart={onRestart}
           onViewTopPerformers={onViewTopPerformers}
+          onStart={onStart}
         />
       ))}
     </View>

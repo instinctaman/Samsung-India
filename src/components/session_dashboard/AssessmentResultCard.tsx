@@ -9,6 +9,7 @@ type AssessmentResultCardProps = {
   passCount?: number;
   failCount?: number;
   passRate?: number;
+  totalAttempts?: number;
   hasStarted?: boolean;
 };
 
@@ -16,19 +17,22 @@ export default function AssessmentResultCard({
   passCount: passCountProp = 0,
   failCount: failCountProp = 0,
   passRate: passRateProp = 0,
+  totalAttempts: totalAttemptsProp = 0,
   hasStarted = true,
 }: AssessmentResultCardProps) {
   const passCount = hasStarted ? passCountProp : 0;
   const failCount = hasStarted ? failCountProp : 0;
+  const totalAttempts = hasStarted ? totalAttemptsProp : 0;
   const passRate = hasStarted ? passRateProp : 0;
+  const hasAttempts = totalAttempts > 0;
   const size = 96;
   const strokeWidth = 11;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
 
-  // Green arc covers 75% of circle, blue arc covers top 25%
-  const greenLength = circumference * 0.75;
-  const blueLength = circumference * 0.25;
+  // Single green arc sweeping `passRate`% of the circle from 12 o'clock, over
+  // a grey track for the failing remainder.
+  const passLength = circumference * (Math.min(100, Math.max(0, passRate)) / 100);
 
   return (
     <View style={styles.card}>
@@ -51,30 +55,15 @@ export default function AssessmentResultCard({
               strokeWidth={strokeWidth}
               fill="none"
             />
-            {/* Green Segment */}
-            {hasStarted && (
+            {/* Pass Segment - sweeps `passRate`% from the top */}
+            {hasAttempts && passLength > 0 && (
               <Circle
                 cx={size / 2}
                 cy={size / 2}
                 r={radius}
                 stroke="#10B981"
                 strokeWidth={strokeWidth}
-                strokeDasharray={`${greenLength} ${circumference}`}
-                strokeDashoffset={0}
-                strokeLinecap="round"
-                fill="none"
-                transform={`rotate(45 ${size / 2} ${size / 2})`}
-              />
-            )}
-            {/* Blue Segment */}
-            {hasStarted && (
-              <Circle
-                cx={size / 2}
-                cy={size / 2}
-                r={radius}
-                stroke="#0066FF"
-                strokeWidth={strokeWidth}
-                strokeDasharray={`${blueLength} ${circumference}`}
+                strokeDasharray={`${passLength} ${circumference}`}
                 strokeDashoffset={0}
                 strokeLinecap="round"
                 fill="none"
@@ -85,7 +74,7 @@ export default function AssessmentResultCard({
 
           <View style={styles.chartCenter}>
             <Text style={styles.chartCenterText}>
-              {hasStarted ? "100% PASS" : "0%"}
+              {hasAttempts ? `${passRate}% PASS` : "No attempts"}
             </Text>
           </View>
         </View>

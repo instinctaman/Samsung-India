@@ -1,5 +1,5 @@
 import json
-from datetime import datetime
+from datetime import date, datetime
 
 from sqlalchemy.orm import Session
 
@@ -192,6 +192,29 @@ def get_current_session(db: Session, trainee: Trainee) -> CurrentSession:
             modules=[],
         )
 
+    # Trainer-gated admission: once the session is live, a trainee only sees
+    # the module flow after the trainer marks them Present on the Participant
+    # Master List. Until then they wait on the "admit me" screen with an empty
+    # module list. Only applies when the session has an attendance module -
+    # otherwise there's nothing to be admitted through.
+    if conference.enableCheckIn:
+        admission = attendance_repository.get_for_conference_and_trainee(
+            db, conference.conferenceUid, trainee.traineeUid
+        )
+        if admission is None or admission.status != "Present":
+            return CurrentSession(
+                conferenceUid=conference.conferenceUid,
+                title=conference.suiteTitle or "Training Session",
+                sessionType=conference.sessionType,
+                date=conference.conferenceDate,
+                location=location,
+                trainerName=conference.trainerName,
+                confirmationStatus="Not Confirmed",
+                started=True,
+                admitted=False,
+                modules=[],
+            )
+
     config = _parse_session_config(conference.sessionConfig)
     modules: list[SessionModule] = []
 
@@ -282,6 +305,7 @@ def get_current_session(db: Session, trainee: Trainee) -> CurrentSession:
         trainerName=conference.trainerName,
         confirmationStatus="Confirmed" if attendance_completed else "Not Confirmed",
         started=True,
+        admitted=True,
         attendanceGeoFencing=bool(attendance_cfg.get("geoFencing")),
         modules=modules,
     )

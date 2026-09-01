@@ -5,15 +5,17 @@ import { Alert, Share } from "react-native";
 import { ApiError } from "@/api/client";
 import {
   SessionDashboard,
-  advanceModule,
   broadcastLiveQuestion,
   endTraining,
   fetchSessionDashboard,
   finishLiveQuiz,
   markAttendance,
+  restartModule,
   showLiveLeaderboard,
   showLiveLobby,
+  startModule,
   startTraining,
+  stopActiveModule,
   stopLiveTimer,
 } from "@/api/training";
 import { DashboardTab } from "@/components/trainer/dashboard/DashboardBottomNav";
@@ -141,13 +143,42 @@ export function useSessionDashboardScreen() {
     }
   };
 
-  const handleAdvanceModule = async () => {
+  const handleStartModule = async (moduleKey: string) => {
     if (!adminToken) return;
     try {
-      await advanceModule(adminToken, conferenceUid);
+      await startModule(adminToken, conferenceUid, moduleKey);
       loadData("silent");
-    } catch {
-      // Fallback / gracefully keep state.
+    } catch (err) {
+      Alert.alert(
+        "Couldn't start the module",
+        err instanceof ApiError ? err.message : "Something went wrong. Please try again.",
+      );
+    }
+  };
+
+  const handleStopActiveModule = async () => {
+    if (!adminToken) return;
+    try {
+      await stopActiveModule(adminToken, conferenceUid);
+      loadData("silent");
+    } catch (err) {
+      Alert.alert(
+        "Couldn't end the module",
+        err instanceof ApiError ? err.message : "Something went wrong. Please try again.",
+      );
+    }
+  };
+
+  const handleRestartModule = async (moduleKey: string) => {
+    if (!adminToken) return;
+    try {
+      await restartModule(adminToken, conferenceUid, moduleKey);
+      loadData("silent");
+    } catch (err) {
+      Alert.alert(
+        "Couldn't restart the module",
+        err instanceof ApiError ? err.message : "Something went wrong. Please try again.",
+      );
     }
   };
 
@@ -222,7 +253,9 @@ export function useSessionDashboardScreen() {
     handleStartSession,
     handleConfirmStartSession,
     handleMarkAttendance,
-    handleAdvanceModule,
+    handleStartModule,
+    handleStopActiveModule,
+    handleRestartModule,
     handleEndSession,
     liveQuizControls: {
       onBroadcast: handleBroadcastQuestion,

@@ -323,6 +323,12 @@ export function useTraineeHome() {
   // dimmed and non-interactive, and every module falls back to "Please Wait".
   const notStarted = session != null && !session.started;
 
+  // Session is live but the trainer hasn't marked this trainee Present yet -
+  // the backend withholds the module list until then, so we show a
+  // full-screen "waiting to be admitted" card instead of an empty timeline.
+  const awaitingAdmission =
+    session != null && session.started && session.admitted === false;
+
   const allModulesDone =
     session != null &&
     session.modules.length > 0 &&
@@ -523,6 +529,7 @@ export function useTraineeHome() {
     error,
     notAssigned,
     notStarted,
+    awaitingAdmission,
     activeTab,
     historyVisible,
     setHistoryVisible,

@@ -45,6 +45,27 @@ def list_for_trainee(db: Session, trainee_uid: str) -> list[Attendance]:
     return db.query(Attendance).filter(Attendance.traineeUid == trainee_uid).all()
 
 
+def list_prior_trained_uids(
+    db: Session, trainee_uids: set[str], exclude_conference_uid: str
+) -> set[str]:
+    """Of the given trainees, which have been marked Present in some *other*
+    conference - i.e. they've been trained before. Drives the dashboard's
+    'Fresh' (first-timer) count."""
+    if not trainee_uids:
+        return set()
+    rows = (
+        db.query(Attendance.traineeUid)
+        .filter(
+            Attendance.traineeUid.in_(trainee_uids),
+            Attendance.conferenceUid != exclude_conference_uid,
+            Attendance.status == "Present",
+        )
+        .distinct()
+        .all()
+    )
+    return {row.traineeUid for row in rows}
+
+
 def create(db: Session, attendance: Attendance) -> Attendance:
     db.add(attendance)
     db.commit()
