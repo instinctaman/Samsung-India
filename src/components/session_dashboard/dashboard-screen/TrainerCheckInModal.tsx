@@ -9,6 +9,7 @@ import {
 } from "@/components/attendance/security-checkin";
 import AppModal from "@/components/ui/AppModal";
 import AppText from "@/components/ui/AppText";
+import { Breakpoints } from "@/theme/breakpoints";
 import { Colors } from "@/theme/colors";
 import { FontWeight } from "@/theme/fontWeight";
 
@@ -71,12 +72,13 @@ export default function TrainerCheckInModal({ visible, onClose, onConfirm }: Tra
 
 const styles = StyleSheet.create({
   card: {
-    width: "90%",
-    maxWidth: 420,
-    // The parent (AppModal, position="center") caps its own height to the
-    // visible screen; flexShrink lets this ScrollView take that clamp and
-    // scroll its content instead of pushing the card off-screen.
-    flexShrink: 1,
+    // Matches the trainee Security Check-In screen's card sizing exactly
+    // (src/components/attendance/SecurityCheckInView.tsx) - full width up to
+    // the same mobile breakpoint, filling the modal's available height
+    // instead of shrinking to its content.
+    width: "100%",
+    maxWidth: Breakpoints.mobileMaxWidth,
+    flex: 1,
     alignSelf: "center",
     backgroundColor: Colors.white,
     borderRadius: 24,

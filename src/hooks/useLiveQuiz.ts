@@ -47,6 +47,13 @@ export function useLiveQuiz() {
 
   const lastQidRef = useRef<number | null>(null);
   const revealingRef = useRef(false);
+  // Guards against out-of-order responses: refetch() is triggered from three
+  // places at once (mount, the poll interval, every WS nudge), so nothing
+  // stops an older in-flight request from resolving after a newer one and
+  // clobbering fresh state with stale data - most likely right at cold
+  // mount, when a pre-broadcast "WAITING" request can still be in flight
+  // when the trainer broadcasts question 1 moments later.
+  const requestSeqRef = useRef(0);
 
   const revealAsTimeout = useCallback(
     async (question: LiveQuizQuestion, selected: string | null) => {
@@ -79,13 +86,20 @@ export function useLiveQuiz() {
 
   const refetch = useCallback(async () => {
     if (!token || !conferenceUid) return;
+    const seq = ++requestSeqRef.current;
     let next: LiveQuizView;
     try {
       next = await getLiveQuizView(token, conferenceUid);
     } catch (err) {
+      // A newer refetch has started since this one was sent - let its
+      // resolution (success or failure) be the one that updates state.
+      if (seq !== requestSeqRef.current) return;
       setLoadError(err instanceof ApiError ? err.message : "Couldn't load the quiz.");
       return;
     }
+    // Same guard on the success path - this response is stale if another
+    // refetch() call was made after this one was sent.
+    if (seq !== requestSeqRef.current) return;
     setLoadError(null);
     setView(next);
 

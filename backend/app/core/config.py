@@ -8,6 +8,11 @@ class Settings(BaseSettings):
     DB_PASSWORD: str
     DB_NAME: str
 
+    # Path to a CA certificate file, required by managed MySQL providers that
+    # enforce TLS (e.g. Aiven - download it from the service's "Connection
+    # Information" panel). Leave blank for a plain local MySQL with no TLS.
+    DB_SSL_CA: str = ""
+
     SECRET_KEY: str
     ALGORITHM: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int

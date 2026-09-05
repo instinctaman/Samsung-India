@@ -15,9 +15,12 @@ DATABASE_URL = URL.create(
     database=settings.DB_NAME,
 )
 
+connect_args = {"ssl": {"ca": settings.DB_SSL_CA}} if settings.DB_SSL_CA else {}
+
 engine = create_engine(
     DATABASE_URL,
-    pool_pre_ping=True
+    pool_pre_ping=True,
+    connect_args=connect_args,
 )
 
 SessionLocal = sessionmaker(
