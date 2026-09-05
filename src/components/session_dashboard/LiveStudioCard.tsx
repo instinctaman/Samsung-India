@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
+import AppText from "@/components/ui/AppText";
 import { Ionicons } from "@expo/vector-icons";
 
 import { LiveStudio } from "@/api/training";
@@ -24,8 +25,8 @@ export default function LiveStudioCard({
   liveStudio: LiveStudio;
   controls: LiveQuizControls;
 }) {
-  const { state, activeQuestionId, timerEndsAt, totalResponses, participants, questions } = liveStudio;
-  const secondsLeft = useCountdown(state === "QUESTION_LIVE" ? timerEndsAt : null);
+  const { state, activeQuestionId, timerEndsAt, serverNowMs, totalResponses, participants, questions } = liveStudio;
+  const secondsLeft = useCountdown(state === "QUESTION_LIVE" ? timerEndsAt : null, serverNowMs);
   const activeOrder = questions.find((q) => q.id === activeQuestionId)?.order ?? null;
 
   return (
@@ -33,14 +34,19 @@ export default function LiveStudioCard({
       <View style={styles.headerBanner}>
         <View style={styles.headerTitleRow}>
           <Ionicons name="radio" size={15} color={Colors.white} />
-          <Text style={styles.headerTitle}>LIVE STUDIO</Text>
+          <AppText style={styles.headerTitle}>LIVE STUDIO</AppText>
         </View>
-        <Text style={styles.headerSuite} numberOfLines={1}>{liveStudio.suiteTitle}</Text>
+        <AppText style={styles.headerSuite} numberOfLines={1}>{liveStudio.suiteTitle}</AppText>
       </View>
 
       <View style={styles.summaryRow}>
         <Summary label="STATE" value={STATE_LABELS[state] ?? state} color="#2563EB" />
         <Summary label="ACTIVE Q" value={activeOrder ? `Q${activeOrder}` : "—"} />
+        <Summary
+          label="TIME LEFT"
+          value={state === "QUESTION_LIVE" ? `${secondsLeft}s` : "—"}
+          color={state === "QUESTION_LIVE" && secondsLeft <= 5 ? "#DC2626" : "#EA580C"}
+        />
         <Summary
           label="RESPONSES"
           value={`${totalResponses}/${participants}`}
@@ -67,7 +73,7 @@ export default function LiveStudioCard({
           />
         ))}
         {questions.length === 0 && (
-          <Text style={styles.empty}>No questions configured for this Live Quiz.</Text>
+          <AppText style={styles.empty}>No questions configured for this Live Quiz.</AppText>
         )}
       </View>
 
@@ -94,8 +100,8 @@ function Summary({
 }) {
   return (
     <View style={[styles.summaryBox, highlighted && styles.summaryBoxHighlighted]}>
-      <Text style={styles.summaryLabel}>{label}</Text>
-      <Text style={[styles.summaryValue, color ? { color } : null]}>{value}</Text>
+      <AppText style={styles.summaryLabel}>{label}</AppText>
+      <AppText style={[styles.summaryValue, color ? { color } : null]}>{value}</AppText>
     </View>
   );
 }

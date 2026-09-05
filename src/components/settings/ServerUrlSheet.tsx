@@ -37,7 +37,7 @@ export default function ServerUrlSheet({ visible, onClose }: ServerUrlSheetProps
           style={styles.input}
           value={url}
           onChangeText={setUrl}
-          placeholder="http://192.168.1.10:8000"
+          placeholder="http://192.168.29.95:8000"
           autoCapitalize="none"
           autoCorrect={false}
           keyboardType="url"

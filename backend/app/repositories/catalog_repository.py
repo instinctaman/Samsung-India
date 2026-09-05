@@ -19,6 +19,10 @@ def get_venues_by_uids(db: Session, venue_uids: set[str]) -> list[Venue]:
     return db.query(Venue).filter(Venue.venueUid.in_(venue_uids)).all()
 
 
+def get_venue_by_uid(db: Session, venue_uid: str) -> Optional[Venue]:
+    return db.query(Venue).filter(Venue.venueUid == venue_uid).first()
+
+
 def list_checklist_items(db: Session) -> list[SubCategory]:
     return (
         db.query(SubCategory)

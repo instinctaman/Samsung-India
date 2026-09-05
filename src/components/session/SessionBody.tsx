@@ -15,7 +15,8 @@ type SessionBodyProps = {
   session: CurrentSession | null;
   notAssigned: boolean;
   notStarted: boolean;
-  awaitingAdmission: boolean;
+  ejected: boolean;
+  sessionClosed: boolean;
   error: string | null;
   activities: SessionActivityData[];
   refreshing: boolean;
@@ -31,7 +32,8 @@ export default function SessionBody({
   session,
   notAssigned,
   notStarted,
-  awaitingAdmission,
+  ejected,
+  sessionClosed,
   error,
   activities,
   refreshing,
@@ -57,21 +59,43 @@ export default function SessionBody({
     );
   }
 
-  if (awaitingAdmission) {
+  if (ejected) {
     return (
       <View style={styles.centered}>
         <WaitingCard
-          title="Waiting for the Trainer"
-          subtitle="You'll see the session activities once the trainer marks you present."
+          title="Marked Absent"
+          subtitle="The trainer has marked you absent for this session. You can't take part unless they mark you present again."
         />
         <Pressable
           style={styles.retryButton}
           onPress={() => loadSession("refresh")}
           accessibilityRole="button"
-          accessibilityLabel="Refresh admission status"
+          accessibilityLabel="Refresh attendance status"
         >
           <AppText variant="label" color={Colors.white}>
             Refresh Status
+          </AppText>
+        </Pressable>
+      </View>
+    );
+  }
+
+  if (sessionClosed) {
+    return (
+      <View style={styles.centered}>
+        <WaitingCard
+          title="Session Ended"
+          subtitle="This session has ended. Your next session will show up here when it starts."
+          icon="checkmark-done-circle"
+        />
+        <Pressable
+          style={styles.retryButton}
+          onPress={() => loadSession("refresh")}
+          accessibilityRole="button"
+          accessibilityLabel="Refresh session status"
+        >
+          <AppText variant="label" color={Colors.white}>
+            Refresh
           </AppText>
         </Pressable>
       </View>

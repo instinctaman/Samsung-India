@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
+import AppText from "@/components/ui/AppText";
 
 import { TrainingAgendaItem } from "@/api/training";
 import { Colors } from "@/theme/colors";
@@ -36,19 +37,19 @@ export default function SessionsListContent({
       {loading ? (
         <View style={styles.centered}>
           <ActivityIndicator size="large" color={Colors.mainColour1} />
-          <Text style={styles.loadingText}>Loading sessions...</Text>
+          <AppText style={styles.loadingText}>Loading sessions...</AppText>
         </View>
       ) : filteredSessions.length === 0 ? (
         <View style={styles.centered}>
           <Ionicons name="calendar-outline" size={48} color="#9CA3AF" />
-          <Text style={styles.emptyTitle}>No Sessions Found</Text>
-          <Text style={styles.emptySubtitle}>
+          <AppText style={styles.emptyTitle}>No Sessions Found</AppText>
+          <AppText style={styles.emptySubtitle}>
             {activeTab === "completed"
               ? "No completed sessions for this period."
               : activeTab === "today"
                 ? "No sessions scheduled for today."
                 : "No sessions match your search criteria."}
-          </Text>
+          </AppText>
         </View>
       ) : (
         <View style={styles.list}>

@@ -1,7 +1,8 @@
 import { Colors } from "@/theme/colors";
 import { Shadows } from "@/theme/shadows";
 import { ReactNode } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
+import AppText from "@/components/ui/AppText";
 
 type StatCardProps = {
   icon: ReactNode;
@@ -29,13 +30,13 @@ export default function StatCard({
       <View style={[styles.iconWrapper, { backgroundColor: iconBg }]}>
         {icon}
       </View>
-      <Text style={styles.title} numberOfLines={1}>
+      <AppText style={styles.title} numberOfLines={1}>
         {title}
-      </Text>
-      <Text style={[styles.value, { color: valueColor }]}>{value}</Text>
-      <Text style={[styles.subtext, { color: subtextColor }]} numberOfLines={1}>
+      </AppText>
+      <AppText style={[styles.value, { color: valueColor }]}>{value}</AppText>
+      <AppText style={[styles.subtext, { color: subtextColor }]} numberOfLines={1}>
         {subtext}
-      </Text>
+      </AppText>
     </View>
   );
 }

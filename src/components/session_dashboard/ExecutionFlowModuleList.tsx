@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
+import AppText from "@/components/ui/AppText";
 
 import { ExecutionFlowItem } from "@/api/training";
 import ExecutionFlowRow from "./ExecutionFlowRow";
@@ -19,7 +20,7 @@ export default function ExecutionFlowModuleList({
   hasStarted = true,
 }: ExecutionFlowModuleListProps) {
   if (modules.length === 0) {
-    return <Text style={styles.empty}>No modules configured for this session.</Text>;
+    return <AppText style={styles.empty}>No modules configured for this session.</AppText>;
   }
 
   return (

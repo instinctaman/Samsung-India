@@ -76,15 +76,13 @@ def submit_assessment(db: Session, trainee: Trainee, suite_uid: str, payload: Su
         questions, {a.questionId: a.selectedOption for a in payload.answers}
     )
 
-    previous_attempts = assessment_repository.count_attempts(db, trainee.traineeUid, suite_uid)
-
     assessment_repository.add_result(
         db,
         AssessmentResult(
             conferenceUid=payload.conferenceUid,
             traineeUid=trainee.traineeUid,
             assessmentSuiteUid=suite_uid,
-            attemptNumber=previous_attempts + 1,
+            attemptNumber=assessment_repository.next_attempt_number(db, trainee.traineeUid, suite_uid),
             totalScore=total_score,
             maxScore=max_score,
             percentage=percentage,

@@ -19,8 +19,8 @@ export default function LocationVerifiedView({ info, onContinue }: Props) {
     info.verifiedTime ||
     new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 
-  const venueName = info.venueLabel || info.location || "Gurugram Sector 4";
-  const subtitleText = `${formattedTime} at 20th from ${venueName}`;
+  const venueName = [info.venueLabel, info.location].find((value) => value && value !== "--");
+  const subtitleText = venueName ? `${formattedTime} · ${venueName}` : `Verified at ${formattedTime}`;
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>

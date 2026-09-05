@@ -1,6 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "expo-router";
 
+import { fetchTrainers } from "@/api/training";
+import { SelectOption } from "@/components/ui/SearchableSelect";
 import { ApiError, registerNewTrainee } from "@/api/trainee";
 import { STATES } from "@/data/states";
 import { useAuth } from "@/hooks/useAuth";
@@ -39,6 +41,24 @@ export function useNewTraineeForm() {
   const [supervisorId, setSupervisorId] = useState("");
   const [supervisorName, setSupervisorName] = useState("");
   const [supervisorDesignation, setSupervisorDesignation] = useState("");
+
+  // Trainer / Supervisor pickers list this company's agencyteam trainers,
+  // fetched live and re-fetched whenever the company changes.
+  const [trainerOptions, setTrainerOptions] = useState<SelectOption[]>([]);
+  useEffect(() => {
+    if (!adminToken || !company) return;
+    fetchTrainers(adminToken, company)
+      .then(setTrainerOptions)
+      .catch(() => setTrainerOptions([]));
+  }, [adminToken, company]);
+
+  const changeCompany = (value: string) => {
+    setCompany(value);
+    setTrainerId("");
+    setTrainerName("");
+    setSupervisorId("");
+    setSupervisorName("");
+  };
 
   // Trainee Profile
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
@@ -162,7 +182,7 @@ export function useNewTraineeForm() {
   return {
     zone, setZone,
     region, setRegion,
-    company, setCompany,
+    company, setCompany: changeCompany,
     requestedByOption, setRequestedByOption,
     requestedByOther, setRequestedByOther,
     requestedBy,
@@ -172,6 +192,7 @@ export function useNewTraineeForm() {
     supervisorId, setSupervisorId,
     supervisorName, setSupervisorName,
     supervisorDesignation, setSupervisorDesignation,
+    trainerOptions,
 
     profilePhoto, setProfilePhoto,
     traineeUid, setTraineeUid,

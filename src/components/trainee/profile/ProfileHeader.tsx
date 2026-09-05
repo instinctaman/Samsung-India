@@ -4,10 +4,11 @@ import { ActivityIndicator, Image, Pressable, StyleSheet, View } from "react-nat
 import Calendar from "@/assets/images/svg/calender2.svg";
 import AppText from "@/components/ui/AppText";
 import { Trainee } from "@/api/auth";
+import { useAuth } from "@/hooks/useAuth";
 import { Colors } from "@/theme/colors";
 import { FontWeight } from "@/theme/fontWeight";
 import { createShadow } from "@/theme/shadows";
-import { DEFAULT_AVATAR } from "./constants";
+import { traineeAvatar } from "@/utils/traineeAvatar";
 
 type ProfileHeaderProps = {
   trainee: Trainee | null;
@@ -18,6 +19,7 @@ type ProfileHeaderProps = {
 };
 
 export default function ProfileHeader({ trainee, uploading, sessionPillLabel, onPickPhoto, onLogout }: ProfileHeaderProps) {
+  const { token } = useAuth();
   return (
     <View style={styles.header}>
       <View style={styles.headerTopRow}>
@@ -29,10 +31,7 @@ export default function ProfileHeader({ trainee, uploading, sessionPillLabel, on
             accessibilityRole="button"
             accessibilityLabel="Change profile picture"
           >
-            <Image
-              source={trainee?.profilePhoto ? { uri: trainee.profilePhoto } : DEFAULT_AVATAR}
-              style={styles.avatar}
-            />
+            <Image source={traineeAvatar(trainee, token)} style={styles.avatar} />
             <View style={styles.onlineDot} />
             {uploading && (
               <View style={styles.uploadingOverlay}>

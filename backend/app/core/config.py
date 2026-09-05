@@ -19,6 +19,11 @@ class Settings(BaseSettings):
 
     ALLOW_ATTENDANCE_RETEST: bool = False
 
+    # Swagger/OpenAPI (`/docs`, `/openapi.json`) expose the full route map -
+    # fine for local/LAN dev, worth turning off (set to "false" in .env)
+    # before this ever sits behind a public URL.
+    DEBUG: bool = True
+
     # Google Cloud Vision API key used for proctoring face-count checks
     # during assessments. Leave blank to disable server-side face checks.
     FACE_DETECTION_API_KEY: str = ""

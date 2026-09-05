@@ -215,6 +215,23 @@ export function setAttendanceState(state: AttendanceState) {
   setSessionFlowState(state);
 }
 
+// Location + face photo captured on the Secure Check-In screen, held here
+// until the "Mark Attendance" step submits them to /attendance/check-in/secure
+// (a geofenced session needs the coordinates at submit time; the plain
+// /attendance/check-in has none and is refused by the backend).
+export type PendingCheckIn = { latitude: number; longitude: number; photoUri: string };
+let _pendingCheckIn: PendingCheckIn | null = null;
+
+export function setPendingCheckIn(pending: PendingCheckIn) {
+  _pendingCheckIn = pending;
+}
+export function getPendingCheckIn(): PendingCheckIn | null {
+  return _pendingCheckIn;
+}
+export function clearPendingCheckIn() {
+  _pendingCheckIn = null;
+}
+
 export async function setSecurityCheckInCompleted(completed: boolean) {
   if (
     completed &&

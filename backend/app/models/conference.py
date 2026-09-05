@@ -67,6 +67,11 @@ class Conference(Base):
     # onto the real table's already-existing (previously unused) column, so
     # no migration/ALTER TABLE is needed for this.
     startConferenceImage = Column(String(300))
+    # Security Check-Out at "End Session": the trainer's face photo
+    # (`conferenceImage`) and the uploaded signed attendance sheet
+    # (`attendanceSheet`). Both are pre-existing real columns - no ALTER.
+    conferenceImage = Column(String(300))
+    attendanceSheet = Column(String(300))
 
     updatedBy = Column(String(100))
     updationOn = Column(DateTime)

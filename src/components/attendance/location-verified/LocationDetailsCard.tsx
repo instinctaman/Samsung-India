@@ -21,7 +21,12 @@ export default function LocationDetailsCard({ info, onContinue }: LocationDetail
     { label: "Session", value: info.sessionTitle, renderIcon: () => <CalendarIcon width={22} height={22} color="#1CB07D" /> },
     { label: "Session Time", value: info.sessionTime, renderIcon: () => <ClockIcon width={22} height={22} color="#1CB07D" /> },
     { label: "Date", value: info.date, renderIcon: () => <CalendarIcon width={22} height={22} color="#1CB07D" /> },
-    { label: "Location", value: info.location, renderIcon: () => <LocationIcon width={20} height={24} color="#1CB07D" /> },
+    { label: "Venue", value: info.location, renderIcon: () => <LocationIcon width={20} height={24} color="#1CB07D" /> },
+    // Only shown once the on-device reverse-geocode resolves - the trainee's
+    // own detected position, not the venue's configured address.
+    ...(info.liveLocation
+      ? [{ label: "Your Location", value: info.liveLocation, renderIcon: () => <LocationIcon width={20} height={24} color="#1CB07D" /> }]
+      : []),
   ];
 
   return (

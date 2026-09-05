@@ -1,8 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
 
-export const SUCCESS_ANIMATION = require("@/assets/lottie/success-check.json");
-export const ERROR_ANIMATION = require("@/assets/lottie/error-cross.json");
-
 export const MAX_WARNINGS = 3;
 
 export const RULES = [

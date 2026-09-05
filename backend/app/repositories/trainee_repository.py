@@ -48,6 +48,11 @@ def list_all(db: Session) -> list[Trainee]:
     return db.query(Trainee).order_by(Trainee.timestamp.desc()).all()
 
 
+def list_uids_in_state(db: Session, state: str) -> set[str]:
+    rows = db.query(Trainee.traineeUid).filter(Trainee.state == state).all()
+    return {row.traineeUid for row in rows}
+
+
 def create(db: Session, trainee: Trainee) -> Trainee:
     db.add(trainee)
     db.commit()

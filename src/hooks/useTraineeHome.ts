@@ -12,10 +12,11 @@ import {
   isAttendanceRecorded,
   setSessionFlowState,
 } from "@/api/session";
-import { isSessionLocked } from "@/components/proctoring/violations";
+import { isSessionLocked, resetSessionViolations } from "@/components/proctoring/violations";
 import { useAuth } from "@/hooks/useAuth";
+import { useLiveQuizChannel } from "@/hooks/useLiveQuizChannel";
 
-export type TraineeTab = "rank" | "home" | "profile";
+export type TraineeTab = "rank" | "dashboard" | "home" | "profile";
 
 export interface SessionActivityData {
   id: string;
@@ -28,8 +29,11 @@ export interface SessionActivityData {
   isLive: boolean;
   isCompleted: boolean;
   isMissed: boolean;
-  /** True when a Post Test was terminated due to security violation */
+  /** True when a Post Test was terminated due to security violation, or the
+   *  trainer hasn't marked this trainee present yet. */
   isLocked?: boolean;
+  /** Why the module is locked (admission gate) - shown on the card. */
+  lockReason?: string | null;
   completedAt: string | null;
   score: string | null;
   ranDuration?: string | null;
@@ -38,19 +42,23 @@ export interface SessionActivityData {
   attendanceState?: AttendanceState;
 }
 
+// Which conference's Live Quiz this trainee has already been pulled into (or
+// left). Module scope so it survives `session_detail` remounting - the trainee
+// gets auto-routed to the quiz room ONCE, and Leave stays Leave.
+let autoEnteredLiveQuiz: string | null = null;
+
 export function useTraineeHome() {
   const router = useRouter();
+  // Post Test / Live Quiz / Survey completion is NOT carried in params any
+  // more - the backend response is authoritative for those modules. These are
+  // just the check-in wizard's client-only steps + the proctoring lock.
   const params = useLocalSearchParams<{
     flow?: SessionFlowState;
     attendance?: string;
     checkIn?: string;
-    quiz?: string;
     postTest?: string;
-    survey?: string;
     score?: string;
-    duration?: string;
     violation?: string;
-    violationType?: string;
   }>();
   const { trainee, token, logout } = useAuth();
 
@@ -74,185 +82,87 @@ export function useTraineeHome() {
       if (mode !== "silent") setError(null);
 
       try {
-        const data = await getCurrentSession(token);
-        const hasAttendanceRecorded =
-          isAttendanceRecorded() ||
-          params.flow === "ATTENDANCE_RECORDED" ||
-          params.attendance === "completed" ||
-          params.quiz === "completed" ||
-          params.postTest === "completed" ||
-          params.postTest === "security_locked" ||
-          params.survey === "completed";
+        const data: CurrentSession = await getCurrentSession(token);
+        // The backend `/sessions/current` response is the single source of
+        // truth for every module's isLive / isCompleted / score / isMissed.
+        // A module goes live ONLY when the trainer starts it
+        // (conference.activeModuleId === key) and completes ONLY when a real
+        // attendance row / assessment result exists. The trainer's actions
+        // reach us in real time over the WebSocket (see useLiveQuizChannel
+        // below), which triggers a silent refetch. The two client-only
+        // overrides below are the only exceptions and each touches a single
+        // module - they must never fake the state of the others.
 
-        if (hasAttendanceRecorded) {
-          setSessionFlowState("ATTENDANCE_RECORDED");
-          data.flowState = "ATTENDANCE_RECORDED";
+        // (1) The trainee just submitted the Post Test in this navigation.
+        // Show it done on the Standard Test card immediately so it doesn't
+        // flash "live" for the one render before the backend result is read
+        // back (submit_assessment commits before returning, so the next
+        // fetch already has it - this just removes the flicker).
+        if (params.postTest === "completed") {
           data.modules = data.modules.map((m) =>
-            m.key === "ATTENDANCE"
+            m.key === "STANDARD_TEST"
               ? {
                   ...m,
                   isCompleted: true,
                   isLive: false,
-                  completedAt: m.completedAt ?? "10:25",
-                  ranDuration: m.ranDuration ?? "Ran : 45m 3s",
+                  score: m.score ?? params.score ?? null,
+                  completedAt: m.completedAt ?? "Completed successfully",
                 }
               : m,
           );
         }
 
-        if (params.survey === "completed") {
-          data.modules = data.modules.map((m) => {
-            if (m.key === "ATTENDANCE") {
-              return {
-                ...m,
-                isCompleted: true,
-                isLive: false,
-                completedAt: m.completedAt ?? "10:25",
-                ranDuration: m.ranDuration ?? "Ran : 45m 3s",
-              };
-            }
-            if (m.key === "LIVE_QUIZ") {
-              return {
-                ...m,
-                isCompleted: true,
-                isLive: false,
-                score: m.score ?? "9/15",
-                completedAt: "Completed successfully",
-                ranDuration: m.ranDuration ?? "Ran : 1h 55m",
-              };
-            }
-            if (m.key === "STANDARD_TEST") {
-              return {
-                ...m,
-                isCompleted: true,
-                isLive: false,
-                score: m.score ?? "12/15",
-                completedAt: "Completed successfully",
-                ranDuration: m.ranDuration ?? "Ran : 1h 50m",
-              };
-            }
-            if (m.key === "SURVEY") {
-              return {
-                ...m,
-                isCompleted: true,
-                isLive: false,
-                completedAt: "Completed successfully",
-                ranDuration: "Ran : 25m",
-              };
-            }
-            return m;
-          });
-        } else if (params.postTest === "security_locked") {
-          // Post Test was terminated due to security violation — NOT completed
-          // Quiz session activity remains completed
-          // Survey stays Upcoming
-          data.modules = data.modules.map((m) => {
-            if (m.key === "ATTENDANCE") {
-              return {
-                ...m,
-                isCompleted: true,
-                isLive: false,
-                completedAt: m.completedAt ?? "10:25",
-                ranDuration: m.ranDuration ?? "Ran : 45m 3s",
-              };
-            }
-            if (m.key === "LIVE_QUIZ") {
-              return {
-                ...m,
-                isCompleted: true,
-                isLive: false,
-                score: m.score ?? "9/15",
-                completedAt: m.completedAt ?? "Completed successfully",
-                ranDuration: m.ranDuration ?? "Ran : 1h 55m",
-              };
-            }
-            if (m.key === "STANDARD_TEST") {
-              return {
-                ...m,
-                isCompleted: false,
-                isLive: false,
-                isLocked: true,
-                completedAt: "Security Violation",
-                score: null,
-              };
-            }
-            // Survey remains Upcoming
-            return m;
-          });
-        } else if (params.postTest === "completed") {
-          data.modules = data.modules.map((m) => {
-            if (m.key === "ATTENDANCE") {
-              return {
-                ...m,
-                isCompleted: true,
-                isLive: false,
-                completedAt: m.completedAt ?? "10:25",
-                ranDuration: m.ranDuration ?? "Ran : 45m 3s",
-              };
-            }
-            if (m.key === "LIVE_QUIZ") {
-              return {
-                ...m,
-                isCompleted: true,
-                isLive: false,
-                score: m.score ?? "9/15",
-                completedAt: "Completed successfully",
-                ranDuration: m.ranDuration ?? "Ran : 1h 55m",
-              };
-            }
-            if (m.key === "STANDARD_TEST") {
-              return {
-                ...m,
-                isCompleted: true,
-                isLive: false,
-                score: params.score ?? m.score ?? "12/15",
-                completedAt: "Completed successfully",
-                ranDuration: params.duration ?? m.ranDuration ?? "Ran : 1h 50m",
-              };
-            }
-            // SURVEY stays whatever the backend reports - it only goes live
-            // once the trainer starts the Survey module.
-            return m;
-          });
-        } else if (params.quiz === "completed") {
-          data.modules = data.modules.map((m) => {
-            if (m.key === "ATTENDANCE") {
-              return {
-                ...m,
-                isCompleted: true,
-                isLive: false,
-                completedAt: m.completedAt ?? "10:25",
-                ranDuration: m.ranDuration ?? "Ran : 45m 3s",
-              };
-            }
-            if (m.key === "LIVE_QUIZ") {
-              return {
-                ...m,
-                isCompleted: true,
-                isLive: false,
-                score: params.score ?? m.score ?? "9/15",
-                completedAt: "Completed successfully",
-                ranDuration: params.duration ?? m.ranDuration ?? "Ran : 1h 55m",
-              };
-            }
-            // STANDARD_TEST stays whatever the backend reports - it only goes
-            // live once the trainer starts the Standard Test module.
-            return m;
-          });
+        // (2) The Post Test's on-device proctoring struck out. The lock is now
+        // persisted on the trainee's attendance row (`data.proctoringLocked`),
+        // so it survives a reload AND the trainer can clear it from the
+        // Participant Master List. Once they do, drop the stale in-memory lock
+        // so the trainee can re-enter the test. (`proctoringLocked` undefined
+        // = older backend -> fall back to the nav-param-only behaviour.)
+        if (data.proctoringLocked === false && data.conferenceUid) {
+          resetSessionViolations(data.conferenceUid);
+        }
+        const postTestLocked =
+          data.proctoringLocked === true ||
+          (params.postTest === "security_locked" && data.proctoringLocked !== false);
+        if (postTestLocked) {
+          data.modules = data.modules.map((m) =>
+            m.key === "STANDARD_TEST"
+              ? {
+                  ...m,
+                  isCompleted: false,
+                  isLive: false,
+                  isLocked: true,
+                  completedAt: "Security Violation",
+                  score: null,
+                }
+              : m,
+          );
+        }
+
+        // The check-in wizard runs through a few client-only steps
+        // (SECURE_CHECKIN -> CAMERA_VERIFIED -> ATTENDANCE_RECORDED) before a
+        // backend attendance row exists. Keep that sub-state in sync; once the
+        // row is there, module.isCompleted from the backend is authoritative.
+        const attendanceDone =
+          isAttendanceRecorded() ||
+          params.flow === "ATTENDANCE_RECORDED" ||
+          params.attendance === "completed" ||
+          data.modules.some((m) => m.key === "ATTENDANCE" && m.isCompleted);
+
+        if (attendanceDone) {
+          setSessionFlowState("ATTENDANCE_RECORDED");
+          data.flowState = "ATTENDANCE_RECORDED";
         } else if (
           params.flow === "CAMERA_VERIFIED" ||
           params.checkIn === "verified"
         ) {
-          if (!hasAttendanceRecorded) {
-            setSessionFlowState("CAMERA_VERIFIED");
-            data.flowState = "CAMERA_VERIFIED";
-          }
+          setSessionFlowState("CAMERA_VERIFIED");
+          data.flowState = "CAMERA_VERIFIED";
         } else if (params.flow === "SECURE_CHECKIN") {
-          if (!hasAttendanceRecorded) {
-            setSessionFlowState("SECURE_CHECKIN");
-            data.flowState = "SECURE_CHECKIN";
-          }
+          setSessionFlowState("SECURE_CHECKIN");
+          data.flowState = "SECURE_CHECKIN";
         }
+
         setSession(data);
         setNotAssigned(false);
       } catch (err) {
@@ -271,17 +181,7 @@ export function useTraineeHome() {
         else if (mode === "load") setLoading(false);
       }
     },
-    [
-      token,
-      params.attendance,
-      params.checkIn,
-      params.duration,
-      params.flow,
-      params.postTest,
-      params.quiz,
-      params.score,
-      params.survey,
-    ],
+    [token, params.attendance, params.checkIn, params.flow, params.postTest, params.score],
   );
 
   useFocusEffect(
@@ -297,15 +197,32 @@ export function useTraineeHome() {
     }, [loadSession, params.violation, params.postTest]),
   );
 
+  // The trainer has closed the session - the app drops back to the "no active
+  // session" screen. Backend-authoritative (session_service.get_current_session
+  // stops sending the module timeline once conferenceStatus is Completed).
+  const sessionClosed = session?.sessionClosed === true;
+
   // The trainer hasn't started the session yet - the whole timeline renders
   // dimmed and non-interactive, and every module falls back to "Please Wait".
-  const notStarted = session != null && !session.started;
+  const notStarted = session != null && !session.started && !sessionClosed;
 
-  // Session is live but the trainer hasn't marked this trainee Present yet -
-  // the backend withholds the module list until then, so we show a
-  // full-screen "waiting to be admitted" card instead of an empty timeline.
-  const awaitingAdmission =
-    session != null && session.started && session.admitted === false;
+  // The trainer marked this trainee Absent - a hard eject. The whole screen
+  // is blocked until (if) the trainer flips them back to Present.
+  const ejected =
+    session != null && session.started && session.attendanceStatus === "Absent";
+
+  // Session live, trainer hasn't marked this trainee Present yet: the timeline
+  // still renders (with LIVE badges) but every module comes back locked from
+  // the backend - no full-screen block, just per-module lock cards.
+
+  // Push channel: any trainer action on this session (start/stop a module,
+  // mark/unmark this trainee, start/end the session) nudges us to refetch,
+  // so the screen updates in real time.
+  const { connected: liveConnected } = useLiveQuizChannel(
+    session?.conferenceUid,
+    token,
+    () => loadSession("silent"),
+  );
 
   const allModulesDone =
     session != null &&
@@ -315,32 +232,57 @@ export function useTraineeHome() {
 
   useEffect(() => {
     if (!shouldPoll) return;
-    const interval = setInterval(() => loadSession("silent"), 10000);
+    // The WebSocket is the real-time path; this poll is only a safety net for
+    // a missed nudge / dropped socket - so back right off while it's connected.
+    const intervalMs = liveConnected ? 30000 : 12000;
+    const interval = setInterval(() => loadSession("silent"), intervalMs);
     return () => clearInterval(interval);
-  }, [shouldPoll, loadSession]);
+  }, [shouldPoll, loadSession, liveConnected]);
 
-  const currentFlow: SessionFlowState =
+  // Attendance is "recorded" once the backend has the row (module.isCompleted)
+  // or the local check-in wizard just finished. Reaching the Post Test / Live
+  // Quiz at all means the trainee is already admitted + checked in.
+  const attendanceRecorded =
     isAttendanceRecorded() ||
     session?.flowState === "ATTENDANCE_RECORDED" ||
     getSessionFlowState() === "ATTENDANCE_RECORDED" ||
     params.flow === "ATTENDANCE_RECORDED" ||
     params.attendance === "completed" ||
-    params.quiz === "completed" ||
-    params.postTest === "completed" ||
-    params.postTest === "security_locked" ||
-    params.survey === "completed"
-      ? "ATTENDANCE_RECORDED"
-      : params.flow === "CAMERA_VERIFIED" ||
-          params.checkIn === "verified" ||
-          session?.flowState === "CAMERA_VERIFIED"
-        ? "CAMERA_VERIFIED"
-        : session?.flowState || getSessionFlowState() || "SECURE_CHECKIN";
+    (session?.modules.some((m) => m.key === "ATTENDANCE" && m.isCompleted) ?? false);
+
+  // Auto-enter the Live Quiz room the moment the trainer makes it the live
+  // module, so the trainee is on the "waiting" screen BEFORE the first
+  // question is broadcast - otherwise Q1's timer (anchored to broadcast time)
+  // has already run out by the time they tap "Enter Live Quiz". Q2+ are fine
+  // because they're already in the room. One-shot per conference; the manual
+  // button and Leave still work.
+  useEffect(() => {
+    const uid = session?.conferenceUid;
+    if (!uid || sessionClosed || notStarted || !attendanceRecorded) return;
+    if (autoEnteredLiveQuiz === uid) return;
+    const liveQuiz = session?.modules.find(
+      (m) => m.key === "LIVE_QUIZ" && m.isLive && !m.isCompleted,
+    );
+    if (!liveQuiz) return;
+    autoEnteredLiveQuiz = uid;
+    router.push({ pathname: "/live_quiz", params: { conferenceUid: uid } });
+  }, [session, sessionClosed, notStarted, attendanceRecorded, router]);
+
+  const currentFlow: SessionFlowState = attendanceRecorded
+    ? "ATTENDANCE_RECORDED"
+    : params.flow === "CAMERA_VERIFIED" ||
+        params.checkIn === "verified" ||
+        session?.flowState === "CAMERA_VERIFIED"
+      ? "CAMERA_VERIFIED"
+      : session?.flowState || getSessionFlowState() || "SECURE_CHECKIN";
 
   const activities: SessionActivityData[] = (session?.modules ?? []).map(
     (module) => {
       const isAttendance = module.key === "ATTENDANCE";
+      // Recorded either locally (self-check-in flow) or by the backend - the
+      // trainer marking this trainee Present also completes Attendance.
       const isAttendanceCompleted =
-        isAttendance && currentFlow === "ATTENDANCE_RECORDED";
+        isAttendance && (currentFlow === "ATTENDANCE_RECORDED" || module.isCompleted);
 
       // `module.isLive` from the backend is the ONLY source of truth for
       // whether a module is live - it's true only once the trainer has
@@ -349,7 +291,7 @@ export function useTraineeHome() {
       // (Attendance also drops the instant it's recorded locally, before
       // the next poll catches up.)
       const isLiveModule = isAttendance
-        ? module.isLive && currentFlow !== "ATTENDANCE_RECORDED"
+        ? module.isLive && !isAttendanceCompleted
         : module.isLive;
 
       return {
@@ -363,14 +305,17 @@ export function useTraineeHome() {
         isLive: notStarted ? false : isLiveModule,
         isCompleted: isAttendance ? isAttendanceCompleted : module.isCompleted,
         isMissed: module.isMissed,
-        isLocked: (module as { isLocked?: boolean }).isLocked ?? false,
-        completedAt: isAttendanceCompleted
-          ? (module.completedAt ?? "10:25")
-          : module.completedAt,
+        // `isLocked` here is only the security-violation lock (that path
+        // builds its own activities array). The admission gate is carried
+        // by `lockReason` instead, so the module keeps its LIVE badge while
+        // its action is blocked.
+        isLocked: false,
+        lockReason: module.lockReason ?? null,
+        completedAt: module.completedAt,
         score: module.score,
-        ranDuration: isAttendanceCompleted
-          ? (module.ranDuration ?? "Ran : 45m 3s")
-          : module.ranDuration,
+        // Actual "Ran : 45m 3s" badge from the trainer's Start/End - the
+        // backend computes it from the activity log; no placeholder.
+        ranDuration: module.ranDuration ?? null,
         geoFencing: isAttendance ? session?.attendanceGeoFencing : undefined,
         securityCheckInCompleted: isAttendance
           ? currentFlow === "CAMERA_VERIFIED" ||
@@ -395,6 +340,9 @@ export function useTraineeHome() {
     const attendanceModule = session.modules.find(
       (module) => module.key === "ATTENDANCE",
     );
+    // Admission gate - the trainer hasn't marked this trainee present yet,
+    // so there's nothing for them to do here.
+    if (attendanceModule?.lockReason) return;
 
     if (currentFlow === "ATTENDANCE_RECORDED") {
       return;
@@ -434,6 +382,8 @@ export function useTraineeHome() {
 
   const handleEnterLiveQuiz = () => {
     blurActiveElement();
+    // Mark it entered so leaving the quiz doesn't get auto-routed straight back.
+    if (session?.conferenceUid) autoEnteredLiveQuiz = session.conferenceUid;
     router.push({
       pathname: "/live_quiz",
       params: { conferenceUid: session?.conferenceUid ?? "" },
@@ -448,10 +398,15 @@ export function useTraineeHome() {
     if (!session || !standardTest?.assessmentSuiteUid) return;
 
     const sessionKey = `${session.conferenceUid}_${standardTest.assessmentSuiteUid}`;
+    // A trainer unlock (backend `proctoringLocked === false`) overrides both a
+    // stale in-memory lock and the nav param that first flagged the lockout.
+    const backendUnlocked = session.proctoringLocked === false;
     if (
-      isSessionLocked(sessionKey) ||
-      isSessionLocked(session.conferenceUid) ||
-      params.postTest === "security_locked"
+      !backendUnlocked &&
+      (session.proctoringLocked === true ||
+        isSessionLocked(sessionKey) ||
+        isSessionLocked(session.conferenceUid) ||
+        params.postTest === "security_locked")
     ) {
       setViolationLockedVisible(true);
       return;
@@ -487,18 +442,18 @@ export function useTraineeHome() {
   const handleTabSelect = (tab: TraineeTab) => {
     setActiveTab(tab);
     if (tab === "rank") {
-      router.push("/quiz_leaderboard");
+      // Pass the session so the Rank page resolves this conference's Live Quiz
+      // board directly - it stays reachable here even after the session ends.
+      router.push({
+        pathname: "/quiz_leaderboard",
+        params: { conferenceUid: session?.conferenceUid ?? "" },
+      });
+    } else if (tab === "dashboard") {
+      router.push("/trainee_dashboard");
     } else if (tab === "profile") {
       router.push("/profile");
     } else if (tab === "home") {
-      setSessionFlowState("ATTENDANCE_RECORDED");
-      router.replace({
-        pathname: "/session_detail",
-        params: {
-          flow: "ATTENDANCE_RECORDED",
-          attendance: "completed",
-        },
-      });
+      // Already on the session timeline - just pull fresh state.
       loadSession("refresh");
     }
   };
@@ -513,7 +468,8 @@ export function useTraineeHome() {
     error,
     notAssigned,
     notStarted,
-    awaitingAdmission,
+    ejected,
+    sessionClosed,
     activeTab,
     historyVisible,
     setHistoryVisible,

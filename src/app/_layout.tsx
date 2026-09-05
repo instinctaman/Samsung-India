@@ -1,6 +1,7 @@
 import { DefaultTheme, ThemeProvider, usePathname } from "expo-router";
 
 import { AnimatedSplashOverlay } from "@/components/animated-icon";
+import BrandSplash from "@/components/common/BrandSplash";
 import { AppShell, AppStack, TRAINER_ROUTES, useRouteBlur } from "@/components/layout";
 import { AuthProvider } from "@/hooks/useAuth";
 import { useAppFonts } from "@/hooks/useAppFonts";
@@ -11,7 +12,7 @@ export default function RootLayout() {
   useRouteBlur(pathname);
 
   if (!fontsLoaded && !fontError) {
-    return null;
+    return <BrandSplash />;
   }
 
   const isTrainerRoute = TRAINER_ROUTES.some((route) => pathname?.startsWith(route));

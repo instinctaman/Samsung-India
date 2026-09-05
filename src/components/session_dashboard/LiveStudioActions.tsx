@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
+import AppText from "@/components/ui/AppText";
 import { Ionicons } from "@expo/vector-icons";
 
 import { LiveStudio } from "@/api/training";
@@ -33,7 +34,7 @@ export default function LiveStudioActions({ state, questions, activeQuestionId, 
       </View>
       <Pressable style={styles.finishBtn} onPress={controls.onFinish}>
         <Ionicons name="flag" size={11} color="#EF4444" />
-        <Text style={styles.finishText}>FINISH LIVE QUIZ</Text>
+        <AppText style={styles.finishText}>FINISH LIVE QUIZ</AppText>
       </Pressable>
     </View>
   );
@@ -59,7 +60,7 @@ function Btn({
       disabled={disabled}
     >
       <Ionicons name={icon} size={11} color={Colors.white} />
-      <Text style={styles.btnText}>{label}</Text>
+      <AppText style={styles.btnText}>{label}</AppText>
     </Pressable>
   );
 }

@@ -1,20 +1,14 @@
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
-import { ImageSourcePropType } from "react-native";
 
 import { CurrentSession, getCurrentSession } from "@/api/session";
 import { useAuth } from "@/hooks/useAuth";
-
-const AVATAR_BY_GENDER: Record<string, ImageSourcePropType> = {
-  male: require("@/assets/images/user_img/default_male.png"),
-  female: require("@/assets/images/user_img/default_female.png"),
-};
-const DEFAULT_AVATAR: ImageSourcePropType = require("@/assets/images/Icons/face_icon.png");
+import { traineeAvatar } from "@/utils/traineeAvatar";
 
 export function useSessionScreen() {
   const router = useRouter();
   const { trainee, token, logout } = useAuth();
-  const avatar = AVATAR_BY_GENDER[trainee?.gender?.toLowerCase() ?? ""] ?? DEFAULT_AVATAR;
+  const avatar = traineeAvatar(trainee);
 
   const [session, setSession] = useState<CurrentSession | null>(null);
   const [loading, setLoading] = useState(true);

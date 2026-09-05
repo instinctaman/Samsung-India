@@ -11,6 +11,7 @@ type WaitingCardProps = {
   subtitle?: string;
   color?: string;
   backgroundColor?: string;
+  icon?: keyof typeof Ionicons.glyphMap;
 };
 
 export default function WaitingCard({
@@ -18,11 +19,12 @@ export default function WaitingCard({
   subtitle = "Trainer will unlock soon...",
   color = Colors.headerBlue,
   backgroundColor = Colors.waitingBlueBg,
+  icon = "hourglass-outline",
 }: WaitingCardProps) {
   return (
     <View style={[styles.container, { backgroundColor }]}>
       <Ionicons
-        name="hourglass-outline"
+        name={icon}
         size={24}
         color={color}
       />

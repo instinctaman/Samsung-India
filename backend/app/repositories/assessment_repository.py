@@ -86,12 +86,18 @@ def upsert_answer(
     suite_uid: str,
     question_id: int,
     selected_option: Optional[str],
+    response_ms: Optional[int] = None,
 ) -> None:
     """One row per (conference, trainee, question) - a trainee changing their
-    pick before the timer locks overwrites the same row rather than stacking."""
+    pick before the timer locks overwrites the same row rather than stacking.
+    `response_ms` (Live Quiz) is the time from question broadcast to this
+    answer; stored as a bare integer in `remarks` (the schema's per-row notes
+    field - no dedicated column) and summed at scoring time for the tie-break."""
     existing = get_answer(db, conference_uid, trainee_uid, question_id)
     if existing:
         existing.selectedOption = selected_option
+        if response_ms is not None:
+            existing.remarks = str(response_ms)
     else:
         db.add(
             Assessment(
@@ -100,6 +106,7 @@ def upsert_answer(
                 traineeUid=trainee_uid,
                 questionId=str(question_id),
                 selectedOption=selected_option,
+                remarks=str(response_ms) if response_ms is not None else None,
             )
         )
     db.commit()
@@ -127,12 +134,21 @@ def responders_by_question(db: Session, conference_uid: str, suite_uid: str) -> 
 
 # --- AssessmentResult ----------------------------------------------------------
 
-def count_attempts(db: Session, trainee_uid: str, suite_uid: str) -> int:
-    return (
-        db.query(AssessmentResult)
-        .filter(AssessmentResult.traineeUid == trainee_uid, AssessmentResult.assessmentSuiteUid == suite_uid)
-        .count()
+def next_attempt_number(db: Session, trainee_uid: str, suite_uid: str) -> int:
+    """The next `attemptNumber` for this trainee + suite. Uses MAX, not COUNT,
+    so it stays correct even after older attempt rows have been deleted (dev
+    cleanup, a reset script, etc.) - COUNT + 1 would then collide with the
+    `unique_attempt` UNIQUE(traineeUid, assessmentSuiteUid, attemptNumber)
+    constraint and make the submit fail with a bare IntegrityError (500)."""
+    highest = (
+        db.query(func.max(AssessmentResult.attemptNumber))
+        .filter(
+            AssessmentResult.traineeUid == trainee_uid,
+            AssessmentResult.assessmentSuiteUid == suite_uid,
+        )
+        .scalar()
     )
+    return int(highest or 0) + 1
 
 
 def add_result(db: Session, result: AssessmentResult) -> None:
@@ -199,3 +215,9 @@ def list_results_for_trainee(db: Session, trainee_uid: str) -> list[AssessmentRe
         .order_by(AssessmentResult.submittedAt.desc())
         .all()
     )
+
+
+def list_all_submitted_results(db: Session) -> list[AssessmentResult]:
+    """Every Submitted result row, all trainees - the dashboard groups these by
+    trainee and keeps only the Standard Test + Live Quiz suites for ranking."""
+    return db.query(AssessmentResult).filter(AssessmentResult.status == "Submitted").all()

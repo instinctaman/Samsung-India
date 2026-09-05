@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
+import AppText from "@/components/ui/AppText";
 import { Ionicons } from "@expo/vector-icons";
 import Svg, { Circle } from "react-native-svg";
 
@@ -34,12 +35,12 @@ export default function SessionRuntimeCard({
         <View style={styles.runtimeLeft}>
           <View style={styles.runtimeHeader}>
             <Ionicons name="time-outline" size={16} color="#0066FF" />
-            <Text style={styles.runtimeTitle}>ACTUAL SESSION RUNTIME</Text>
+            <AppText style={styles.runtimeTitle}>ACTUAL SESSION RUNTIME</AppText>
           </View>
-          <Text style={styles.runtimeValue}>{actualRuntime}</Text>
+          <AppText style={styles.runtimeValue}>{actualRuntime}</AppText>
           <View style={styles.assignedConsumedRow}>
-            <Text style={styles.subTimeText}>Assigned: {assignedTime}</Text>
-            <Text style={styles.subTimeText}>Consumed: {consumedTime}</Text>
+            <AppText style={styles.subTimeText}>Assigned: {assignedTime}</AppText>
+            <AppText style={styles.subTimeText}>Consumed: {consumedTime}</AppText>
           </View>
         </View>
 
@@ -68,10 +69,10 @@ export default function SessionRuntimeCard({
               />
             </Svg>
             <View style={styles.donutCenter}>
-              <Text style={styles.donutPercentText}>{timeUsedPercent}%</Text>
+              <AppText style={styles.donutPercentText}>{timeUsedPercent}%</AppText>
             </View>
           </View>
-          <Text style={styles.timeUsedLabel}>TOTAL TIME USED</Text>
+          <AppText style={styles.timeUsedLabel}>TOTAL TIME USED</AppText>
           <View style={styles.timeProgressBar}>
             <View
               style={[
@@ -91,11 +92,11 @@ export default function SessionRuntimeCard({
             size={17}
             color="#10B981"
           />
-          <Text style={styles.completionTitle}>MODULE COMPLETION</Text>
+          <AppText style={styles.completionTitle}>MODULE COMPLETION</AppText>
         </View>
-        <Text style={styles.completionPercent}>
+        <AppText style={styles.completionPercent}>
           {moduleCompletionPercent}%
-        </Text>
+        </AppText>
         <View style={styles.completionProgressBar}>
           <View
             style={[

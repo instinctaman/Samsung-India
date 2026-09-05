@@ -24,6 +24,11 @@ export type AttendanceListItem = {
   conferenceId: string | null;
   lastUpdates: string | null;
   marked: boolean;
+  // Tallies of this participant across all of this trainer's trainings - the
+  // same numbers repeat on each of the participant's rows.
+  trainerTrainingsTotal: number;
+  trainerTrainingsPresent: number;
+  trainerTrainingsPending: number;
 };
 
 export function fetchAttendanceList(token: string) {

@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
+import AppText from "@/components/ui/AppText";
 import { Ionicons } from "@expo/vector-icons";
 
 import { SessionHeroStat } from "@/api/training";
@@ -19,8 +20,8 @@ const VISUAL: Record<string, { icon: keyof typeof Ionicons.glyphMap; bg: string;
 function Metric({ label, value }: { label: string; value: string }) {
   return (
     <View style={styles.metricItem}>
-      <Text style={styles.metricLabel}>{label}</Text>
-      <Text style={styles.metricValue}>{value}</Text>
+      <AppText style={styles.metricLabel}>{label}</AppText>
+      <AppText style={styles.metricValue}>{value}</AppText>
     </View>
   );
 }
@@ -28,15 +29,15 @@ function Metric({ label, value }: { label: string; value: string }) {
 export default function SessionHeroesCard({ heroes, hasStarted = true }: SessionHeroesCardProps) {
   return (
     <View style={styles.container}>
-      <Text style={styles.sectionTitle}>SESSION HEROES</Text>
+      <AppText style={styles.sectionTitle}>SESSION HEROES</AppText>
 
       {heroes.length === 0 && (
         <View style={styles.heroCard}>
-          <Text style={styles.emptyText}>
+          <AppText style={styles.emptyText}>
             {hasStarted
               ? "No quiz or test module in this session."
               : "Hero stats appear once quizzes / tests are attempted."}
-          </Text>
+          </AppText>
         </View>
       )}
 
@@ -51,15 +52,15 @@ export default function SessionHeroesCard({ heroes, hasStarted = true }: Session
                   <Ionicons name={v.icon} size={18} color={v.color} />
                 </View>
                 <View>
-                  <Text style={styles.heroTitle}>{hero.label} Hero</Text>
+                  <AppText style={styles.heroTitle}>{hero.label} Hero</AppText>
                   <View style={styles.badgesRow}>
                     <View style={styles.darkBadge}>
-                      <Text style={styles.darkBadgeText}>
+                      <AppText style={styles.darkBadgeText}>
                         {hasScores ? (hero.topName ?? "—") : "Standby"}
-                      </Text>
+                      </AppText>
                     </View>
                     <View style={styles.greyBadge}>
-                      <Text style={styles.greyBadgeText}>{hero.participants} attempted</Text>
+                      <AppText style={styles.greyBadgeText}>{hero.participants} attempted</AppText>
                     </View>
                   </View>
                 </View>

@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
+import AppText from "@/components/ui/AppText";
 import CalendarDay from "./CalendarDay";
 import {
   WEEKDAYS,
@@ -31,9 +32,9 @@ export default function CalendarGrid({
       {/* Weekday Row */}
       <View style={styles.weekdaysRow}>
         {WEEKDAYS.map((weekday) => (
-          <Text key={weekday} style={styles.weekdayLabel}>
+          <AppText key={weekday} style={styles.weekdayLabel}>
             {weekday}
-          </Text>
+          </AppText>
         ))}
       </View>
 

@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
+import AppText from "@/components/ui/AppText";
 import { Ionicons } from "@expo/vector-icons";
 
 import { Colors } from "@/theme/colors";
@@ -38,7 +39,7 @@ export default function SessionDetailsCard({
           <View style={styles.infoIconCircle}>
             <Ionicons name="information" size={14} color={Colors.white} />
           </View>
-          <Text style={styles.title}>SESSION DETAILS</Text>
+          <AppText style={styles.title}>SESSION DETAILS</AppText>
         </View>
 
         <Pressable
@@ -48,9 +49,9 @@ export default function SessionDetailsCard({
           accessibilityRole="button"
           accessibilityLabel={isCollapsed ? "View More" : "View Less"}
         >
-          <Text style={styles.toggleText}>
+          <AppText style={styles.toggleText}>
             {isCollapsed ? "View More" : "View Less"}
-          </Text>
+          </AppText>
           <Ionicons
             name={isCollapsed ? "chevron-down" : "chevron-forward"}
             size={14}
@@ -71,9 +72,9 @@ export default function SessionDetailsCard({
                   color="#0066FF"
                 />
               </View>
-              <Text style={styles.label}>Topic</Text>
+              <AppText style={styles.label}>Topic</AppText>
             </View>
-            <Text style={styles.value}>{topic}</Text>
+            <AppText style={styles.value}>{topic}</AppText>
           </View>
 
           <View style={styles.divider} />
@@ -88,9 +89,9 @@ export default function SessionDetailsCard({
                   color="#0066FF"
                 />
               </View>
-              <Text style={styles.label}>Date</Text>
+              <AppText style={styles.label}>Date</AppText>
             </View>
-            <Text style={styles.value}>{date}</Text>
+            <AppText style={styles.value}>{date}</AppText>
           </View>
 
           <View style={styles.divider} />
@@ -105,11 +106,11 @@ export default function SessionDetailsCard({
                   color="#0066FF"
                 />
               </View>
-              <Text style={styles.label}>Trainer</Text>
+              <AppText style={styles.label}>Trainer</AppText>
             </View>
-            <Text style={[styles.value, styles.trainerValue]}>
+            <AppText style={[styles.value, styles.trainerValue]}>
               {trainerName}
-            </Text>
+            </AppText>
           </View>
 
           {/* Row 4: Status — Scheduled / In Progress / Session Closed,
@@ -120,19 +121,19 @@ export default function SessionDetailsCard({
               <View style={styles.iconBox}>
                 <Ionicons name="shield-checkmark-outline" size={16} color="#0066FF" />
               </View>
-              <Text style={styles.label}>Status</Text>
+              <AppText style={styles.label}>Status</AppText>
             </View>
             <View style={[styles.statusPill, { backgroundColor: statusPresentation.bg }]}>
-              <Text style={[styles.statusPillText, { color: statusPresentation.color }]}>
+              <AppText style={[styles.statusPillText, { color: statusPresentation.color }]}>
                 {statusPresentation.label}
-              </Text>
+              </AppText>
             </View>
           </View>
 
           {/* Bottom Runtime Pill */}
           <View style={styles.bottomPillWrapper}>
             <View style={styles.runtimePill}>
-              <Text style={styles.runtimeText}>{runtime}</Text>
+              <AppText style={styles.runtimeText}>{runtime}</AppText>
             </View>
           </View>
         </View>

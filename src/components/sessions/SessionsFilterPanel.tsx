@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
+import AppText from "@/components/ui/AppText";
 
 import { SearchableSelect, SelectOption } from "@/components/ui/SearchableSelect";
 import { DateTimeField } from "@/components/training/add-training/DateTimeField";
@@ -23,7 +24,7 @@ export default function SessionsFilterPanel({
 }: SessionsFilterPanelProps) {
   return (
     <View style={styles.card}>
-      <Text style={styles.sectionLabel}>Date Range</Text>
+      <AppText style={styles.sectionLabel}>Date Range</AppText>
       <View style={styles.dateRow}>
         <View style={styles.dateField}>
           <DateTimeField
@@ -45,7 +46,7 @@ export default function SessionsFilterPanel({
 
       {variant === "full" && (
         <>
-          <Text style={styles.sectionLabel}>Location</Text>
+          <AppText style={styles.sectionLabel}>Location</AppText>
           <SearchableSelect
             placeholder="All Locations"
             value={filters.location}
@@ -55,7 +56,7 @@ export default function SessionsFilterPanel({
             compact
           />
 
-          <Text style={styles.sectionLabel}>Session Type</Text>
+          <AppText style={styles.sectionLabel}>Session Type</AppText>
           <SearchableSelect
             placeholder="All Types"
             value={filters.sessionType}

@@ -3,9 +3,10 @@ import { ImageSourcePropType } from "react-native";
 import { useRouter } from "expo-router";
 
 import { ApiError, VerifyLocationResult, secureCheckIn, verifyLocation } from "@/api/attendance";
-import { setAttendanceState, setSessionFlowState } from "@/api/session";
+import { setAttendanceState, setPendingCheckIn, setSessionFlowState } from "@/api/session";
 import { useAuth } from "@/hooks/useAuth";
 import { useLocationPermission } from "@/hooks/useLocationPermission";
+import { reverseGeocode } from "@/services/locationService";
 
 export type SecureCheckInStep =
   | "locating"
@@ -39,6 +40,7 @@ export function useSecureCheckIn(params: SecureCheckInParams) {
   const [activeCoords, setActiveCoords] = useState<{ latitude: number; longitude: number } | null>(null);
   const [locationResult, setLocationResult] = useState<VerifyLocationResult | null>(null);
   const [verifiedAt, setVerifiedAt] = useState<Date | null>(null);
+  const [liveLocationLabel, setLiveLocationLabel] = useState<string | null>(null);
 
   const startLocationVerification = useCallback(async () => {
     if (!token || !params.conferenceUid) return;
@@ -49,9 +51,22 @@ export function useSecureCheckIn(params: SecureCheckInParams) {
 
     if (status === "granted" && coords) {
       setActiveCoords(coords);
+      setLiveLocationLabel(null);
+      // Best-effort - the on-device geocoder can be slow/unavailable, and the
+      // trainee's own location label is a nice-to-have, not blocking.
+      reverseGeocode(coords).then(setLiveLocationLabel);
       try {
         const result = await verifyLocation(token, params.conferenceUid, coords.latitude, coords.longitude);
         setLocationResult(result);
+        // Geofenced session, trainee outside the radius - hard stop here (the
+        // backend enforces it again at submit, this is the friendly pre-check).
+        if (result.withinRadius === false) {
+          const away =
+            result.distanceMeters != null ? ` (about ${Math.round(result.distanceMeters)} m away)` : "";
+          setError(`You're not at the training venue${away}. Move closer and try again.`);
+          setStep("error");
+          return;
+        }
         setVerifiedAt(new Date());
         setStep("location-verified");
       } catch (err) {
@@ -81,26 +96,39 @@ export function useSecureCheckIn(params: SecureCheckInParams) {
   }, [startLocationVerification]);
 
   const handleProceedFromCheckIn = async (photoSource: ImageSourcePropType) => {
+    const currentCoords = activeCoords || locationCoords;
+    const photoUri =
+      typeof photoSource === "object" && photoSource && "uri" in photoSource
+        ? (photoSource as { uri: string }).uri
+        : "checkin.jpg";
+
     if (isEntryMode) {
+      // Carry the trainee's location + photo forward to the secure check-in
+      // endpoint. This happens for every session now, geofenced or not - a
+      // geofenced one is additionally hard-blocked outside the radius (that
+      // `false` case already bailed above); a non-geofenced one just records
+      // the coordinates alongside the attendance row.
+      if (currentCoords) {
+        setPendingCheckIn({
+          latitude: currentCoords.latitude,
+          longitude: currentCoords.longitude,
+          photoUri,
+        });
+      }
       setSessionFlowState("CAMERA_VERIFIED");
       router.replace({ pathname: "/session_detail", params: { flow: "CAMERA_VERIFIED" } });
       return;
     }
 
-    const currentCoords = activeCoords || locationCoords;
     if (!token || !params.conferenceUid || !currentCoords) return;
     setStep("submitting");
     setError(null);
     try {
-      const uriStr =
-        typeof photoSource === "object" && photoSource && "uri" in photoSource
-          ? (photoSource as { uri: string }).uri
-          : "checkin.jpg";
       await secureCheckIn(token, {
         conferenceUid: params.conferenceUid,
         latitude: currentCoords.latitude,
         longitude: currentCoords.longitude,
-        photo: { uri: uriStr, name: "checkin.jpg", type: "image/jpeg" },
+        photo: { uri: photoUri, name: "checkin.jpg", type: "image/jpeg" },
       });
       setAttendanceState("ATTENDANCE_RECORDED");
       setStep("granted");
@@ -117,6 +145,7 @@ export function useSecureCheckIn(params: SecureCheckInParams) {
     error,
     locationResult,
     verifiedAt,
+    liveLocationLabel,
     permissionState,
     locationLoading,
     locationError,

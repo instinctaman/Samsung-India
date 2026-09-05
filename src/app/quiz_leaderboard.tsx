@@ -14,6 +14,9 @@ export default function QuizLeaderboardScreen() {
   const {
     insets,
     screenWidth,
+    liveState,
+    showResults,
+    quizEnded,
     total,
     correct,
     accuracy,
@@ -28,6 +31,22 @@ export default function QuizLeaderboardScreen() {
     handleContinue,
   } = useQuizLeaderboard();
 
+  const emptyCopy =
+    liveState === "in_progress" && quizEnded
+      ? {
+          title: "Live Quiz has ended",
+          body: "This session's Live Quiz is over and you didn't submit an entry, so there's no rank to show.",
+        }
+      : liveState === "in_progress"
+        ? {
+            title: "Attend the Live Quiz first",
+            body: "Answer each question as your trainer broadcasts it, then hit Final Submit — your rank will appear here right after.",
+          }
+        : {
+            title: "No Live Quiz results yet",
+            body: "Take part in a Live Quiz during a session and your rank will show up here.",
+          };
+
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <View style={[styles.statusBarBackground, { height: insets.top }]} />
@@ -35,6 +54,21 @@ export default function QuizLeaderboardScreen() {
 
       <QuizLiveHeader onSync={() => {}} onRefresh={() => {}} isConnected={true} />
 
+      {!showResults ? (
+        <View style={styles.pendingWrap}>
+          <AppText style={styles.pendingTitle} weight={FontWeight.bold}>
+            {emptyCopy.title}
+          </AppText>
+          <AppText style={styles.pendingBody} color={Colors.gray600}>
+            {emptyCopy.body}
+          </AppText>
+          <Pressable style={styles.continueButton} onPress={handleContinue}>
+            <AppText style={styles.continueButtonText} color={Colors.white} weight={FontWeight.bold}>
+              Back to session
+            </AppText>
+          </Pressable>
+        </View>
+      ) : (
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <ResultsHero screenWidth={screenWidth} />
 
@@ -45,7 +79,12 @@ export default function QuizLeaderboardScreen() {
           timeTakenFormatted={timeTakenFormatted}
         />
 
-        <PerformanceSummary correctCount={correct} incorrectCount={incorrect} accuracy={accuracy} timeTaken="28m" />
+        <PerformanceSummary
+          correctCount={correct}
+          incorrectCount={incorrect}
+          accuracy={accuracy}
+          timeTaken={timeTakenFormatted}
+        />
 
         <GlobalLeaderboardCard
           filterOpen={filterOpen}
@@ -67,6 +106,7 @@ export default function QuizLeaderboardScreen() {
           </AppText>
         </Pressable>
       </ScrollView>
+      )}
     </SafeAreaView>
   );
 }
@@ -90,6 +130,9 @@ const styles = StyleSheet.create({
     paddingBottom: 36,
     gap: 12,
   },
+  pendingWrap: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12, paddingHorizontal: 28 },
+  pendingTitle: { fontSize: 18, color: "#111827" },
+  pendingBody: { fontSize: 13, textAlign: "center", lineHeight: 19 },
   continueButton: {
     height: 52,
     borderRadius: 14,

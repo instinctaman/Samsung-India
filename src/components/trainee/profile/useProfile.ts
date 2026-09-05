@@ -4,8 +4,8 @@ import { useState } from "react";
 import { Alert } from "react-native";
 
 import { ApiError, uploadTraineePhoto } from "@/api/auth";
-import { setSessionFlowState } from "@/api/session";
 import { useAuth } from "@/hooks/useAuth";
+import { TraineeTab } from "@/hooks/useTraineeHome";
 import { DetailItem, MAX_PHOTO_BYTES, locationLabel } from "./constants";
 
 export function useProfile() {
@@ -63,15 +63,13 @@ export function useProfile() {
     }
   };
 
-  const handleTabSelect = (tab: "rank" | "home" | "profile") => {
+  const handleTabSelect = (tab: TraineeTab) => {
     if (tab === "home") {
-      setSessionFlowState("ATTENDANCE_RECORDED");
-      router.replace({
-        pathname: "/session_detail",
-        params: { flow: "ATTENDANCE_RECORDED", attendance: "completed" },
-      });
+      router.replace("/session_detail");
+    } else if (tab === "dashboard") {
+      router.replace("/trainee_dashboard");
     } else if (tab === "rank") {
-      router.replace({ pathname: "/session_detail", params: { tab: "rank" } });
+      router.replace("/quiz_leaderboard");
     }
   };
 

@@ -2,7 +2,7 @@ import React from "react";
 import { StyleSheet, Text, TextProps, TextStyle } from "react-native";
 
 import { Colors } from "@/theme/colors";
-import { FontFamily } from "@/theme/fontFamily";
+import { APP_FONT_FAMILY, FontWeightValue } from "@/theme/fontFamily";
 import {
   FontWeight,
   Typography,
@@ -25,7 +25,7 @@ export type TextWeight =
   | "extraBold"
   | "black";
 
-const fontFamilyForWeight: Record<TextWeight, keyof typeof FontFamily> = {
+const weightValueFor: Record<TextWeight, keyof typeof FontWeightValue> = {
   "300": "light",
   light: "light",
   "400": "regular",
@@ -75,8 +75,8 @@ export default function AppText({
   const resolvedTextTransform =
     preset && "textTransform" in preset ? preset.textTransform : undefined;
 
-  const selectedFamily =
-    FontFamily[fontFamilyForWeight[resolvedWeight]] || FontFamily.regular;
+  const resolvedFontWeight =
+    FontWeightValue[weightValueFor[resolvedWeight] ?? "regular"];
 
   return (
     <Text
@@ -87,7 +87,8 @@ export default function AppText({
           fontSize: resolvedSize,
           lineHeight: resolvedLineHeight,
           color,
-          fontFamily: selectedFamily,
+          fontFamily: APP_FONT_FAMILY,
+          fontWeight: resolvedFontWeight,
           letterSpacing: resolvedLetterSpacing,
           textTransform: resolvedTextTransform,
           textAlign: align,
@@ -103,7 +104,7 @@ export default function AppText({
 
 const styles = StyleSheet.create({
   text: {
-    fontFamily: FontFamily.regular,
+    fontFamily: APP_FONT_FAMILY,
     includeFontPadding: false,
   },
 });

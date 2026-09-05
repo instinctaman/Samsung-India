@@ -14,13 +14,19 @@ type LocationVerifiedStepProps = {
   params: LocationVerifiedStepParams;
   locationResult: VerifyLocationResult | null;
   verifiedAt: Date | null;
+  liveLocationLabel?: string | null;
   onContinue: () => void;
 };
 
-export default function LocationVerifiedStep({ params, locationResult, verifiedAt, onContinue }: LocationVerifiedStepProps) {
+export default function LocationVerifiedStep({
+  params,
+  locationResult,
+  verifiedAt,
+  liveLocationLabel,
+  onContinue,
+}: LocationVerifiedStepProps) {
   const formattedTime =
     verifiedAt?.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) || "--";
-  const venueName = locationResult?.venueLabel || params.location || "--";
 
   return (
     <LocationVerifiedView
@@ -30,7 +36,8 @@ export default function LocationVerifiedStep({ params, locationResult, verifiedA
         date: formatDisplayDate(params.date ?? null),
         location: params.location || "--",
         verifiedTime: formattedTime,
-        venueLabel: venueName,
+        venueLabel: locationResult?.venueLabel || params.location || undefined,
+        liveLocation: liveLocationLabel || undefined,
       }}
       onContinue={onContinue}
     />

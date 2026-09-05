@@ -1,7 +1,7 @@
 import { SelectOption } from "@/components/ui/SearchableSelect";
-import { COMPANY_OPTIONS, REGIONS_BY_ZONE, REQUESTED_BY_OPTIONS, TRAINER_OPTIONS, ZONES } from "@/components/training/add-training/constants";
+import { COMPANY_OPTIONS, REGIONS_BY_ZONE, REQUESTED_BY_OPTIONS, ZONES } from "@/components/training/add-training/constants";
 
-export { COMPANY_OPTIONS, REGIONS_BY_ZONE, REQUESTED_BY_OPTIONS, TRAINER_OPTIONS, ZONES };
+export { COMPANY_OPTIONS, REGIONS_BY_ZONE, REQUESTED_BY_OPTIONS, ZONES };
 
 export const AGENCY_OPTIONS: SelectOption[] = [
   { label: "Quess Corp Ltd", value: "Quess Corp Ltd" },

@@ -24,7 +24,8 @@ export default function SessionDetailScreen() {
     error,
     notAssigned,
     notStarted,
-    awaitingAdmission,
+    ejected,
+    sessionClosed,
     activeTab,
     historyVisible,
     setHistoryVisible,
@@ -63,7 +64,8 @@ export default function SessionDetailScreen() {
             session={session}
             notAssigned={notAssigned}
             notStarted={notStarted}
-            awaitingAdmission={awaitingAdmission}
+            ejected={ejected}
+            sessionClosed={sessionClosed}
             error={error}
             activities={activities}
             refreshing={refreshing}

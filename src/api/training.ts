@@ -23,6 +23,8 @@ export type AttendanceConfig = {
   checkInOpens?: string;
   checkOutCloses?: string;
   geoFencing: boolean;
+  /** Metres from the venue a trainee may still check in (geoFencing on). */
+  geoRadius?: number;
 };
 
 export type SessionFlowConfig = {
@@ -145,6 +147,12 @@ export type TraineeRow = {
   checkOutTime: string | null;
   score: string | null;
   profilePhoto: string | null;
+  // On-device proctoring lockout (post-test). Drives the red "LOCKED" pill +
+  // the trainer's unlock control on the Participant Master List.
+  isLocked: boolean;
+  proctoringStrikes: number;
+  proctoringMaxStrikes: number;
+  proctoringLogs: string[];
 };
 
 export type ExecutionFlowStatus = "Pending" | "Running" | "Completed";
@@ -192,6 +200,8 @@ export type LiveStudio = {
   state: "IDLE" | "WAITING" | "QUESTION_LIVE" | "LEADERBOARD" | "FINISHED" | string;
   activeQuestionId: number | null;
   timerEndsAt: number | null;
+  // Server clock when this was sent (epoch ms) - for clock-skew-correct countdown.
+  serverNowMs: number | null;
   participants: number;
   totalResponses: number;
   questions: LiveStudioQuestion[];
@@ -248,21 +258,83 @@ export function fetchSessionDashboard(token: string, conferenceUid: string) {
   });
 }
 
+export type SessionReportParticipant = {
+  userId: string;
+  name: string;
+  role: string;
+  checkIn: string | null;
+  checkOut: string | null;
+  score: string | null;
+};
+
+export type SessionReport = {
+  summary: {
+    conferenceId: string;
+    sessionName: string;
+    date: string | null;
+    state: string | null;
+    schedule: string | null;
+    duration: string | null;
+    venueLink: string | null;
+  };
+  standardTest: SessionReportParticipant[];
+  liveQuiz: SessionReportParticipant[];
+};
+
+export function fetchSessionReport(token: string, conferenceUid: string) {
+  return apiRequest<SessionReport>(
+    `/admin/trainings/${encodeURIComponent(conferenceUid)}/report`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  );
+}
+
+export type StartTrainingLocation = {
+  /** The trainer's own GPS at start - checked against the venue geofence. */
+  latitude?: number;
+  longitude?: number;
+  /** Set only when the trainer corrects the venue location from the
+   *  "you're not at the venue" prompt - persisted to the venue + conference. */
+  venueLatitude?: number;
+  venueLongitude?: number;
+};
+
 export function startTraining(
   token: string,
   conferenceUid: string,
   photo: { uri: string; name: string; type: string },
+  location?: StartTrainingLocation,
 ) {
   const formData = new FormData();
   formData.append("photo", { uri: photo.uri, name: photo.name, type: photo.type } as unknown as Blob);
+  const fields: [keyof StartTrainingLocation, number | undefined][] = [
+    ["latitude", location?.latitude],
+    ["longitude", location?.longitude],
+    ["venueLatitude", location?.venueLatitude],
+    ["venueLongitude", location?.venueLongitude],
+  ];
+  for (const [key, value] of fields) {
+    if (value != null) formData.append(key, String(value));
+  }
   return apiUpload<TrainingOut>(`/admin/trainings/${encodeURIComponent(conferenceUid)}/start`, formData, token);
 }
 
-export function endTraining(token: string, conferenceUid: string) {
-  return apiRequest<TrainingOut>(`/admin/trainings/${encodeURIComponent(conferenceUid)}/end`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export type UploadFile = { uri: string; name: string; type: string };
+
+// Ending a session is a Security Check-Out: the trainer's face photo + the
+// signed attendance sheet (PDF or image) are both required.
+export function endTraining(
+  token: string,
+  conferenceUid: string,
+  photo: UploadFile,
+  attendanceSheet: UploadFile,
+) {
+  const formData = new FormData();
+  formData.append("photo", { uri: photo.uri, name: photo.name, type: photo.type } as unknown as Blob);
+  formData.append(
+    "attendanceSheet",
+    { uri: attendanceSheet.uri, name: attendanceSheet.name, type: attendanceSheet.type } as unknown as Blob,
+  );
+  return apiUpload<TrainingOut>(`/admin/trainings/${encodeURIComponent(conferenceUid)}/end`, formData, token);
 }
 
 // Manually opens one module. The trainer walks the flow forward one Start
@@ -326,13 +398,21 @@ export function finishLiveQuiz(token: string, conferenceUid: string) {
   return liveQuizAction(token, conferenceUid, "finish");
 }
 
-export function markAttendance(token: string, conferenceUid: string, traineeUid: string, status: "Present" | "Absent") {
+export function markAttendance(
+  token: string,
+  conferenceUid: string,
+  traineeUid: string,
+  // Trainer confirming (Present) or overriding (Absent) a trainee's
+  // attendance on the Participant Master List. "Absent" is a hard eject.
+  status: "Present" | "Absent",
+  reason: string,
+) {
   return apiRequest<SessionDashboard>(
     `/admin/trainings/${encodeURIComponent(conferenceUid)}/attendance/${encodeURIComponent(traineeUid)}`,
     {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ status }),
+      body: JSON.stringify({ status, reason }),
     }
   );
 }
@@ -343,6 +423,24 @@ export function resetAttendance(token: string, conferenceUid: string, traineeUid
     {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
+    }
+  );
+}
+
+/** Clear a trainee's on-device proctoring lockout from the Participant Master
+ *  List - the trainer must give a reason (audit-logged). */
+export function unlockProctoring(
+  token: string,
+  conferenceUid: string,
+  traineeUid: string,
+  reason: string,
+) {
+  return apiRequest<SessionDashboard>(
+    `/admin/trainings/${encodeURIComponent(conferenceUid)}/attendance/${encodeURIComponent(traineeUid)}/unlock`,
+    {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ reason }),
     }
   );
 }
@@ -360,8 +458,9 @@ export function fetchTrainerName(token: string, username: string) {
   );
 }
 
-export function fetchTrainers(token: string) {
-  return apiRequest<SelectOption[]>("/admin/trainers", {
+export function fetchTrainers(token: string, company?: string) {
+  const query = company ? `?company=${encodeURIComponent(company)}` : "";
+  return apiRequest<SelectOption[]>(`/admin/trainers${query}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 }

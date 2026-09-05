@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
+import AppText from "@/components/ui/AppText";
 
 import CalendarIcon from "@/assets/images/svg/calender.svg";
 import { TrainingAgendaItem } from "@/api/training";
@@ -22,14 +23,14 @@ export default function RecentSessionsCard({
     <View style={styles.card}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Recent Sessions</Text>
+        <AppText style={styles.title}>Recent Sessions</AppText>
         <Pressable style={styles.viewAllPill} onPress={onViewAll} hitSlop={6}>
-          <Text style={styles.viewAllText}>View All</Text>
+          <AppText style={styles.viewAllText}>View All</AppText>
         </Pressable>
       </View>
 
       {sessions.length === 0 ? (
-        <Text style={styles.emptyText}>No sessions yet</Text>
+        <AppText style={styles.emptyText}>No sessions yet</AppText>
       ) : (
         <View style={styles.list}>
           {sessions.map((session, index) => {
@@ -57,15 +58,15 @@ export default function RecentSessionsCard({
                   </View>
 
                   <View style={styles.infoWrapper}>
-                    <Text style={styles.sessionTitle} numberOfLines={1}>
+                    <AppText style={styles.sessionTitle} numberOfLines={1}>
                       {session.title || "Training Session"}
-                    </Text>
-                    <Text style={styles.sessionDateTime}>
+                    </AppText>
+                    <AppText style={styles.sessionDateTime}>
                       {formatSessionTime(
                         session.conferenceDate,
                         session.conferenceTime,
                       )}
-                    </Text>
+                    </AppText>
                   </View>
                 </View>
 
@@ -77,14 +78,14 @@ export default function RecentSessionsCard({
                       { backgroundColor: statusInfo.bg },
                     ]}
                   >
-                    <Text
+                    <AppText
                       style={[
                         styles.statusBadgeText,
                         { color: statusInfo.color },
                       ]}
                     >
                       {statusInfo.label}
-                    </Text>
+                    </AppText>
                   </View>
                 </View>
               </Pressable>

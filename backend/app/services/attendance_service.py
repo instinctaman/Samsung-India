@@ -66,8 +66,8 @@ def check_in(db: Session, trainee: Trainee, payload: CheckInRequest, background_
 def verify_location(db: Session, payload: VerifyLocationRequest) -> VerifyLocationOut:
     """First step of the geofenced check-in flow (see check_in_secure) - lets
     the "Location Verified" screen show the trainee's distance from the venue
-    before they move on to the face-capture step. Informational only: it
-    never blocks the flow, it just reports the distance."""
+    and whether they're inside the radius. This is only a pre-check for the UI;
+    the hard block happens server-side in check_in_secure."""
     conference = conference_repository.get_by_uid(db, payload.conferenceUid)
     if not conference:
         raise not_found("Session not found")
@@ -75,10 +75,11 @@ def verify_location(db: Session, payload: VerifyLocationRequest) -> VerifyLocati
     venue_lat = float(conference.geoLatitude) if conference.geoLatitude is not None else None
     venue_lng = float(conference.geoLongitude) if conference.geoLongitude is not None else None
     distance = distance_meters(payload.latitude, payload.longitude, venue_lat, venue_lng)
+    radius = conference.geoRadius or 100
 
     return VerifyLocationOut(
         distanceMeters=distance,
-        withinRadius=(distance <= conference.geoRadius) if distance is not None and conference.geoRadius else None,
+        withinRadius=(distance <= radius) if distance is not None else None,
         venueLabel=", ".join(filter(None, [conference.district, conference.state])) or None,
     )
 

@@ -73,7 +73,10 @@ const styles = StyleSheet.create({
   card: {
     width: "90%",
     maxWidth: 420,
-    maxHeight: "85%",
+    // The parent (AppModal, position="center") caps its own height to the
+    // visible screen; flexShrink lets this ScrollView take that clamp and
+    // scroll its content instead of pushing the card off-screen.
+    flexShrink: 1,
     alignSelf: "center",
     backgroundColor: Colors.white,
     borderRadius: 24,

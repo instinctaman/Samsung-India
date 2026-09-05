@@ -1,14 +1,36 @@
 /**
  * useAttendance Hook
- * Manages attendance check-in lifecycle, API communication, error handling, and state.
+ * Runs the final attendance write once the trainee reaches the "Mark Attendance"
+ * step, then exposes its lifecycle (checking-in / done / error) to the screen.
+ *
+ * The Secure Check-In screen stashes the verified location + photo
+ * (`getPendingCheckIn`) for every session now, so this normally submits them
+ * to `/attendance/check-in/secure` - which attaches the proof to the row the
+ * trainer already marked "Present" (and, for a geofenced session, re-checks
+ * the venue radius). The plain `/attendance/check-in` is only a fallback for
+ * when no coordinates were captured at all.
  */
 
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { ApiError, checkIn } from "@/api/attendance";
-import { setSessionFlowState } from "@/api/session";
+import { AttendanceRecord, ApiError, checkIn, secureCheckIn } from "@/api/attendance";
+import { clearPendingCheckIn, getPendingCheckIn, setSessionFlowState } from "@/api/session";
 
 export type AttendanceStatus = "checking-in" | "done" | "error";
+
+async function submitCheckIn(token: string, conferenceUid: string): Promise<AttendanceRecord> {
+  const pending = getPendingCheckIn();
+  const result = pending
+    ? await secureCheckIn(token, {
+        conferenceUid,
+        latitude: pending.latitude,
+        longitude: pending.longitude,
+        photo: { uri: pending.photoUri, name: "checkin.jpg", type: "image/jpeg" },
+      })
+    : await checkIn(token, conferenceUid);
+  clearPendingCheckIn();
+  return result;
+}
 
 export function useAttendance(conferenceUid?: string) {
   const { token } = useAuth();
@@ -16,47 +38,40 @@ export function useAttendance(conferenceUid?: string) {
   const [markedOn, setMarkedOn] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const markAttendance = useCallback(async () => {
+  const errorText = (err: unknown) =>
+    err instanceof ApiError ? err.message : "Couldn't mark your attendance.";
+
+  useEffect(() => {
+    if (!token || !conferenceUid) return;
+    let ignore = false;
+    submitCheckIn(token, conferenceUid)
+      .then((result) => {
+        if (ignore) return;
+        setMarkedOn(result.markedOn);
+        setStatus("done");
+      })
+      .catch((err) => {
+        if (ignore) return;
+        setError(errorText(err));
+        setStatus("error");
+      });
+    return () => {
+      ignore = true;
+    };
+  }, [token, conferenceUid]);
+
+  const retry = useCallback(async () => {
     if (!token || !conferenceUid) return;
     setStatus("checking-in");
     setError(null);
     try {
-      const result = await checkIn(token, conferenceUid);
+      const result = await submitCheckIn(token, conferenceUid);
       setMarkedOn(result.markedOn);
       setStatus("done");
     } catch (err) {
-      setError(
-        err instanceof ApiError ? err.message : "Couldn't mark your attendance.",
-      );
+      setError(errorText(err));
       setStatus("error");
     }
-  }, [token, conferenceUid]);
-
-  useEffect(() => {
-    let ignore = false;
-    async function run() {
-      if (!token || !conferenceUid) return;
-      try {
-        const result = await checkIn(token, conferenceUid);
-        if (!ignore) {
-          setMarkedOn(result.markedOn);
-          setStatus("done");
-        }
-      } catch (err) {
-        if (!ignore) {
-          setError(
-            err instanceof ApiError
-              ? err.message
-              : "Couldn't mark your attendance.",
-          );
-          setStatus("error");
-        }
-      }
-    }
-    run();
-    return () => {
-      ignore = true;
-    };
   }, [token, conferenceUid]);
 
   const confirmAttendanceRecorded = useCallback(() => {
@@ -67,7 +82,7 @@ export function useAttendance(conferenceUid?: string) {
     status,
     markedOn,
     error,
-    retry: markAttendance,
+    retry,
     confirmAttendanceRecorded,
   };
 }

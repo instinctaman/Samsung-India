@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Pressable, ScrollView, StyleSheet, Text } from "react-native";
+import { Pressable, ScrollView, StyleSheet } from "react-native";
+import AppText from "@/components/ui/AppText";
 
 import AppModal from "@/components/ui/AppModal";
 import { Colors } from "@/theme/colors";
@@ -51,7 +52,7 @@ export default function MonthYearPickerPanel({
                   onClose();
                 }}
               >
-                <Text style={[styles.modalOptionText, isSelected && styles.modalOptionTextSelected]}>{name}</Text>
+                <AppText style={[styles.modalOptionText, isSelected && styles.modalOptionTextSelected]}>{name}</AppText>
                 {isSelected && <Ionicons name="checkmark" size={14} color={Colors.mainColour1} />}
               </Pressable>
             );
@@ -69,7 +70,7 @@ export default function MonthYearPickerPanel({
                   onClose();
                 }}
               >
-                <Text style={[styles.modalOptionText, isSelected && styles.modalOptionTextSelected]}>{year}</Text>
+                <AppText style={[styles.modalOptionText, isSelected && styles.modalOptionTextSelected]}>{year}</AppText>
                 {isSelected && <Ionicons name="checkmark" size={14} color={Colors.mainColour1} />}
               </Pressable>
             );

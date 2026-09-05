@@ -12,36 +12,42 @@ import {
   Global_Percentage,
   TraineeMetricsGrid,
   TrainingDetailsTable,
+  toTrainingRows,
 } from "@/components/trainee/dashboard";
 import { TraineeTab } from "@/hooks/useTraineeHome";
 import { useTraineeDashboard } from "@/hooks/useTraineeDashboard";
 import { Colors } from "@/theme/colors";
 
+const rankLabel = (rank: number | null) => (rank != null ? `# ${rank.toLocaleString()}` : "Unranked");
+
 export default function TraineeDashboardScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [activeTab, setActiveTab] = useState<TraineeTab>("home");
+  const [activeTab, setActiveTab] = useState<TraineeTab>("dashboard");
 
   const {
     trainee,
     session,
+    dashboard,
     refreshing,
-    trainings,
     handleRefresh,
-    handleJoinSession,
     handleLogout,
   } = useTraineeDashboard();
 
   const handleTabSelect = (tab: TraineeTab) => {
     setActiveTab(tab);
     if (tab === "home") {
-      // Already on Trainee Dashboard
+      router.replace("/session_detail");
     } else if (tab === "rank") {
-      router.push({ pathname: "/session_detail", params: { tab: "rank" } });
+      router.push("/quiz_leaderboard");
     } else if (tab === "profile") {
       router.push("/profile");
     }
   };
+
+  const metrics = dashboard?.metrics;
+  const performance = dashboard?.performance;
+  const ranking = dashboard?.ranking;
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
@@ -60,48 +66,43 @@ export default function TraineeDashboardScreen() {
           />
         }
       >
-        {/* Header */}
         <TrainingSessionHeader
-          userName={trainee?.name || "Anshu Pandey"}
+          userName={trainee?.name ?? undefined}
           gender={trainee?.gender}
           profilePhoto={trainee?.profilePhoto}
-          confirmationStatus={session?.confirmationStatus || "Not Confirmed"}
-          sessionType={session?.sessionType || "One-Day Session"}
-          title={session?.title || "Training Session"}
-          date={session?.date || "06 Jun 2026"}
-          location={session?.location || "New Delhi"}
-          isOnline={true}
+          confirmationStatus={session?.confirmationStatus ?? "Not Confirmed"}
+          sessionType={session?.sessionType ?? undefined}
+          title={session?.title ?? undefined}
+          date={session?.date ?? undefined}
+          location={session?.location ?? undefined}
+          isOnline
           onLogout={handleLogout}
         />
 
-        {/* 4 Metric Stats Grid */}
         <TraineeMetricsGrid
-          totalTrainings={32}
-          presentCount={18}
-          absentCount={6}
-          scheduledCount={8}
+          totalTrainings={metrics?.totalTrainings ?? 0}
+          presentCount={metrics?.present ?? 0}
+          absentCount={metrics?.absent ?? 0}
+          scheduledCount={metrics?.scheduled ?? 0}
         />
 
-        {/* Global Percentage & Rankings Section */}
         <Global_Percentage
-          percentage={90}
-          totalScore={90}
-          maxScore={100}
-          periodGain={10}
-          globalRank="# 1,245"
-          globalPercentile={18}
-          stateRank="# 85"
-          statePercentile={12}
+          percentage={Math.round(performance?.percentage ?? 0)}
+          totalScore={performance?.totalScore ?? 0}
+          maxScore={performance?.maxScore ?? 0}
+          periodGain={performance?.periodGain ?? null}
+          globalRank={rankLabel(ranking?.globalRank ?? null)}
+          globalPercentile={Math.round(ranking?.globalPercentile ?? 0)}
+          stateRank={rankLabel(ranking?.stateRank ?? null)}
+          statePercentile={Math.round(ranking?.statePercentile ?? 0)}
         />
 
-        {/* Training Details Table with Join Button */}
         <TrainingDetailsTable
-          trainings={trainings}
-          onJoinSession={handleJoinSession}
+          trainings={toTrainingRows(dashboard?.trainings ?? [])}
+          onViewAll={() => router.push("/training_history")}
         />
       </ScrollView>
 
-      {/* Floating Bottom Navigation (Rank, Raised Home, Profile) */}
       <TraineeBottomNavigation activeTab={activeTab} onSelectTab={handleTabSelect} />
     </SafeAreaView>
   );
@@ -121,9 +122,5 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: 32,
-  },
-  quickLinksSection: {
-    paddingHorizontal: 16,
-    marginTop: 14,
   },
 });

@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
+import AppText from "@/components/ui/AppText";
 
 import { Colors } from "@/theme/colors";
 import { MONTH_NAMES } from "./calendarUtils";
@@ -28,7 +29,7 @@ export default function MonthSelector({ currentMonth, currentYear, onSelectMonth
         accessibilityRole="button"
         accessibilityLabel="Select month"
       >
-        <Text style={styles.dropdownPillText}>{MONTH_NAMES[currentMonth]}</Text>
+        <AppText style={styles.dropdownPillText}>{MONTH_NAMES[currentMonth]}</AppText>
         <Ionicons name="chevron-down" size={9} color="#6B7280" />
       </Pressable>
 
@@ -38,7 +39,7 @@ export default function MonthSelector({ currentMonth, currentYear, onSelectMonth
         accessibilityRole="button"
         accessibilityLabel="Select year"
       >
-        <Text style={styles.dropdownPillText}>{currentYear}</Text>
+        <AppText style={styles.dropdownPillText}>{currentYear}</AppText>
         <Ionicons name="chevron-down" size={9} color="#6B7280" />
       </Pressable>
 

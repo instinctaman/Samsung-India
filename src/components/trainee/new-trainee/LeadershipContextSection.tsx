@@ -4,20 +4,22 @@ import AppCard from "@/components/ui/AppCard";
 import AppInput from "@/components/ui/AppInput";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { SectionTitle } from "@/components/training/add-training/SectionTitle";
-import { SUPERVISOR_DESIGNATION_OPTIONS, TRAINER_OPTIONS } from "./constants";
+import { SUPERVISOR_DESIGNATION_OPTIONS } from "./constants";
 import { NewTraineeForm } from "./useNewTraineeForm";
 
 export function LeadershipContextSection({ form }: { form: NewTraineeForm }) {
+  const trainerPlaceholder = form.company ? "Select Trainer" : "Select Company First";
   return (
     <AppCard style={styles.card}>
       <SectionTitle index={2} title="Leadership Context" icon="people-outline" />
       <SearchableSelect
         label="Trainer ID"
         required
-        placeholder="Select Trainer"
+        placeholder={trainerPlaceholder}
         icon="briefcase-outline"
         value={form.trainerId}
-        options={TRAINER_OPTIONS}
+        options={form.trainerOptions}
+        disabled={!form.company}
         onSelect={(option) => {
           form.setTrainerId(option.value);
           form.setTrainerName(option.label.split(" - ")[1] ?? "");
@@ -27,10 +29,11 @@ export function LeadershipContextSection({ form }: { form: NewTraineeForm }) {
       <SearchableSelect
         label="Supervisor ID"
         required
-        placeholder="Select Trainer"
+        placeholder={trainerPlaceholder}
         icon="briefcase-outline"
         value={form.supervisorId}
-        options={TRAINER_OPTIONS}
+        options={form.trainerOptions}
+        disabled={!form.company}
         onSelect={(option) => {
           form.setSupervisorId(option.value);
           form.setSupervisorName(option.label.split(" - ")[1] ?? "");

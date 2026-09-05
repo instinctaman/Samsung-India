@@ -1,4 +1,5 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import AppText from "@/components/ui/AppText";
 import { Ionicons } from "@expo/vector-icons";
 
 import AppModal from "@/components/ui/AppModal";
@@ -21,31 +22,30 @@ export default function SuspiciousActivityModal({ participant, onClose }: Suspic
     >
       <View style={styles.header}>
         <Ionicons name="warning" size={16} color="#F59E0B" />
-        <Text style={styles.title}>SUSPICIOUS ACTIVITY</Text>
+        <AppText style={styles.title}>SUSPICIOUS ACTIVITY</AppText>
       </View>
       <View style={styles.divider} />
 
-      <Text style={styles.metaLine}>
-        Participant: <Text style={styles.metaValue}>{participant?.name}</Text>
-      </Text>
-      <Text style={styles.metaLine}>
-        Flags: <Text style={styles.metaValue}>{proctoring?.flags ?? 0}/{proctoring?.maxFlags ?? 3}</Text>
-      </Text>
+      <AppText style={styles.metaLine}>
+        Participant: <AppText style={styles.metaValue}>{participant?.name}</AppText>
+      </AppText>
+      <AppText style={styles.metaLine}>
+        Flags: <AppText style={styles.metaValue}>{proctoring?.flags ?? 0}/{proctoring?.maxFlags ?? 3}</AppText>
+      </AppText>
 
-      <Text style={styles.logsLabel}>LOGS:</Text>
+      <AppText style={styles.logsLabel}>LOGS:</AppText>
       <ScrollView style={styles.logsList}>
-        {proctoring?.logs.map((log, idx) => (
+        {(proctoring?.logs ?? []).map((log, idx) => (
           <View key={idx} style={styles.logRow}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.logText}>
-              [{log.timestamp}] Strike #{log.strikeNumber}: {log.reason} (Attempts left: {log.attemptsLeft})
-            </Text>
+            <AppText style={styles.bullet}>•</AppText>
+            <AppText style={styles.logText}>{log}</AppText>
           </View>
         ))}
+        {!proctoring?.logs?.length && <AppText style={styles.logText}>No proctoring events logged.</AppText>}
       </ScrollView>
 
       <Pressable style={styles.closeBtn} onPress={onClose} hitSlop={8}>
-        <Text style={styles.closeText}>Close</Text>
+        <AppText style={styles.closeText}>Close</AppText>
       </Pressable>
     </AppModal>
   );

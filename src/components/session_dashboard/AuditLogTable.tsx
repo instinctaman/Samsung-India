@@ -1,4 +1,5 @@
-import { Text, View, StyleSheet } from "react-native";
+import { View, StyleSheet } from "react-native";
+import AppText from "@/components/ui/AppText";
 
 import { AuditLogEntry } from "@/api/training";
 import { Colors } from "@/theme/colors";
@@ -10,16 +11,16 @@ type AuditLogTableProps = {
 
 export default function AuditLogTable({ entries }: AuditLogTableProps) {
   if (entries.length === 0) {
-    return <Text style={styles.empty}>No audit log entries yet.</Text>;
+    return <AppText style={styles.empty}>No audit log entries yet.</AppText>;
   }
 
   return (
     <View style={styles.table}>
       <View style={styles.headerRow}>
-        <Text style={[styles.th, { flex: 1.4 }]}>Module Name</Text>
-        <Text style={[styles.th, { flex: 1.1, textAlign: "center" }]}>Start Time (IST)</Text>
-        <Text style={[styles.th, { flex: 1.1, textAlign: "center" }]}>End Time (OUT)</Text>
-        <Text style={[styles.th, { flex: 0.9, textAlign: "right" }]}>Duration</Text>
+        <AppText style={[styles.th, { flex: 1.4 }]}>Module Name</AppText>
+        <AppText style={[styles.th, { flex: 1.1, textAlign: "center" }]}>Start Time (IST)</AppText>
+        <AppText style={[styles.th, { flex: 1.1, textAlign: "center" }]}>End Time (OUT)</AppText>
+        <AppText style={[styles.th, { flex: 0.9, textAlign: "right" }]}>Duration</AppText>
       </View>
 
       {entries.map((entry, idx) => (

@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
+import AppText from "@/components/ui/AppText";
 import { Ionicons } from "@expo/vector-icons";
 
 import { AuditLogEntry, ExecutionFlowItem } from "@/api/training";
@@ -40,9 +41,9 @@ export default function ExecutionFlowCard({
             size={14}
             color={activeTab === "flow" ? "#2563EB" : "#6B7280"}
           />
-          <Text style={[styles.tabText, activeTab === "flow" && styles.tabTextActive]}>
+          <AppText style={[styles.tabText, activeTab === "flow" && styles.tabTextActive]}>
             EXECUTION FLOW
-          </Text>
+          </AppText>
         </Pressable>
 
         <Pressable
@@ -54,9 +55,9 @@ export default function ExecutionFlowCard({
             size={14}
             color={activeTab === "logs" ? "#2563EB" : "#6B7280"}
           />
-          <Text style={[styles.tabText, activeTab === "logs" && styles.tabTextActive]}>
+          <AppText style={[styles.tabText, activeTab === "logs" && styles.tabTextActive]}>
             Audit Logs
-          </Text>
+          </AppText>
         </Pressable>
       </View>
 

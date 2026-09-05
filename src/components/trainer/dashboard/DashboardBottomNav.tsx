@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
+import AppText from "@/components/ui/AppText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/theme/colors";
@@ -81,7 +82,7 @@ export default function DashboardBottomNav({
             accessibilityState={{ selected: isActive }}
           >
             {tab.icon(isActive)}
-            <Text
+            <AppText
               style={[
                 styles.tabLabel,
                 { color: isActive ? Colors.mainColour1 : "#6B7280" },
@@ -89,7 +90,7 @@ export default function DashboardBottomNav({
               ]}
             >
               {tab.label}
-            </Text>
+            </AppText>
           </Pressable>
         );
       })}

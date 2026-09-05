@@ -10,14 +10,14 @@ export type PerformanceSummaryProps = {
   correctCount: number;
   incorrectCount: number;
   accuracy: number;
-  timeTaken?: string;
+  timeTaken: string;
 };
 
 export default function PerformanceSummary({
   correctCount,
   incorrectCount,
   accuracy,
-  timeTaken = "23m",
+  timeTaken,
 }: PerformanceSummaryProps) {
   return (
     <View style={styles.card}>

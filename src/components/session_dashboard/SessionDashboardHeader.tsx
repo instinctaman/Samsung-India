@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
+import AppText from "@/components/ui/AppText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import LinkIcon from "@/assets/images/svg/session/link.svg";
@@ -14,6 +15,12 @@ type SessionDashboardHeaderProps = {
   hasStarted?: boolean;
   isLive?: boolean;
   isApproved?: boolean;
+  // True while the scheduled date is still in the future - the trainer can't
+  // start the session before then.
+  notYetDue?: boolean;
+  startsOnLabel?: string;
+  // The Session Report is only meaningful once the session has ended.
+  reportEnabled?: boolean;
   loading?: boolean;
   onBack: () => void;
   onCopyLink: () => void;
@@ -31,6 +38,9 @@ export default function SessionDashboardHeader({
   hasStarted = true,
   isLive = false,
   isApproved = true,
+  notYetDue = false,
+  startsOnLabel,
+  reportEnabled = true,
   loading = false,
   onBack,
   onCopyLink,
@@ -63,13 +73,13 @@ export default function SessionDashboardHeader({
 
             {/* Title, Badge & Subtitle */}
             <View style={styles.titleWrapper}>
-              <Text style={styles.title}>SESSION DASHBOARD</Text>
+              <AppText style={styles.title}>SESSION DASHBOARD</AppText>
               <View style={styles.uidBadge}>
-                <Text style={styles.uidText}>
+                <AppText style={styles.uidText}>
                   {conferenceUid ? conferenceUid.toUpperCase() : "CONF2627273"}
-                </Text>
+                </AppText>
               </View>
-              <Text style={styles.subtitle}>{timestamp}</Text>
+              <AppText style={styles.subtitle}>{timestamp}</AppText>
             </View>
           </View>
 
@@ -83,7 +93,7 @@ export default function SessionDashboardHeader({
               accessibilityLabel="Copy Link"
             >
               <LinkIcon width={16} height={16} />
-              <Text style={styles.squareBtnText}>Copy Link</Text>
+              <AppText style={styles.squareBtnText}>Copy Link</AppText>
             </Pressable>
 
             {isLive && (
@@ -95,7 +105,7 @@ export default function SessionDashboardHeader({
                 accessibilityLabel="Show QR"
               >
                 <Ionicons name="qr-code-outline" size={16} color={Colors.white} />
-                <Text style={styles.squareBtnText}>Show QR</Text>
+                <AppText style={styles.squareBtnText}>Show QR</AppText>
               </Pressable>
             )}
           </View>
@@ -116,33 +126,44 @@ export default function SessionDashboardHeader({
             </Pressable>
 
             <Pressable
-              style={styles.reportBtn}
+              style={[styles.reportBtn, !reportEnabled && styles.reportBtnDisabled]}
               onPress={onReport}
+              disabled={!reportEnabled}
               accessibilityRole="button"
               accessibilityLabel="Report"
+              accessibilityState={{ disabled: !reportEnabled }}
             >
               <Ionicons
-                name="document-text-outline"
+                name={reportEnabled ? "document-text-outline" : "lock-closed"}
                 size={14}
-                color="#374151"
+                color={reportEnabled ? "#374151" : "#9CA3AF"}
               />
-              <Text style={styles.reportBtnText}>Report</Text>
+              <AppText style={[styles.reportBtnText, !reportEnabled && styles.reportBtnTextDisabled]}>
+                Report
+              </AppText>
             </Pressable>
           </View>
 
           {/* Right Side: Start/End Session Button / Session Closed indicator */}
           {loading ? (
             <View style={[styles.endSessionBtn, styles.sessionLoadingBtn]}>
-              <Text style={[styles.endSessionBtnText, styles.sessionLoadingBtnText]}>Loading...</Text>
+              <AppText style={[styles.endSessionBtnText, styles.sessionLoadingBtnText]}>Loading...</AppText>
             </View>
           ) : isClosed ? (
             <View style={[styles.endSessionBtn, styles.sessionClosedBtn]}>
-              <Text style={styles.endSessionBtnText}>Session Closed</Text>
+              <AppText style={styles.endSessionBtnText}>Session Closed</AppText>
             </View>
           ) : !hasStarted && !isApproved ? (
             <View style={[styles.endSessionBtn, styles.sessionPendingBtn]}>
               <Ionicons name="time-outline" size={12} color="#92400E" />
-              <Text style={[styles.endSessionBtnText, styles.sessionPendingBtnText]}>Awaiting Approval</Text>
+              <AppText style={[styles.endSessionBtnText, styles.sessionPendingBtnText]}>Awaiting Approval</AppText>
+            </View>
+          ) : !hasStarted && notYetDue ? (
+            <View style={[styles.endSessionBtn, styles.sessionScheduledBtn]}>
+              <Ionicons name="lock-closed" size={12} color="#475569" />
+              <AppText style={[styles.endSessionBtnText, styles.sessionScheduledBtnText]}>
+                {startsOnLabel ? `Starts ${startsOnLabel}` : "Not started"}
+              </AppText>
             </View>
           ) : !hasStarted ? (
             <Pressable
@@ -152,7 +173,7 @@ export default function SessionDashboardHeader({
               accessibilityLabel="Start Session"
             >
               <Ionicons name="play" size={12} color={Colors.white} />
-              <Text style={styles.endSessionBtnText}>Start Session</Text>
+              <AppText style={styles.endSessionBtnText}>Start Session</AppText>
             </Pressable>
           ) : (
             <Pressable
@@ -164,7 +185,7 @@ export default function SessionDashboardHeader({
               <View style={styles.whiteStopIcon}>
                 <Ionicons name="square" size={11} color={Colors.white} />
               </View>
-              <Text style={styles.endSessionBtnText}>End Session</Text>
+              <AppText style={styles.endSessionBtnText}>End Session</AppText>
             </Pressable>
           )}
         </View>
@@ -289,10 +310,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 5,
   },
+  reportBtnDisabled: {
+    backgroundColor: "#F3F4F6",
+    borderColor: "#E5E7EB",
+    opacity: 0.7,
+  },
   reportBtnText: {
     fontSize: 12,
     color: "#374151",
     fontWeight: "700",
+  },
+  reportBtnTextDisabled: {
+    color: "#9CA3AF",
   },
   endSessionBtn: {
     flexDirection: "row",
@@ -315,6 +344,12 @@ const styles = StyleSheet.create({
   },
   sessionPendingBtnText: {
     color: "#92400E",
+  },
+  sessionScheduledBtn: {
+    backgroundColor: "#E2E8F0",
+  },
+  sessionScheduledBtnText: {
+    color: "#475569",
   },
   sessionLoadingBtn: {
     backgroundColor: "#E5E7EB",

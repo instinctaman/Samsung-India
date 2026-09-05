@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
+import AppText from "@/components/ui/AppText";
 import Svg, { Circle } from "react-native-svg";
 
 import { Colors } from "@/theme/colors";
@@ -27,7 +28,7 @@ export default function TrainingEfficiencyCard({
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.headerRow}>
-        <Text style={styles.title}>Training Efficiency</Text>
+        <AppText style={styles.title}>Training Efficiency</AppText>
       </View>
 
       {/* Content: Donut Chart + Middle Divider + Stats */}
@@ -67,9 +68,9 @@ export default function TrainingEfficiencyCard({
 
           <View style={styles.chartCenterText}>
             
-            <Text style={styles.centerValue}>{stats.totalSessions}</Text>
-            <Text style={styles.centerLabel}>Total</Text>
-            <Text style={styles.centerLabel}> Sessions</Text>
+            <AppText style={styles.centerValue}>{stats.totalSessions}</AppText>
+            <AppText style={styles.centerLabel}>Total</AppText>
+            <AppText style={styles.centerLabel}> Sessions</AppText>
           </View>
         </View>
 
@@ -83,16 +84,16 @@ export default function TrainingEfficiencyCard({
             <View style={styles.statHeader}>
               <View style={styles.statLabelRow}>
                 <View style={[styles.dot, { backgroundColor: "#00BA5D" }]} />
-                <Text style={styles.statLabel}>Executed</Text>
+                <AppText style={styles.statLabel}>Executed</AppText>
               </View>
             </View>
             <View style={styles.valueRow}>
-              <Text style={styles.executedValue}>
+              <AppText style={styles.executedValue}>
                 {stats.completed}{" "}
-                <Text style={styles.executedPercentText}>
+                <AppText style={styles.executedPercentText}>
                   ({executedPercent}%)
-                </Text>
-              </Text>
+                </AppText>
+              </AppText>
             </View>
             <View style={styles.progressBarTrack}>
               <View
@@ -112,16 +113,16 @@ export default function TrainingEfficiencyCard({
             <View style={styles.statHeader}>
               <View style={styles.statLabelRow}>
                 <View style={[styles.dot, { backgroundColor: "#0066FF" }]} />
-                <Text style={styles.statLabel}>Pending</Text>
+                <AppText style={styles.statLabel}>Pending</AppText>
               </View>
             </View>
             <View style={styles.valueRow}>
-              <Text style={styles.pendingValue}>
+              <AppText style={styles.pendingValue}>
                 {stats.pending}{" "}
-                <Text style={styles.pendingPercentText}>
+                <AppText style={styles.pendingPercentText}>
                   ({pendingPercent}%)
-                </Text>
-              </Text>
+                </AppText>
+              </AppText>
             </View>
             <View style={styles.progressBarTrack}>
               <View

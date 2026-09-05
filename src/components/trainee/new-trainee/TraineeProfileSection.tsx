@@ -3,7 +3,6 @@ import { ActivityIndicator, Alert, Image, Pressable, StyleSheet, View } from "re
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 
-import ProfilePlaceholder from "@/assets/images/svg/profile.svg";
 import AppCard from "@/components/ui/AppCard";
 import AppInput from "@/components/ui/AppInput";
 import AppText from "@/components/ui/AppText";
@@ -49,11 +48,10 @@ export function TraineeProfileSection({ form }: { form: NewTraineeForm }) {
       <View style={styles.photoBlock}>
         <AppText style={styles.photoLabel} color={Colors.gray600}>Profile Photo</AppText>
         <View style={styles.avatarWrap}>
-          {form.profilePhoto ? (
-            <Image source={{ uri: form.profilePhoto }} style={styles.avatar} />
-          ) : (
-            <ProfilePlaceholder width={88} height={88} />
-          )}
+          <Image
+            source={form.profilePhoto ? { uri: form.profilePhoto } : require("@/assets/images/profile.webp")}
+            style={styles.avatar}
+          />
         </View>
         <Pressable style={styles.uploadButton} onPress={handlePickPhoto} disabled={picking}>
           {picking ? (

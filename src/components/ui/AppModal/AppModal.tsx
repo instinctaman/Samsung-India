@@ -167,6 +167,12 @@ export default function AppModal({
             style={[
               styles.content,
               styles[position],
+              // Keep a centered modal within the visible screen (status bar +
+              // gesture/nav bar excluded) so tall content scrolls instead of
+              // spilling off both edges.
+              position === "center" && {
+                maxHeight: height - insets.top - insets.bottom - 24,
+              },
               contentStyle,
               {
                 opacity,

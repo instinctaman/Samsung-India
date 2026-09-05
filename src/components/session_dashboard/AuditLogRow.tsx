@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
+import AppText from "@/components/ui/AppText";
 
 import { AuditLogEntry } from "@/api/training";
 import { useLiveRuntime } from "@/hooks/useLiveRuntime";
@@ -23,21 +24,21 @@ export default function AuditLogRow({ entry, alt }: AuditLogRowProps) {
   return (
     <View style={[styles.row, alt && styles.rowAlt]}>
       <View style={{ flex: 1.4 }}>
-        <Text style={styles.moduleName} numberOfLines={1}>
+        <AppText style={styles.moduleName} numberOfLines={1}>
           {entry.label}
           {entry.runNumber > 1 ? ` (Run ${entry.runNumber})` : ""}
-        </Text>
+        </AppText>
         {entry.startedBy && (
-          <Text style={styles.by} numberOfLines={1}>by {entry.startedBy}</Text>
+          <AppText style={styles.by} numberOfLines={1}>by {entry.startedBy}</AppText>
         )}
       </View>
-      <Text style={[styles.cell, { flex: 1.1, textAlign: "center" }]}>{formatTime(entry.startedAt)}</Text>
-      <Text style={[styles.cell, { flex: 1.1, textAlign: "center" }]}>
+      <AppText style={[styles.cell, { flex: 1.1, textAlign: "center" }]}>{formatTime(entry.startedAt)}</AppText>
+      <AppText style={[styles.cell, { flex: 1.1, textAlign: "center" }]}>
         {entry.isRunning ? "In progress" : formatTime(entry.endedAt)}
-      </Text>
-      <Text style={[styles.duration, { flex: 0.9, textAlign: "right" }]}>
+      </AppText>
+      <AppText style={[styles.duration, { flex: 0.9, textAlign: "right" }]}>
         {entry.startedAt ? formatElapsed(seconds) : "--"}
-      </Text>
+      </AppText>
     </View>
   );
 }

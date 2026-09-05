@@ -13,35 +13,9 @@ import SecurityFooter from "@/components/common/SecurityFooter";
 // import RegisterBottomSheet from "@/components/bottom-sheet/RegisterSheet";
 import { Colors } from "@/theme/colors";
 import { Fonts } from "@/theme/fonts";
-import { ApiError, AuthSession, loginTrainee } from "@/api/auth";
+import { ApiError, loginTrainee } from "@/api/auth";
 import { joinSession } from "@/api/session";
 import { useAuth } from "@/hooks/useAuth";
-
-const BYPASS_LOGIN = process.env.EXPO_PUBLIC_BYPASS_LOGIN === "true";
-
-function createDevelopmentSession(phone: string): AuthSession {
-  return {
-    // This is intentionally not a real credential. Requests requiring a
-    // server-issued token will remain protected by the backend.
-    access_token: "development-login-bypass",
-    token_type: "bearer",
-    trainee: {
-      id: 0,
-      traineeUid: "development-trainee",
-      name: "Test Trainee",
-      phone: Number(phone) || 0,
-      email: "test@example.com",
-      gender: null,
-      designation: "Test User",
-      employee_id: "DEV-001",
-      supervisorName: null,
-      state: null,
-      district: null,
-      profilePhoto: null,
-      status: "Active",
-    },
-  };
-}
 
 export default function Starter1() {
   const router = useRouter();
@@ -66,12 +40,6 @@ export default function Starter1() {
     setLoading(true);
     setError(null);
     try {
-      if (BYPASS_LOGIN) {
-        setSession(createDevelopmentSession(trimmed));
-        router.replace("/trainee_dashboard" as any);
-        return;
-      }
-
       const session = await loginTrainee(trimmed);
       setSession(session);
       if (join) {
@@ -84,7 +52,9 @@ export default function Starter1() {
         }
         router.replace("/session");
       } else {
-        router.push("/trainee_dashboard" as any);
+        // Trainees land on the live session timeline; the stats/dashboard
+        // page is a tab in the bottom nav from there.
+        router.replace("/session_detail" as any);
       }
     } catch (err) {
       setError(

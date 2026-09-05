@@ -1,4 +1,4 @@
-from sqlalchemy import or_
+from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 from app.models.admin import Admin
@@ -33,8 +33,11 @@ def list_admin_trainers(db: Session) -> list[Admin]:
     return db.query(Admin).filter(Admin.role == "trainer").all()
 
 
-def list_agency_trainers(db: Session) -> list[AgencyTeam]:
-    return db.query(AgencyTeam).filter(AgencyTeam.role == "trainer").all()
+def list_agency_trainers(db: Session, company: str | None = None) -> list[AgencyTeam]:
+    query = db.query(AgencyTeam).filter(AgencyTeam.role == "trainer")
+    if company:
+        query = query.filter(func.lower(AgencyTeam.company) == company.strip().lower())
+    return query.all()
 
 
 def get_admins_by_usernames(db: Session, usernames: set[str]) -> list[Admin]:

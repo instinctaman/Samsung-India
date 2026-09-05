@@ -5,6 +5,7 @@ import { Alert, Share } from "react-native";
 import { ApiError } from "@/api/client";
 import {
   SessionDashboard,
+  UploadFile,
   broadcastLiveQuestion,
   endTraining,
   fetchSessionDashboard,
@@ -17,12 +18,22 @@ import {
   startTraining,
   stopActiveModule,
   stopLiveTimer,
+  unlockProctoring,
 } from "@/api/training";
 import { DashboardTab } from "@/components/trainer/dashboard/DashboardBottomNav";
 import { useAuth } from "@/hooks/useAuth";
 import { useLiveQuizChannel } from "@/hooks/useLiveQuizChannel";
+import { useLocationPermission } from "@/hooks/useLocationPermission";
+import { formatDisplayDate } from "@/utils/formatDisplayDate";
 import { formatGeneratedTimestamp } from "./formatting";
 import { TrainerCheckInPhoto } from "./TrainerCheckInModal";
+
+export type OutsideVenuePrompt = {
+  photo: TrainerCheckInPhoto;
+  distanceMeters: number;
+  radius: number;
+  trainerCoords: { latitude: number; longitude: number } | null;
+};
 
 export function useSessionDashboardScreen() {
   const router = useRouter();
@@ -39,7 +50,11 @@ export function useSessionDashboardScreen() {
   const [moreOpen, setMoreOpen] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
   const [showCheckInModal, setShowCheckInModal] = useState(false);
+  const [outsideVenue, setOutsideVenue] = useState<OutsideVenuePrompt | null>(null);
+  const [showCheckOutModal, setShowCheckOutModal] = useState(false);
+  const [endingSession, setEndingSession] = useState(false);
   const [startedForUid, setStartedForUid] = useState(conferenceUid);
+  const { requestLocationWithRationale } = useLocationPermission();
 
   if (startedForUid !== conferenceUid) {
     setStartedForUid(conferenceUid);
@@ -113,17 +128,37 @@ export function useSessionDashboardScreen() {
     setShowCheckInModal(true);
   };
 
-  const handleConfirmStartSession = async (photo: TrainerCheckInPhoto) => {
+  const runStartSession = async (
+    photo: TrainerCheckInPhoto,
+    trainerCoords: { latitude: number; longitude: number } | null,
+    venueOverride?: { latitude: number; longitude: number },
+  ) => {
     if (!adminToken) return;
-    setShowCheckInModal(false);
     try {
-      await startTraining(adminToken, conferenceUid, photo);
+      await startTraining(adminToken, conferenceUid, photo, {
+        latitude: trainerCoords?.latitude,
+        longitude: trainerCoords?.longitude,
+        venueLatitude: venueOverride?.latitude,
+        venueLongitude: venueOverride?.longitude,
+      });
       // Only flip to the "started" view once the backend actually confirms
       // it - e.g. an unapproved session gets rejected with a 403, and the
       // dashboard shouldn't show as live when nothing actually started.
+      setOutsideVenue(null);
       setHasStarted(true);
       loadData("silent");
     } catch (err) {
+      const body = err instanceof ApiError ? (err.body as { code?: string } | null) : null;
+      if (err instanceof ApiError && err.status === 409 && body?.code === "OUTSIDE_VENUE" && !venueOverride) {
+        const info = err.body as { distanceMeters: number; radius: number };
+        setOutsideVenue({
+          photo,
+          distanceMeters: info.distanceMeters,
+          radius: info.radius,
+          trainerCoords,
+        });
+        return;
+      }
       Alert.alert(
         "Couldn't start the session",
         err instanceof ApiError ? err.message : "Something went wrong. Please try again.",
@@ -131,15 +166,53 @@ export function useSessionDashboardScreen() {
     }
   };
 
-  const handleMarkAttendance = async (traineeUid: string, status: "Present" | "Absent") => {
+  const handleConfirmStartSession = async (photo: TrainerCheckInPhoto) => {
+    if (!adminToken) return;
+    setShowCheckInModal(false);
+    const { coords } = await requestLocationWithRationale();
+    await runStartSession(photo, coords ?? null);
+  };
+
+  // "Yes, update the venue location" from the OUTSIDE_VENUE prompt: re-runs
+  // start with the chosen coordinates, which the backend writes onto the
+  // venue + this conference and then starts.
+  const handleUpdateVenueLocation = async (latitude: number, longitude: number) => {
+    if (!outsideVenue) return;
+    await runStartSession(outsideVenue.photo, outsideVenue.trainerCoords, { latitude, longitude });
+  };
+
+  // "No" - the session does not start (they must be at the venue to start).
+  const dismissOutsideVenue = () => setOutsideVenue(null);
+
+  const handleMarkAttendance = async (
+    traineeUid: string,
+    status: "Present" | "Absent",
+    reason: string,
+  ) => {
     if (!adminToken) return;
     try {
       // The endpoint returns a fresh dashboard, so we can update in place
       // without waiting for the next poll.
-      const fresh = await markAttendance(adminToken, conferenceUid, traineeUid, status);
+      const fresh = await markAttendance(adminToken, conferenceUid, traineeUid, status, reason);
       setData(fresh);
-    } catch {
-      // Fallback / gracefully keep state.
+    } catch (err) {
+      Alert.alert(
+        "Couldn't update attendance",
+        err instanceof ApiError ? err.message : "Something went wrong. Please try again.",
+      );
+    }
+  };
+
+  const handleUnlockExam = async (traineeUid: string, reason: string) => {
+    if (!adminToken) return;
+    try {
+      // Returns a fresh dashboard, so the row's LOCKED pill clears at once.
+      setData(await unlockProctoring(adminToken, conferenceUid, traineeUid, reason));
+    } catch (err) {
+      Alert.alert(
+        "Couldn't unlock the trainee",
+        err instanceof ApiError ? err.message : "Something went wrong. Please try again.",
+      );
     }
   };
 
@@ -182,24 +255,26 @@ export function useSessionDashboardScreen() {
     }
   };
 
-  const handleEndSession = () => {
-    Alert.alert("End Quiz", "Do you want to end quiz?", [
-      { text: "No", style: "cancel" },
-      {
-        text: "Yes",
-        style: "destructive",
-        onPress: async () => {
-          if (adminToken) {
-            try {
-              await endTraining(adminToken, conferenceUid);
-            } catch {
-              // Fallback / gracefully keep state
-            }
-          }
-          router.replace("/trainer_dashboard");
-        },
-      },
-    ]);
+  // "End Session" opens the Security Check-Out flow (face photo + signed
+  // attendance sheet). Closing it without submitting leaves the session
+  // running - it only ends once the backend confirms the check-out.
+  const handleEndSession = () => setShowCheckOutModal(true);
+
+  const handleConfirmEndSession = async (photo: UploadFile, attendanceSheet: UploadFile) => {
+    if (!adminToken) return;
+    setEndingSession(true);
+    try {
+      await endTraining(adminToken, conferenceUid, photo, attendanceSheet);
+      setShowCheckOutModal(false);
+      router.replace("/trainer_dashboard");
+    } catch (err) {
+      Alert.alert(
+        "Couldn't end the session",
+        err instanceof ApiError ? err.message : "Something went wrong. Please try again.",
+      );
+    } finally {
+      setEndingSession(false);
+    }
   };
 
   const handleBottomNavSelect = (tab: DashboardTab) => {
@@ -234,6 +309,13 @@ export function useSessionDashboardScreen() {
   // action instead of letting the trainer hit a dead-end "not approved" alert.
   const isApproved = data ? data.approvalStatus === "Approved" : true;
 
+  // A session can't be started before its scheduled date (backend enforces
+  // this too). Compare "YYYY-MM-DD" strings against today's LOCAL date.
+  const now = new Date();
+  const todayISO = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  const notYetDue = !!data?.conferenceDate && data.conferenceDate > todayISO;
+  const startsOnLabel = data?.conferenceDate ? formatDisplayDate(data.conferenceDate) : undefined;
+
   return {
     router,
     conferenceUid,
@@ -252,7 +334,15 @@ export function useSessionDashboardScreen() {
     handleCopyLink,
     handleStartSession,
     handleConfirmStartSession,
+    outsideVenue,
+    handleUpdateVenueLocation,
+    dismissOutsideVenue,
+    showCheckOutModal,
+    setShowCheckOutModal,
+    endingSession,
+    handleConfirmEndSession,
     handleMarkAttendance,
+    handleUnlockExam,
     handleStartModule,
     handleStopActiveModule,
     handleRestartModule,
@@ -269,5 +359,7 @@ export function useSessionDashboardScreen() {
     showSessionData,
     isLive,
     isApproved,
+    notYetDue,
+    startsOnLabel,
   };
 }

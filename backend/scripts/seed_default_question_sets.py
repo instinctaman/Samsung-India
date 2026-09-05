@@ -10,6 +10,7 @@ venv/Scripts/python.exe scripts/seed_default_question_sets.py
 """
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -61,10 +62,18 @@ QUESTION_SET_NAMES = [
     "Laptop Classroom/Webinar: Post Test July'26",
 ]
 
+def question_set_uid(name: str) -> str:
+    """Must stay byte-for-byte identical to `questionSetUid` in
+    src/components/training/add-training/constants.ts. Length-capped because
+    `assessment_results.assessmentSuiteUid` is varchar(50) in the real schema."""
+    slug = re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")[:40].rstrip("-")
+    return f"default:{slug}"
+
+
 db = SessionLocal()
 try:
     for name in QUESTION_SET_NAMES:
-        suite_uid = f"default:{name}"
+        suite_uid = question_set_uid(name)
         existing = db.query(AssessmentSuite).filter(AssessmentSuite.assessmentSuiteUid == suite_uid).first()
         if existing:
             print(f"Skipping {suite_uid!r} - already exists")

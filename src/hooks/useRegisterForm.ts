@@ -72,7 +72,7 @@ export function useRegisterForm({ joinCode, onSuccess }: UseRegisterFormOptions 
         const session = await loginTrainee(phone);
         setSession(session);
         try {
-          await joinSession(joinCode, session.access_token);
+          await joinSession(joinCode, session.access_token, true);
         } catch {
           // Non-fatal - they still land on /session.
         }

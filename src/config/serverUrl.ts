@@ -10,7 +10,7 @@ import { File, Paths } from "expo-file-system";
  * request, so a change takes effect without an app restart.
  */
 
-const DEFAULT_HOST = "192.168.1.10";
+const DEFAULT_HOST = "192.168.29.95";
 export const DEFAULT_API_URL =
   process.env.EXPO_PUBLIC_API_URL || `http://${DEFAULT_HOST}:8000`;
 

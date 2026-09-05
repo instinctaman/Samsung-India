@@ -20,6 +20,7 @@ import {
   MODULE_LABELS,
   ModuleKey,
 } from "./constants";
+import { FlowItem, FlowItemId, orderFlowItems } from "./flowLayout";
 import { parseTimeToMinutes, toPayloadModule } from "./formatting";
 import { cleanText, digitsOnly, firstError, intInRange } from "@/utils/validation";
 
@@ -66,12 +67,18 @@ export function useAddTrainingForm() {
   const [checkInOpens, setCheckInOpens] = useState("");
   const [checkOutCloses, setCheckOutCloses] = useState("");
   const [geoFencing, setGeoFencing] = useState(true);
+  // Metres a trainee may be from the venue and still check in (geoFencing on).
+  const [geoRadius, setGeoRadius] = useState("100");
 
   const [modules, setModules] = useState<Record<ModuleKey, EvaluationModuleState>>({
     standardTest: emptyModule(),
     liveQuiz: emptyModule(),
     survey: emptyModule(),
   });
+  // When each flow item was added, so the Session Flow cards can float the
+  // newest (still un-timed) one to the top before it gets sorted by time.
+  const [attendanceEnabledAt, setAttendanceEnabledAt] = useState(() => Date.now());
+  const [moduleEnabledAt, setModuleEnabledAt] = useState<Partial<Record<ModuleKey, number>>>({});
 
   const [checklist, setChecklist] = useState<string[]>([]);
   const [agreeTerms, setAgreeTerms] = useState(false);
@@ -128,7 +135,19 @@ export function useAddTrainingForm() {
   };
 
   const toggleModule = (key: ModuleKey) => {
+    const turningOn = !modules[key].enabled;
     setModules((prev) => ({ ...prev, [key]: { ...prev[key], enabled: !prev[key].enabled } }));
+    setModuleEnabledAt((prev) => {
+      const next = { ...prev };
+      if (turningOn) next[key] = Date.now();
+      else delete next[key];
+      return next;
+    });
+  };
+
+  const toggleAttendance = () => {
+    if (!attendanceEnabled) setAttendanceEnabledAt(Date.now());
+    setAttendanceEnabled((v) => !v);
   };
 
   const updateModule = (key: ModuleKey, patch: Partial<EvaluationModuleState>) => {
@@ -137,44 +156,51 @@ export function useAddTrainingForm() {
 
   const requestedBy = requestedByOption === "Other" ? requestedByOther : requestedByOption;
 
-  // Modules always run in this fixed order (matches the backend's
-  // MODULE_SEQUENCE) - each enabled module's window must fully close
-  // before the next one's is allowed to open, so a trainee always has a
-  // real chance to complete the current one before it's skipped past.
-  const validateModuleSequence = (): string | null => {
-    const sequence: { label: string; start: string; end: string }[] = [];
+  const flowItemLabel = (id: FlowItemId): string =>
+    id === "attendance" ? "Attendance" : MODULE_LABELS[id];
+
+  const flowItemWindow = (id: FlowItemId): { start: string; end: string } =>
+    id === "attendance"
+      ? { start: checkInOpens, end: checkOutCloses }
+      : { start: modules[id].startTime ?? "", end: modules[id].endTime ?? "" };
+
+  // Attendance + every enabled module as one list, ordered by planned start
+  // time (un-timed items float to the top, newest first). Drives both the
+  // Session Flow cards and the backend's run order (via sessionConfig times).
+  const orderedFlowItems = useMemo<FlowItem[]>(() => {
+    const items: FlowItem[] = [];
     if (attendanceEnabled) {
-      sequence.push({ label: "Attendance", start: checkInOpens, end: checkOutCloses });
+      items.push({ id: "attendance", startTime: checkInOpens, enabledAt: attendanceEnabledAt });
     }
-    (["standardTest", "liveQuiz", "survey"] as ModuleKey[]).forEach((key) => {
+    (Object.keys(modules) as ModuleKey[]).forEach((key) => {
       if (modules[key].enabled) {
-        sequence.push({
-          label: key === "standardTest" ? "Standard Test" : key === "liveQuiz" ? "Live Quiz (FFF)" : "Survey",
-          start: modules[key].startTime ?? "",
-          end: modules[key].endTime ?? "",
-        });
+        items.push({ id: key, startTime: modules[key].startTime ?? "", enabledAt: moduleEnabledAt[key] ?? 0 });
       }
     });
+    return orderFlowItems(items);
+  }, [attendanceEnabled, checkInOpens, attendanceEnabledAt, modules, moduleEnabledAt]);
 
-    for (let i = 0; i < sequence.length; i++) {
-      const current = sequence[i];
-      if (!current.start || !current.end) {
-        return `${current.label} needs both a start and end time.`;
-      }
-      const start = parseTimeToMinutes(current.start);
-      const end = parseTimeToMinutes(current.end);
-      if (start == null || end == null) {
-        return `${current.label} has an invalid time.`;
-      }
-      if (end <= start) {
-        return `${current.label}'s end time must be after its start time.`;
-      }
-      if (i > 0) {
-        const previous = sequence[i - 1];
-        const previousEnd = parseTimeToMinutes(previous.end)!;
-        if (start < previousEnd) {
-          return `${current.label} can only start after ${previous.label} ends (${previous.end}).`;
-        }
+  // Modules run in start-time order now. Each needs a start + end, its end
+  // must be after its start, and no two windows may overlap.
+  const validateModuleSequence = (): string | null => {
+    const windows = orderedFlowItems.map((item) => ({
+      label: flowItemLabel(item.id),
+      ...flowItemWindow(item.id),
+    }));
+
+    for (const w of windows) {
+      if (!w.start || !w.end) return `${w.label} needs both a start and end time.`;
+      const start = parseTimeToMinutes(w.start);
+      const end = parseTimeToMinutes(w.end);
+      if (start == null || end == null) return `${w.label} has an invalid time.`;
+      if (end <= start) return `${w.label}'s end time must be after its start time.`;
+    }
+
+    for (let i = 1; i < windows.length; i++) {
+      const previousEnd = parseTimeToMinutes(windows[i - 1].end)!;
+      const currentStart = parseTimeToMinutes(windows[i].start)!;
+      if (currentStart < previousEnd) {
+        return `${windows[i].label} overlaps ${windows[i - 1].label} (which ends at ${windows[i - 1].end}).`;
       }
     }
     return null;
@@ -253,7 +279,12 @@ export function useAddTrainingForm() {
         batchSize: digitsOnly(batchSize) || undefined,
         sessionFlow: {
           attendance: attendanceEnabled
-            ? { checkInOpens: checkInOpens || undefined, checkOutCloses: checkOutCloses || undefined, geoFencing }
+            ? {
+                checkInOpens: checkInOpens || undefined,
+                checkOutCloses: checkOutCloses || undefined,
+                geoFencing,
+                geoRadius: geoFencing ? Number(digitsOnly(geoRadius)) || 100 : undefined,
+              }
             : undefined,
           standardTest: modules.standardTest.enabled ? toPayloadModule(modules.standardTest) : undefined,
           liveQuiz: modules.liveQuiz.enabled ? toPayloadModule(modules.liveQuiz) : undefined,
@@ -302,12 +333,14 @@ export function useAddTrainingForm() {
     trainingType, setTrainingType,
     batchSize, setBatchSize,
 
-    attendanceEnabled, setAttendanceEnabled,
+    attendanceEnabled, setAttendanceEnabled, toggleAttendance,
     checkInOpens, setCheckInOpens,
     checkOutCloses, setCheckOutCloses,
     geoFencing, setGeoFencing,
+    geoRadius, setGeoRadius,
 
     modules, toggleModule, updateModule,
+    orderedFlowItems,
     categoryOptions, questionSetOptionsFor, assessmentSuites,
     checklistOptions,
 

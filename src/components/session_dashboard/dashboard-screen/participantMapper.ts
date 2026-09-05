@@ -26,5 +26,11 @@ export function participantsFromTrainees(trainees: TraineeRow[]): ParticipantIte
     status: toStatus(t.status),
     inTime: timeOnly(t.markedOn, "IN"),
     outTime: timeOnly(t.checkOutTime, "OUT"),
+    // Only carry proctoring data when the trainee is actually locked - the
+    // Participant Master List keys the LOCKED pill / unlock control off its
+    // presence.
+    proctoring: t.isLocked
+      ? { flags: t.proctoringStrikes, maxFlags: t.proctoringMaxStrikes, logs: t.proctoringLogs }
+      : undefined,
   }));
 }

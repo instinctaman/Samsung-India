@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
+import AppText from "@/components/ui/AppText";
 import { Ionicons } from "@expo/vector-icons";
 
 import { Colors } from "@/theme/colors";
@@ -8,6 +9,8 @@ type ParticipantRowProps = {
   item: ParticipantItem;
   alt: boolean;
   isLocked: boolean;
+  // Present/Absent can only be changed while the session is running.
+  canEdit: boolean;
   onCheck: () => void;
   onReject: () => void;
   onShowSuspicious: () => void;
@@ -24,6 +27,7 @@ export default function ParticipantRow({
   item,
   alt,
   isLocked,
+  canEdit,
   onCheck,
   onReject,
   onShowSuspicious,
@@ -35,9 +39,9 @@ export default function ParticipantRow({
   return (
     <View style={[styles.row, alt && styles.rowAlt]}>
       <View style={[styles.detailsCol, { flex: 1.3 }]}>
-        <Text style={styles.name} numberOfLines={1}>{item.name}</Text>
-        <Text style={styles.empId}>{item.employeeId}</Text>
-        <Text style={styles.phone}>{item.phone}</Text>
+        <AppText style={styles.name} numberOfLines={1}>{item.name}</AppText>
+        <AppText style={styles.empId}>{item.employeeId}</AppText>
+        <AppText style={styles.phone}>{item.phone}</AppText>
       </View>
 
       <View style={[styles.centerCol, { flex: 1.1 }]}>
@@ -50,33 +54,33 @@ export default function ParticipantRow({
             },
           ]}
         >
-          <Text
+          <AppText
             style={[styles.typePillText, { color: isAssigned ? "#D97706" : "#6B7280" }]}
             numberOfLines={1}
           >
             {item.attendeeType}
-          </Text>
+          </AppText>
         </View>
       </View>
 
       <View style={[styles.centerCol, { flex: 0.8 }]}>
         <View style={[styles.statusPill, { backgroundColor: statusColor.bg, borderColor: statusColor.border }]}>
-          <Text style={[styles.statusPillText, { color: statusColor.text }]}>{item.status}</Text>
+          <AppText style={[styles.statusPillText, { color: statusColor.text }]}>{item.status}</AppText>
         </View>
       </View>
 
       <View style={[styles.inOutCol, { flex: 1.1 }]}>
-        <Text style={styles.inText}>{item.inTime}</Text>
-        <Text style={styles.outText}>{item.outTime}</Text>
+        <AppText style={styles.inText}>{item.inTime}</AppText>
+        <AppText style={styles.outText}>{item.outTime}</AppText>
       </View>
 
       <View style={[styles.controlsWrap, { flex: 0.9 }]}>
         {isLocked && (
           <Pressable style={styles.lockedPill} onPress={onShowSuspicious} hitSlop={3}>
             <Ionicons name="lock-closed" size={9} color="#EF4444" />
-            <Text style={styles.lockedPillText}>
+            <AppText style={styles.lockedPillText}>
               LOCKED ({item.proctoring!.flags}/{item.proctoring!.maxFlags})
-            </Text>
+            </AppText>
           </Pressable>
         )}
         <View style={styles.controlsRow}>
@@ -85,11 +89,21 @@ export default function ParticipantRow({
               <Ionicons name="lock-closed" size={10} color="#B45309" />
             </Pressable>
           )}
-          <Pressable onPress={onCheck} hitSlop={2} style={[styles.iconBtn, styles.iconBtnSuccess]}>
-            <Ionicons name="checkmark" size={11} color="#10B981" />
+          <Pressable
+            onPress={onCheck}
+            disabled={!canEdit}
+            hitSlop={2}
+            style={[styles.iconBtn, styles.iconBtnSuccess, !canEdit && styles.iconBtnDisabled]}
+          >
+            <Ionicons name="checkmark" size={11} color={canEdit ? "#10B981" : "#9CA3AF"} />
           </Pressable>
-          <Pressable onPress={onReject} hitSlop={2} style={[styles.iconBtn, styles.iconBtnDanger]}>
-            <Ionicons name="close" size={11} color="#EF4444" />
+          <Pressable
+            onPress={onReject}
+            disabled={!canEdit}
+            hitSlop={2}
+            style={[styles.iconBtn, styles.iconBtnDanger, !canEdit && styles.iconBtnDisabled]}
+          >
+            <Ionicons name="close" size={11} color={canEdit ? "#EF4444" : "#9CA3AF"} />
           </Pressable>
         </View>
       </View>
@@ -147,4 +161,5 @@ const styles = StyleSheet.create({
   iconBtnSuccess: { backgroundColor: "#ECFDF5", borderColor: "#A7F3D0" },
   iconBtnDanger: { backgroundColor: "#FEF2F2", borderColor: "#FECACA" },
   iconBtnWarning: { backgroundColor: "#FEF3C7", borderColor: "#FDE68A" },
+  iconBtnDisabled: { backgroundColor: "#F3F4F6", borderColor: "#E5E7EB", opacity: 0.6 },
 });

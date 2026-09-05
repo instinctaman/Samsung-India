@@ -1,5 +1,5 @@
 import { CameraView } from "expo-camera";
-import { Pressable, StyleSheet, View } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { Ionicons } from "@expo/vector-icons";
@@ -10,8 +10,33 @@ import { Colors } from "@/theme/colors";
 import { useQrScanner } from "./useQrScanner";
 
 export default function QrScannerView() {
-  const { granted, canAskAgain, requestPermission, error, handleScanned, onClose, onManualLogin } =
-    useQrScanner();
+  const {
+    granted,
+    canAskAgain,
+    requestPermission,
+    error,
+    decoding,
+    handleScanned,
+    handlePickFromGallery,
+    onClose,
+  } = useQrScanner();
+
+  const galleryButton = (
+    <Pressable
+      style={styles.galleryBtn}
+      onPress={handlePickFromGallery}
+      disabled={decoding}
+      hitSlop={10}
+      accessibilityRole="button"
+      accessibilityLabel="Scan a QR code from your gallery"
+    >
+      {decoding ? (
+        <ActivityIndicator size="small" color={Colors.white} />
+      ) : (
+        <Ionicons name="images" size={24} color={Colors.white} />
+      )}
+    </Pressable>
+  );
 
   return (
     <View style={styles.container}>
@@ -35,6 +60,7 @@ export default function QrScannerView() {
           <View style={styles.center}>
             <View style={styles.frame} />
             <AppText style={styles.hint}>Point at the session QR code</AppText>
+            {galleryButton}
             {error ? <AppText style={styles.error}>{error}</AppText> : null}
           </View>
         ) : (
@@ -48,12 +74,11 @@ export default function QrScannerView() {
             {canAskAgain && (
               <AppButton title="Enable Camera" onPress={requestPermission} buttonStyle={styles.permBtn} />
             )}
+            <AppText style={styles.hint}>…or pick a saved QR image from your gallery.</AppText>
+            {galleryButton}
+            {error ? <AppText style={styles.error}>{error}</AppText> : null}
           </View>
         )}
-
-        <Pressable style={styles.manualBtn} onPress={onManualLogin} hitSlop={8}>
-          <AppText style={styles.manualText}>Enter Company ID / Phone instead</AppText>
-        </Pressable>
       </SafeAreaView>
     </View>
   );
@@ -63,8 +88,18 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#000000" },
   overlay: { flex: 1, alignItems: "center", justifyContent: "center", padding: 24 },
   closeBtn: { position: "absolute", top: 12, left: 12, padding: 8 },
-  manualBtn: { position: "absolute", bottom: 28, alignSelf: "center", padding: 8 },
-  manualText: { color: Colors.white, fontSize: 13, textDecorationLine: "underline" },
+  // UPI-style: a plain icon button right under the scan frame.
+  galleryBtn: {
+    marginTop: 4,
+    width: 52,
+    height: 52,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.55)",
+    backgroundColor: "rgba(255,255,255,0.12)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   center: { alignItems: "center", gap: 16 },
   frame: {
     width: 220,

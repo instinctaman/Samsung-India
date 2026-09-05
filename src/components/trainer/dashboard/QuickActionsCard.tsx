@@ -1,7 +1,8 @@
 import { Colors } from "@/theme/colors";
 import { Shadows } from "@/theme/shadows";
 import { Ionicons } from "@expo/vector-icons";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
+import AppText from "@/components/ui/AppText";
 
 type QuickActionsCardProps = {
   onCreateTraining: () => void;
@@ -49,7 +50,7 @@ export default function QuickActionsCard({
 
   return (
     <View style={styles.card}>
-      <Text style={styles.headerTitle}>Quick Actions</Text>
+      <AppText style={styles.headerTitle}>Quick Actions</AppText>
 
       <View style={styles.actionsList}>
         {actions.map((action) => (
@@ -60,9 +61,9 @@ export default function QuickActionsCard({
           >
             <View style={styles.leftContent}>
               <Ionicons name={action.iconName} size={13} color={action.color} />
-              <Text style={styles.actionText} numberOfLines={1}>
+              <AppText style={styles.actionText} numberOfLines={1}>
                 {action.title}
-              </Text>
+              </AppText>
             </View>
             <Ionicons name="chevron-forward" size={10} color={action.color} />
           </Pressable>

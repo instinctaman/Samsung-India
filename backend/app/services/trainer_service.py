@@ -19,19 +19,29 @@ def _find_trainer(db: Session, username: str) -> Admin | AgencyTeam | None:
     return admin_repository.get_agency_by_username_and_role(db, username, "trainer")
 
 
-def list_trainers(db: Session) -> list[SelectOptionOut]:
-    """Powers the Add Training form's Trainer ID picker. `label` shows the
-    employee ID alongside the name (e.g. "OFF26001 - Aditya Kumar") so
-    trainers sharing a name are still distinguishable; `value` stays the
-    login username since that's what `trainerEmployeeId` is matched
-    against for ownership, and `name` carries the bare name for the
-    "Trainer Name" field to display."""
-    admins = admin_repository.list_admin_trainers(db)
-    agents = admin_repository.list_agency_trainers(db)
+def list_trainers(db: Session, company: str | None = None) -> list[SelectOptionOut]:
+    """Powers the Add Training and New Trainee forms' Trainer ID pickers.
+    `label` shows the employee ID alongside the name (e.g.
+    "OFF26001 - Aditya Kumar") so trainers sharing a name are still
+    distinguishable; `value` stays the login username since that's what
+    `trainerEmployeeId` is matched against for ownership, and `name`
+    carries the bare name for the "Trainer Name" field to display.
+
+    When `company` is given (the New Trainee form, which maps a trainee to
+    one company's trainer) the list is the `agencyteam` trainers of that
+    company only. Without it, both the `admin` and `agencyteam` trainer
+    rows are merged (the Add Training form's behaviour)."""
+    if company:
+        trainers = admin_repository.list_agency_trainers(db, company=company)
+    else:
+        trainers = [
+            *admin_repository.list_admin_trainers(db),
+            *admin_repository.list_agency_trainers(db),
+        ]
 
     seen: set[str] = set()
     options: list[SelectOptionOut] = []
-    for trainer in [*admins, *agents]:
+    for trainer in trainers:
         if not trainer.username or trainer.username in seen:
             continue
         seen.add(trainer.username)

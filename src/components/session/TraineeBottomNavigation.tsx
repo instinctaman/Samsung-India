@@ -50,6 +50,30 @@ export default function TraineeBottomNavigation({
           </AppText>
         </Pressable>
 
+        {/* Dashboard Tab - the trainee's stats / rankings / history page */}
+        <Pressable
+          style={styles.tabItem}
+          onPress={() => onSelectTab("dashboard")}
+          accessibilityRole="button"
+          accessibilityLabel="Dashboard"
+          hitSlop={8}
+        >
+          <Ionicons
+            name={activeTab === "dashboard" ? "grid" : "grid-outline"}
+            size={22}
+            color={activeTab === "dashboard" ? Colors.headerBlue : Colors.bottomNavInactive}
+          />
+          <AppText
+            style={[
+              styles.tabLabel,
+              activeTab === "dashboard" && styles.tabLabelActive,
+            ]}
+            weight={activeTab === "dashboard" ? FontWeight.bold : FontWeight.medium}
+          >
+            Dashboard
+          </AppText>
+        </Pressable>
+
         {/* Center: Raised Circular Home Button */}
         <View style={styles.centerButtonWrapper}>
           <Pressable

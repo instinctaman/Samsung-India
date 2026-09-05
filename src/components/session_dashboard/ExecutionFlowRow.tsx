@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
+import AppText from "@/components/ui/AppText";
 import { Ionicons } from "@expo/vector-icons";
 
 import { ExecutionFlowItem } from "@/api/training";
@@ -38,15 +39,15 @@ export default function ExecutionFlowRow({
           <Ionicons name={visual.icon} size={16} color="#FFFFFF" />
         </View>
         <View style={styles.textCol}>
-          <Text style={styles.title}>{item.label}</Text>
-          <Text style={styles.subtitle}>
+          <AppText style={styles.title}>{item.label}</AppText>
+          <AppText style={styles.subtitle}>
             {visual.categoryLabel}
             {item.assignedMinutes != null ? ` | Assigned: ${item.assignedMinutes}m` : ""}
-          </Text>
+          </AppText>
         </View>
         <View style={[styles.statusPill, { backgroundColor: status.bg }]}>
-          <Text style={[styles.statusText, { color: status.color }]}>{status.label}</Text>
-          {elapsed && <Text style={[styles.elapsedText, { color: status.color }]}>{elapsed}</Text>}
+          <AppText style={[styles.statusText, { color: status.color }]}>{status.label}</AppText>
+          {elapsed && <AppText style={[styles.elapsedText, { color: status.color }]}>{elapsed}</AppText>}
         </View>
         {showStart && (
           <Pressable
@@ -57,7 +58,7 @@ export default function ExecutionFlowRow({
             accessibilityLabel={`Start ${item.label}`}
           >
             <Ionicons name="play" size={11} color="#FFFFFF" />
-            <Text style={styles.startBtnText}>Start</Text>
+            <AppText style={styles.startBtnText}>Start</AppText>
           </Pressable>
         )}
       </View>
@@ -71,7 +72,7 @@ export default function ExecutionFlowRow({
           accessibilityLabel={`Restart ${item.label}`}
         >
           <Ionicons name="refresh" size={12} color={item.canRestart ? "#4B5563" : "#9CA3AF"} />
-          <Text style={[styles.actionText, !item.canRestart && styles.actionTextDisabled]}>Restart</Text>
+          <AppText style={[styles.actionText, !item.canRestart && styles.actionTextDisabled]}>Restart</AppText>
         </Pressable>
       )}
 
@@ -79,11 +80,11 @@ export default function ExecutionFlowRow({
         <View style={styles.actionRow}>
           <Pressable style={styles.actionBtnOutline} onPress={() => onViewTopPerformers?.(item.moduleKey)}>
             <Ionicons name="stats-chart" size={12} color="#2563EB" />
-            <Text style={styles.actionTextBlue}>Top Performers</Text>
+            <AppText style={styles.actionTextBlue}>Top Performers</AppText>
           </Pressable>
           <View style={styles.liveDot}>
             <View style={styles.liveDotIndicator} />
-            <Text style={styles.liveDotText}>Running</Text>
+            <AppText style={styles.liveDotText}>Running</AppText>
           </View>
         </View>
       )}

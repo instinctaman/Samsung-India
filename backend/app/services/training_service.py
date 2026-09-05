@@ -1,9 +1,9 @@
 import json
-from collections import defaultdict
+from collections import Counter, defaultdict
 from datetime import date, datetime
 from typing import Optional
 
-from fastapi import BackgroundTasks, UploadFile
+from fastapi import BackgroundTasks, HTTPException, UploadFile, status as http_status
 from sqlalchemy.orm import Session
 
 from app.core.constants import LIVE_QUIZ_STATE_IDLE, MODULE_LABELS, PASS_THRESHOLD_PERCENT
@@ -23,8 +23,9 @@ from app.repositories import (
     trainee_repository,
 )
 from app.routers.ws import manager as ws_manager
+from app.utils.helpers import geofence_enabled, within_geofence
 from app.utils.status import title_status
-from app.utils.validators import validate_image_upload
+from app.utils.validators import validate_document_upload, validate_image_upload
 from app.schemas.training import (
     AssessmentSummary,
     AttendanceListItemOut,
@@ -33,8 +34,12 @@ from app.schemas.training import (
     AuditLogEntry,
     ExecutionFlowItem,
     PendingSessionItem,
+    ProctoringUnlockRequest,
     SessionDashboardOut,
     SessionHeroStat,
+    SessionReportOut,
+    SessionReportParticipant,
+    SessionReportSummary,
     TopPerformer,
     TraineeRow,
     TrainerAgendaResponse,
@@ -264,6 +269,21 @@ def create_training(db: Session, payload: TrainingCreate, background_tasks: Back
         if payload.sessionFlow.survey:
             session_config["survey"] = payload.sessionFlow.survey.model_dump(exclude_none=True)
 
+    # Geofenced attendance: pin the check-in radius to the chosen venue's
+    # coordinates. Only meaningful if geoFencing is on AND the venue has
+    # coordinates on record - otherwise the columns stay NULL and the check-in
+    # geofence is simply not enforced.
+    geo_latitude = geo_longitude = None
+    geo_radius = None
+    attendance_cfg = session_config.get("attendance")
+    if attendance_cfg and attendance_cfg.get("geoFencing"):
+        geo_radius = attendance_cfg.get("geoRadius") or 100
+        if payload.venue:
+            venue = catalog_repository.get_venue_by_uid(db, payload.venue)
+            if venue and venue.latitude is not None and venue.longitude is not None:
+                geo_latitude = venue.latitude
+                geo_longitude = venue.longitude
+
     conference = Conference(
         zone=payload.zone,
         region=payload.region,
@@ -284,6 +304,9 @@ def create_training(db: Session, payload: TrainingCreate, background_tasks: Back
         state=payload.state,
         district=payload.district,
         venueUid=payload.venue,
+        geoLatitude=geo_latitude,
+        geoLongitude=geo_longitude,
+        geoRadius=geo_radius,
         checklistUid=",".join(payload.checklist) if payload.checklist else None,
         sessionConfig=json.dumps(session_config) if session_config else None,
         # The trainee session flow (see session_service._select_current_conference
@@ -431,8 +454,17 @@ def list_trainer_trainings(
         all_trainee_uids |= uids
 
     total_sessions = len(conferences)
-    completed = sum(1 for c in conferences if c.conferenceStatus == "Completed")
-    pending = total_sessions - completed
+    completed = sum(1 for c in conferences if title_status(c.conferenceStatus) == "Completed")
+    # Pending = incoming AND approved: not yet started (excludes Ongoing/Live -
+    # that's running right now, not "incoming"), not Completed, and actually
+    # Approved (a training still awaiting admin approval, or Rejected, isn't
+    # a real incoming session). Was `total_sessions - completed`, which lumped
+    # in-progress and not-yet-approved sessions into "Pending" too.
+    pending = sum(
+        1
+        for c in conferences
+        if title_status(c.status) == "Approved" and title_status(c.conferenceStatus) not in ("Ongoing", "Live", "Completed")
+    )
     executed_percentage = round((completed / total_sessions) * 100) if total_sessions else 0
     pending_percentage = round((pending / total_sessions) * 100) if total_sessions else 0
 
@@ -513,6 +545,23 @@ def reject_training(db: Session, admin: Admin, conference_uid: str) -> TrainingO
     )
 
 
+def _audience_class(attendance) -> str:
+    """ASSIGNED (admin pre-seeded roster) / FRESH (registered via the QR flow) /
+    UNASSIGNED (existing trainee who logged in and joined). Written to
+    `attendance.sessionMeta` at join time (session_service.join_session);
+    legacy rows with no meta fall back to UNASSIGNED."""
+    if attendance is None:
+        return "UNASSIGNED"
+    if attendance.sessionMeta:
+        try:
+            value = (json.loads(attendance.sessionMeta) or {}).get("audience")
+            if value in ("ASSIGNED", "FRESH", "UNASSIGNED"):
+                return value
+        except (ValueError, TypeError):
+            pass
+    return "UNASSIGNED"
+
+
 def _build_dashboard(db: Session, conference: Conference) -> SessionDashboardOut:
     auto_advance_if_due(db, conference)
     conference_uid = conference.conferenceUid
@@ -539,6 +588,7 @@ def _build_dashboard(db: Session, conference: Conference) -> SessionDashboardOut
     trainees_by_uid = {t.traineeUid: t for t in trainee_repository.get_by_uids(db, participant_uids)}
 
     attendance_by_trainee = {a.traineeUid: a for a in attendance_rows}
+    audience_by_uid = {uid: _audience_class(attendance_by_trainee.get(uid)) for uid in participant_uids}
 
     def _row_status(uid: str) -> str:
         att = attendance_by_trainee.get(uid)
@@ -550,6 +600,20 @@ def _build_dashboard(db: Session, conference: Conference) -> SessionDashboardOut
             return "Absent"
         return "Pending"  # "Joined" - on the list, not checked in yet
 
+    def _proctoring(uid: str) -> tuple[bool, int, list[str]]:
+        """(isLocked, strikes, log lines) from the trainee's attendance row -
+        `isTheftLocked` / `theftAttemptsLeft` / `theftRemarks` (see
+        session_service.report_proctoring_lock)."""
+        att = attendance_by_trainee.get(uid)
+        if att is None:
+            return False, 0, []
+        logs = [ln for ln in (att.theftRemarks or "").splitlines() if ln.strip()]
+        attempts_left = att.theftAttemptsLeft if att.theftAttemptsLeft is not None else 3
+        strikes = max(0, min(3, 3 - attempts_left))
+        return bool(att.isTheftLocked), strikes, logs
+
+    proctoring_by_uid = {uid: _proctoring(uid) for uid in participant_uids}
+
     trainee_rows = [
         TraineeRow(
             traineeUid=uid,
@@ -557,12 +621,7 @@ def _build_dashboard(db: Session, conference: Conference) -> SessionDashboardOut
             employeeId=trainees_by_uid[uid].employee_id if uid in trainees_by_uid else None,
             phone=trainees_by_uid[uid].phone if uid in trainees_by_uid else None,
             profilePhoto=trainees_by_uid[uid].profilePhoto if uid in trainees_by_uid else None,
-            audienceType=(
-                "ASSIGNED"
-                if uid in trainees_by_uid
-                and trainees_by_uid[uid].trainerEmployeeId == conference.trainerEmployeeId
-                else "NOT ALLOCATED"
-            ),
+            audienceType=("ASSIGNED" if audience_by_uid.get(uid) == "ASSIGNED" else "NOT ALLOCATED"),
             status=_row_status(uid),
             markedOn=attendance_by_trainee[uid].markedOn if uid in attendance_by_trainee else None,
             checkOutTime=(
@@ -575,6 +634,9 @@ def _build_dashboard(db: Session, conference: Conference) -> SessionDashboardOut
                 if uid in latest_result_by_trainee
                 else None
             ),
+            isLocked=proctoring_by_uid[uid][0],
+            proctoringStrikes=proctoring_by_uid[uid][1],
+            proctoringLogs=proctoring_by_uid[uid][2],
         )
         for uid in participant_uids
     ]
@@ -584,10 +646,9 @@ def _build_dashboard(db: Session, conference: Conference) -> SessionDashboardOut
     present_count = sum(1 for r in trainee_rows if r.status == "Present")
     absent_count = sum(1 for r in trainee_rows if r.status == "Absent")
     not_marked_count = sum(1 for r in trainee_rows if r.status not in ("Present", "Absent"))
-    assigned_count = sum(1 for r in trainee_rows if r.audienceType == "ASSIGNED")
-    unassigned_count = len(trainee_rows) - assigned_count
-    prior_trained = attendance_repository.list_prior_trained_uids(db, participant_uids, conference_uid)
-    fresh_count = len(participant_uids - prior_trained)
+    assigned_count = sum(1 for a in audience_by_uid.values() if a == "ASSIGNED")
+    unassigned_count = sum(1 for a in audience_by_uid.values() if a == "UNASSIGNED")
+    fresh_count = sum(1 for a in audience_by_uid.values() if a == "FRESH")
 
     pass_count = sum(
         1 for r in latest_result_by_trainee.values() if float(r.percentage) >= PASS_THRESHOLD_PERCENT
@@ -657,12 +718,191 @@ def get_session_dashboard(db: Session, admin: Admin, conference_uid: str) -> Ses
     return _build_dashboard(db, conference)
 
 
-async def start_training(db: Session, admin: Admin, conference_uid: str, photo: UploadFile) -> TrainingOut:
+def _report_duration_label(conference: Conference) -> Optional[str]:
+    """"09:30 - 11:00" spanning the earliest module start to the latest
+    module end in the session flow, falling back to the conference start
+    time alone when there's no per-module config."""
+    try:
+        config = json.loads(conference.sessionConfig) if conference.sessionConfig else {}
+    except ValueError:
+        config = {}
+    times: list[str] = []
+    for section in config.values():
+        if isinstance(section, dict):
+            for field in ("checkInOpens", "startTime", "checkOutCloses", "endTime"):
+                value = section.get(field)
+                if value:
+                    times.append(value)
+
+    def _key(value: str) -> datetime:
+        try:
+            return datetime.strptime(value, "%I:%M %p")
+        except ValueError:
+            return datetime.max
+
+    times = sorted({t for t in times if _key(t) is not datetime.max}, key=_key)
+    if len(times) >= 2:
+        return f"{times[0]} - {times[-1]}"
+    return conference.conferenceTime
+
+
+def get_session_report(db: Session, admin: Admin, conference_uid: str) -> SessionReportOut:
+    conference = _get_owned_conference(db, admin, conference_uid)
+    # The report is a post-session artifact - only available once the trainer
+    # has ended the session (mirrors the disabled "Report" button on the
+    # Session Dashboard).
+    if title_status(conference.conferenceStatus) != "Completed":
+        raise bad_request("The session report is available once the session has ended")
+
+    attendance_by_trainee = {
+        a.traineeUid: a for a in attendance_repository.list_for_conference(db, conference_uid)
+    }
+
+    def _participants(suite_uid: Optional[str]) -> list[SessionReportParticipant]:
+        if not suite_uid:
+            return []
+        # `list_results_for_conference_suite` returns only Submitted results,
+        # newest attempt first - so the first row seen per trainee is their
+        # latest completed attempt at this module.
+        latest_by_trainee: dict[str, object] = {}
+        for result in assessment_repository.list_results_for_conference_suite(db, conference_uid, suite_uid):
+            latest_by_trainee.setdefault(result.traineeUid, result)
+
+        trainees_by_uid = {
+            t.traineeUid: t for t in trainee_repository.get_by_uids(db, set(latest_by_trainee))
+        }
+
+        rows: list[SessionReportParticipant] = []
+        for uid, result in latest_by_trainee.items():
+            trainee = trainees_by_uid.get(uid)
+            attendance = attendance_by_trainee.get(uid)
+            check_in = None
+            if attendance and attendance.markedOn:
+                check_in = attendance.markedOn.split(" ")[-1][:5]
+            rows.append(
+                SessionReportParticipant(
+                    userId=(trainee.employee_id if trainee and trainee.employee_id else uid),
+                    name=(trainee.name if trainee else "Unknown Trainee"),
+                    role="Participant",
+                    checkIn=check_in,
+                    checkOut=(
+                        attendance.checkOutTime.strftime("%H:%M")
+                        if attendance and attendance.checkOutTime
+                        else None
+                    ),
+                    score=f"{float(result.percentage):g}%",
+                )
+            )
+        rows.sort(key=lambda r: r.name.lower())
+        return rows
+
+    venue_name = _venue_names_for(db, [conference]).get(conference.venueUid)
+
+    return SessionReportOut(
+        summary=SessionReportSummary(
+            conferenceId=conference.conferenceUid,
+            sessionName=conference.suiteTitle or conference.trainingType or "Training Session",
+            date=conference.conferenceDate,
+            state=conference.state,
+            schedule=", ".join(filter(None, [conference.conferenceDate, conference.conferenceTime])) or None,
+            duration=_report_duration_label(conference),
+            venueLink=venue_name or ", ".join(filter(None, [conference.district, conference.state])) or None,
+        ),
+        standardTest=_participants(conference.postAssessmentUid),
+        liveQuiz=_participants(live_quiz_suite_uid(conference)),
+    )
+
+
+def _resolve_start_geofence(
+    db: Session,
+    admin: Admin,
+    conference: Conference,
+    latitude: float | None,
+    longitude: float | None,
+    venue_latitude: float | None,
+    venue_longitude: float | None,
+) -> None:
+    """Geofence gate for starting a session.
+
+    - If the trainer supplied `venue_latitude`/`venue_longitude` they've chosen
+      to correct the venue location from the "you're not at the venue" prompt:
+      persist it onto the venue row and this conference, and skip the check.
+    - Else, if the session is geofenced (venue has coordinates + geoFencing on)
+      and the trainer's position is outside the radius, raise a 409 the app
+      recognises to show that prompt. A session that isn't geofenced starts
+      with no location check.
+    """
+    if venue_latitude is not None and venue_longitude is not None:
+        if conference.venueUid:
+            venue = catalog_repository.get_venue_by_uid(db, conference.venueUid)
+            if venue:
+                venue.latitude = venue_latitude
+                venue.longitude = venue_longitude
+                venue.updatedBy = admin.username
+                venue.updationOn = datetime.now()
+        conference.geoLatitude = venue_latitude
+        conference.geoLongitude = venue_longitude
+        return
+
+    if not geofence_enabled(conference):
+        return
+
+    # Geofenced session: the trainer's location is mandatory - without it we
+    # can't confirm they're at the venue, and skipping the check would be a
+    # bypass. The app surfaces this as "turn on location".
+    if latitude is None or longitude is None:
+        raise HTTPException(
+            status_code=http_status.HTTP_400_BAD_REQUEST,
+            detail={
+                "code": "LOCATION_REQUIRED",
+                "message": "Turn on location to start this session - it confirms you're at the venue.",
+            },
+        )
+
+    within, distance = within_geofence(conference, latitude, longitude)
+    if within:
+        return
+
+    radius = conference.geoRadius or 100
+    raise HTTPException(
+        status_code=http_status.HTTP_409_CONFLICT,
+        detail={
+            "code": "OUTSIDE_VENUE",
+            "message": (
+                f"You're about {distance:.0f} m from the venue (allowed: {radius} m). "
+                "Start the session from the venue, or update the venue location."
+            ),
+            "distanceMeters": round(distance),
+            "radius": radius,
+        },
+    )
+
+
+async def start_training(
+    db: Session,
+    admin: Admin,
+    conference_uid: str,
+    photo: UploadFile,
+    background_tasks: BackgroundTasks,
+    latitude: float | None = None,
+    longitude: float | None = None,
+    venue_latitude: float | None = None,
+    venue_longitude: float | None = None,
+) -> TrainingOut:
     conference = _get_owned_conference(db, admin, conference_uid)
     if conference.conferenceEndsOn is not None:
         raise conflict("This session has already ended")
     if title_status(conference.status) != "Approved":
         raise forbidden("This session hasn't been approved by an admin yet")
+    # A session can only be started on (or after) its scheduled date - not
+    # ahead of time. `conferenceDate` is stored as "YYYY-MM-DD", so a plain
+    # string compare against today's ISO date is correct.
+    if conference.conferenceDate and conference.conferenceDate > date.today().isoformat():
+        raise bad_request("This session can only be started on its scheduled date")
+
+    _resolve_start_geofence(
+        db, admin, conference, latitude, longitude, venue_latitude, venue_longitude
+    )
 
     # The trainer must capture a check-in photo to start the session - same
     # identity-verification idea as the trainee's secure attendance check-in.
@@ -681,6 +921,7 @@ async def start_training(db: Session, admin: Admin, conference_uid: str, photo: 
     # runs the flow forward one manual Start at a time (start_module), so
     # `activeModuleId` stays None until they tap Start on the first module.
     conference_repository.save(db, conference)
+    _nudge_session_room(background_tasks, conference_uid)
 
     return TrainingOut(
         conferenceUid=conference.conferenceUid,
@@ -689,7 +930,9 @@ async def start_training(db: Session, admin: Admin, conference_uid: str, photo: 
     )
 
 
-def start_module(db: Session, admin: Admin, conference_uid: str, module_key: str) -> TrainingOut:
+def start_module(
+    db: Session, admin: Admin, conference_uid: str, module_key: str, background_tasks: BackgroundTasks
+) -> TrainingOut:
     """Manually opens one module. The trainer runs the flow forward one
     Start at a time: a module can only be started once the session is live,
     nothing else is running, this module hasn't run yet, and every module
@@ -720,6 +963,7 @@ def start_module(db: Session, admin: Admin, conference_uid: str, module_key: str
         conference.liveQuizState = LIVE_QUIZ_STATE_IDLE
     log_module_action(db, conference.conferenceUid, module_key, "STARTED", admin.username)
     conference_repository.save(db, conference)
+    _nudge_session_room(background_tasks, conference_uid)
 
     return TrainingOut(
         conferenceUid=conference.conferenceUid,
@@ -728,7 +972,9 @@ def start_module(db: Session, admin: Admin, conference_uid: str, module_key: str
     )
 
 
-def restart_module(db: Session, admin: Admin, conference_uid: str, module_key: str) -> TrainingOut:
+def restart_module(
+    db: Session, admin: Admin, conference_uid: str, module_key: str, background_tasks: BackgroundTasks
+) -> TrainingOut:
     """Re-opens a module that already ran. Only allowed while no other module
     is currently live (the trainer must end the running one first). Powers
     the per-row Restart button on the Session Dashboard's Execution Flow."""
@@ -754,6 +1000,7 @@ def restart_module(db: Session, admin: Admin, conference_uid: str, module_key: s
         conference.liveQuizState = LIVE_QUIZ_STATE_IDLE
     log_module_action(db, conference.conferenceUid, module_key, "STARTED", admin.username)
     conference_repository.save(db, conference)
+    _nudge_session_room(background_tasks, conference_uid)
 
     return TrainingOut(
         conferenceUid=conference.conferenceUid,
@@ -762,7 +1009,9 @@ def restart_module(db: Session, admin: Admin, conference_uid: str, module_key: s
     )
 
 
-def stop_active_module(db: Session, admin: Admin, conference_uid: str) -> TrainingOut:
+def stop_active_module(
+    db: Session, admin: Admin, conference_uid: str, background_tasks: BackgroundTasks
+) -> TrainingOut:
     """Force-ends whatever module is currently live, without opening the
     next one - the trainer starts that manually. Never ends the session
     itself (only end_training / the red "End Session" button does that).
@@ -779,6 +1028,7 @@ def stop_active_module(db: Session, admin: Admin, conference_uid: str) -> Traini
     log_module_action(db, conference.conferenceUid, current, "STOPPED", admin.username)
     conference.activeModuleId = None
     conference_repository.save(db, conference)
+    _nudge_session_room(background_tasks, conference_uid)
 
     return TrainingOut(
         conferenceUid=conference.conferenceUid,
@@ -787,7 +1037,9 @@ def stop_active_module(db: Session, admin: Admin, conference_uid: str) -> Traini
     )
 
 
-def advance_module(db: Session, admin: Admin, conference_uid: str) -> TrainingOut:
+def advance_module(
+    db: Session, admin: Admin, conference_uid: str, background_tasks: BackgroundTasks
+) -> TrainingOut:
     """Hands the session off from its current live module to the next one
     in the configured flow (e.g. Attendance -> Survey), closing out the
     current module's Execution Flow entry and opening the next. Powers the
@@ -819,6 +1071,7 @@ def advance_module(db: Session, admin: Admin, conference_uid: str) -> TrainingOu
         log_module_action(db, conference.conferenceUid, next_module, "STARTED", admin.username)
 
     conference_repository.save(db, conference)
+    _nudge_session_room(background_tasks, conference_uid)
 
     return TrainingOut(
         conferenceUid=conference.conferenceUid,
@@ -827,10 +1080,39 @@ def advance_module(db: Session, admin: Admin, conference_uid: str) -> TrainingOu
     )
 
 
-def end_training(db: Session, admin: Admin, conference_uid: str) -> TrainingOut:
+async def end_training(
+    db: Session,
+    admin: Admin,
+    conference_uid: str,
+    background_tasks: BackgroundTasks,
+    photo: UploadFile,
+    attendance_sheet: UploadFile,
+) -> TrainingOut:
     conference = _get_owned_conference(db, admin, conference_uid)
     if conference.conferenceEndsOn is not None:
         raise conflict("This session has already ended")
+
+    # Security Check-Out: the trainer captures a face photo and attaches the
+    # signed attendance sheet - both required to close the session. Validated
+    # before any state change so a bad upload leaves the session running.
+    photo_bytes = await photo.read()
+    photo_ext = validate_image_upload(
+        photo.content_type, photo_bytes, size_error_detail="Photo must be 5MB or smaller"
+    )
+    sheet_bytes = await attendance_sheet.read()
+    sheet_ext = validate_document_upload(
+        attendance_sheet.content_type,
+        sheet_bytes,
+        size_error_detail="Attendance sheet must be 5MB or smaller",
+    )
+
+    photo_dir = media_subdir("trainer_checkout_photos")
+    (photo_dir / f"{conference.conferenceUid}.{photo_ext}").write_bytes(photo_bytes)
+    conference.conferenceImage = f"trainer_checkout_photos/{conference.conferenceUid}.{photo_ext}"
+
+    sheet_dir = media_subdir("attendance_sheets")
+    (sheet_dir / f"{conference.conferenceUid}.{sheet_ext}").write_bytes(sheet_bytes)
+    conference.attendanceSheet = f"attendance_sheets/{conference.conferenceUid}.{sheet_ext}"
 
     if conference.activeModuleId:
         if conference.activeModuleId == "LIVE_QUIZ":
@@ -842,6 +1124,7 @@ def end_training(db: Session, admin: Admin, conference_uid: str) -> TrainingOut:
     conference.conferenceStatus = "Completed"
     conference.actualEndedAt = datetime.now()
     conference_repository.save(db, conference)
+    _nudge_session_room(background_tasks, conference_uid)
 
     return TrainingOut(
         conferenceUid=conference.conferenceUid,
@@ -850,37 +1133,113 @@ def end_training(db: Session, admin: Admin, conference_uid: str) -> TrainingOut:
     )
 
 
+def _append_remark_line(existing: str | None, line: str) -> str:
+    """This schema has no activity-log table - entity `remarks` longtext
+    fields are used as running text logs (see `attendance.theftRemarks`
+    COMMENT 'Log of tab switches'). Prepend a timestamped line so the newest
+    entry is first."""
+    entry = f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {line}"
+    return f"{entry}\n{existing}" if existing else entry
+
+
+def _nudge_session_room(background_tasks: BackgroundTasks, conference_uid: str) -> None:
+    """Tell everyone on the conference's `/ws/live` room (the trainees) to
+    refetch `/sessions/current`. Fired after any trainer action that changes
+    what a trainee sees - starting/stopping a module, marking attendance,
+    starting/ending the session - so their screen updates in real time
+    instead of waiting for the 10s poll. The payload is a thin nudge; the
+    real state travels over REST."""
+    background_tasks.add_task(ws_manager.send_to_room, conference_uid, {"type": "session"})
+
+
 def mark_attendance(
-    db: Session, admin: Admin, conference_uid: str, trainee_uid: str, payload: AttendanceMarkRequest
+    db: Session,
+    admin: Admin,
+    conference_uid: str,
+    trainee_uid: str,
+    payload: AttendanceMarkRequest,
+    background_tasks: BackgroundTasks,
 ) -> SessionDashboardOut:
-    """Manual override for the Trainee Master List's IN/OUT controls -
-    lets the trainer correct a trainee's attendance status by hand."""
+    """Manual Present/Absent from the Trainee Master List - only allowed
+    while the session is running. Records who/when/why: sets `status` +
+    `updatedBy`, appends a timestamped line to `attendance.remarks`, and
+    upserts the `attendance_logs` snapshot for the ATTENDANCE module."""
     conference = _get_owned_conference(db, admin, conference_uid)
+    if title_status(conference.conferenceStatus) != "Ongoing":
+        raise conflict("Attendance can only be changed while the session is running")
+
+    now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    log_line = f"{admin.username} -> {payload.status.upper()}: {payload.reason.strip()}"
 
     record = attendance_repository.get_for_conference_and_trainee(db, conference_uid, trainee_uid)
     if record:
         record.status = payload.status
+        record.markedOn = now_str
+        record.updatedBy = admin.username
+        record.remarks = _append_remark_line(record.remarks, log_line)
         attendance_repository.save(db)
     else:
         attendance_repository.create(
             db,
             Attendance(
                 conferenceUid=conference_uid,
-                trainerUid=admin.username,
+                trainerUid=conference.trainerEmployeeId,
                 traineeUid=trainee_uid,
-                markedOn=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                markedOn=now_str,
                 status=payload.status,
+                updatedBy=admin.username,
+                remarks=_append_remark_line(None, log_line),
             ),
         )
 
+    attendance_repository.upsert_attendance_log(
+        db, conference_uid, trainee_uid, "ATTENDANCE", payload.status
+    )
+    attendance_repository.save(db)
+
+    _nudge_session_room(background_tasks, conference_uid)
     return _build_dashboard(db, conference)
 
 
-def reset_attendance(db: Session, admin: Admin, conference_uid: str, trainee_uid: str) -> SessionDashboardOut:
+def unlock_proctoring(
+    db: Session,
+    admin: Admin,
+    conference_uid: str,
+    trainee_uid: str,
+    payload: ProctoringUnlockRequest,
+    background_tasks: BackgroundTasks,
+) -> SessionDashboardOut:
+    """Clears a trainee's on-device proctoring lockout from the Participant
+    Master List - records who/when/why on `attendance.theftRemarks` +
+    `remarks` and resets `isTheftLocked` / `theftAttemptsLeft`. The trainee's
+    post-test screen sees the flip via `/sessions/current` and lets them back
+    in (session_service.get_current_session)."""
+    conference = _get_owned_conference(db, admin, conference_uid)
+    record = attendance_repository.get_for_conference_and_trainee(db, conference_uid, trainee_uid)
+    if record is None or not record.isTheftLocked:
+        raise conflict("This trainee isn't locked")
+
+    reason = payload.reason.strip()
+    now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    record.isTheftLocked = 0
+    record.theftAttemptsLeft = 3
+    record.theftRemarks = f"[{now_str}] {admin.username} -> UNLOCK: {reason}\n{record.theftRemarks or ''}".rstrip()
+    record.remarks = _append_remark_line(record.remarks, f"{admin.username} -> PROCTORING UNLOCK: {reason}")
+    record.updatedBy = admin.username
+    attendance_repository.save(db)
+
+    _nudge_session_room(background_tasks, conference_uid)
+    return _build_dashboard(db, conference)
+
+
+def reset_attendance(
+    db: Session, admin: Admin, conference_uid: str, trainee_uid: str, background_tasks: BackgroundTasks
+) -> SessionDashboardOut:
     """Clears a trainee's attendance record entirely - the "..." control
     on the Trainee Master List."""
     conference = _get_owned_conference(db, admin, conference_uid)
     attendance_repository.delete_for_conference_and_trainee(db, conference_uid, trainee_uid)
+    _nudge_session_room(background_tasks, conference_uid)
     return _build_dashboard(db, conference)
 
 
@@ -900,6 +1259,17 @@ def list_attendance(db: Session, admin: Admin) -> list[AttendanceListItemOut]:
 
     trainee_uids = {a.traineeUid for a in attendance_rows}
     trainees_by_uid = {t.traineeUid: t for t in trainee_repository.get_by_uids(db, trainee_uids)}
+
+    # Per-participant tallies across every training this trainer owns - the
+    # roster is seeded (status "Pending") when a training is scheduled, so a
+    # trainee on an upcoming session counts here before it's held.
+    trainings_total: Counter[str] = Counter(a.traineeUid for a in attendance_rows)
+    trainings_present: Counter[str] = Counter(
+        a.traineeUid for a in attendance_rows if a.status == "Present"
+    )
+    trainings_pending: Counter[str] = Counter(
+        a.traineeUid for a in attendance_rows if a.status in ("Pending", "Joined")
+    )
 
     result_rows = assessment_repository.list_results_for_conferences(db, conference_uids)
     # Keep only the latest attempt per (conference, trainee), matching a
@@ -952,6 +1322,9 @@ def list_attendance(db: Session, admin: Admin) -> list[AttendanceListItemOut]:
                 conferenceId=a.conferenceUid,
                 lastUpdates=a.timestamp.strftime("%Y-%m-%d %H:%M:%S") if a.timestamp else None,
                 marked=a.status == "Present",
+                trainerTrainingsTotal=trainings_total[a.traineeUid],
+                trainerTrainingsPresent=trainings_present[a.traineeUid],
+                trainerTrainingsPending=trainings_pending[a.traineeUid],
             )
         )
 

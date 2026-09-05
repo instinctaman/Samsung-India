@@ -1,5 +1,49 @@
+import json
 import math
 from typing import Optional
+
+
+def attendance_is_assigned(attendance) -> bool:
+    """True when the trainee is on the trainer's roster for this session - a
+    pre-seeded "Pending" row, or a row tagged ASSIGNED at QR-join time
+    (session_service._set_attendance_audience -> sessionMeta.audience).
+
+    Assigned trainees self-admit: completing Secure Check-In marks them
+    Present without the trainer's manual "mark present" step. Walk-ins
+    (UNASSIGNED / FRESH) stay trainer-gated."""
+    if attendance is None:
+        return False
+    if attendance.status == "Pending":
+        return True
+    try:
+        return (json.loads(attendance.sessionMeta or "{}") or {}).get("audience") == "ASSIGNED"
+    except (ValueError, TypeError):
+        return False
+
+
+def geofence_enabled(conference) -> bool:
+    """True when this session's attendance module is configured for geofenced
+    check-in AND the conference has venue coordinates to fence against. When
+    either is missing the geofence simply isn't enforced."""
+    if conference is None or conference.geoLatitude is None or conference.geoLongitude is None:
+        return False
+    if not conference.sessionConfig:
+        return False
+    try:
+        return bool(json.loads(conference.sessionConfig).get("attendance", {}).get("geoFencing"))
+    except (ValueError, AttributeError):
+        return False
+
+
+def within_geofence(conference, latitude: float, longitude: float) -> tuple[bool, Optional[float]]:
+    """(is_within, distance_m) for a trainee's check-in position against the
+    conference's geofence. Assumes `geofence_enabled(conference)` is True."""
+    distance = distance_meters(
+        latitude, longitude, float(conference.geoLatitude), float(conference.geoLongitude)
+    )
+    if distance is None:
+        return True, None
+    return distance <= (conference.geoRadius or 100), distance
 
 
 def distance_meters(

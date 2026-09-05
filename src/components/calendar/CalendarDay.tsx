@@ -1,5 +1,6 @@
 import { Colors } from "@/theme/colors";
-import { Pressable, StyleSheet, Text } from "react-native";
+import { Pressable, StyleSheet } from "react-native";
+import AppText from "@/components/ui/AppText";
 import { isToday } from "./calendarUtils";
 
 type CalendarDayProps = {
@@ -36,7 +37,7 @@ export default function CalendarDay({
       disabled={disabled}
       onPress={() => onSelect(date)}
     >
-      <Text
+      <AppText
         style={[
           styles.text,
           !isCurrentMonth && styles.textOutside,
@@ -47,7 +48,7 @@ export default function CalendarDay({
         ]}
       >
         {dayNumber}
-      </Text>
+      </AppText>
     </Pressable>
   );
 }

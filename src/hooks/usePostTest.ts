@@ -23,6 +23,7 @@ import {
   SECURITY_VIOLATIONS,
   SecurityViolationType,
 } from "@/components/proctoring/violations";
+import { reportProctoringLock } from "@/api/session";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -189,6 +190,16 @@ export function usePostTest(
         );
       } catch {
         // Even if API call fails, lock the test permanently for this session
+      }
+
+      // Persist the lock onto the trainee's attendance row so the trainer's
+      // Participant Master List shows it and can unlock (with a reason).
+      if (token && conferenceUid) {
+        try {
+          await reportProctoringLock(token, conferenceUid, violationType, MAX_PROCTORING_WARNINGS);
+        } catch {
+          // Non-fatal - the local lock still holds for this session.
+        }
       }
 
       router.replace({

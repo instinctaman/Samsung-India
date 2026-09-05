@@ -52,3 +52,6 @@ backend/backups/
 *.md 
 *.claude
 database_dump.sql
+claudememory.md
+tasks.lessons.md
+primer.md

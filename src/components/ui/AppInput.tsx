@@ -10,7 +10,7 @@ import { Ionicons } from "@expo/vector-icons";
 
 import AppText from "./AppText";
 import { Colors } from "@/theme/colors";
-import { FontFamily } from "@/theme/fontFamily";
+import { APP_FONT_FAMILY } from "@/theme/fontFamily";
 import { Fonts } from "@/theme/fonts";
 import { FontWeight } from "@/theme/typography";
 import { Radius } from "@/theme/radius";
@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     fontSize: Fonts.body,
     backgroundColor: Colors.white,
-    fontFamily: FontFamily.regular,
+    fontFamily: APP_FONT_FAMILY,
     includeFontPadding: false,
   },
 

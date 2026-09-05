@@ -1,4 +1,5 @@
 import json
+import logging
 from datetime import datetime
 from typing import List, Optional
 
@@ -18,6 +19,7 @@ from app.schemas.assessment import (
     SubmitResult,
 )
 from app.models.quiz import Assessment, AssessmentResult, AssessmentSuite, Question
+from app.repositories import assessment_repository, attendance_repository
 from app.services import assessment_service
 
 router = APIRouter(prefix="/assessments", tags=["assessments"])
@@ -39,6 +41,18 @@ def submit_assessment(
     db: Session = Depends(get_db),
     trainee: Trainee = Depends(get_current_trainee),
 ):
+    # A trainee can only take a module's test once the trainer has marked
+    # them Present for this session - being un-marked or marked Absent blocks
+    # the submission (mirrors the locked modules in GET /sessions/current).
+    attendance = attendance_repository.get_for_conference_and_trainee(
+        db, payload.conferenceUid, trainee.traineeUid
+    )
+    if not attendance or attendance.status != "Present":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You must be marked present by the trainer to submit this assessment.",
+        )
+
     questions = db.query(Question).filter(Question.assessmentSuiteUid == suite_uid).all()
     if not questions:
         raise HTTPException(
@@ -73,32 +87,33 @@ def submit_assessment(
             )
         )
 
-    previous_attempts = (
-        db.query(AssessmentResult)
-        .filter(
-            AssessmentResult.traineeUid == trainee.traineeUid,
-            AssessmentResult.assessmentSuiteUid == suite_uid,
-        )
-        .count()
-    )
-
     percentage = round((total_score / max_score) * 100, 2) if max_score else 0.0
 
-    db.add(
-        AssessmentResult(
-            conferenceUid=payload.conferenceUid,
-            traineeUid=trainee.traineeUid,
-            assessmentSuiteUid=suite_uid,
-            attemptNumber=previous_attempts + 1,
-            totalScore=total_score,
-            maxScore=max_score,
-            percentage=percentage,
-            startedAt=now,
-            submittedAt=now,
-            status="Submitted",
+    try:
+        db.add(
+            AssessmentResult(
+                conferenceUid=payload.conferenceUid,
+                traineeUid=trainee.traineeUid,
+                assessmentSuiteUid=suite_uid,
+                attemptNumber=assessment_repository.next_attempt_number(
+                    db, trainee.traineeUid, suite_uid
+                ),
+                totalScore=total_score,
+                maxScore=max_score,
+                percentage=percentage,
+                startedAt=now,
+                submittedAt=now,
+                status="Submitted",
+            )
         )
-    )
-    db.commit()
+        db.commit()
+    except Exception as exc:  # TEMP diagnostic - surface the real reason
+        db.rollback()
+        logging.getLogger("assessment").exception("submit_assessment failed")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Save failed: {type(exc).__name__}: {str(exc)[:200]}",
+        )
 
     return SubmitResult(
         totalScore=total_score,

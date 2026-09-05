@@ -27,27 +27,12 @@ export * from "./QuizResult";
 export { default as QuizWaiting } from "./QuizWaiting";
 export * from "./QuizWaiting";
 
-export { default as AssessmentMapHeader } from "./AssessmentMapHeader";
-export * from "./AssessmentMapHeader";
-
-export { default as QuestionStatusGrid } from "./QuestionStatusGrid";
-export * from "./QuestionStatusGrid";
-
-export { default as AssessmentMap } from "./AssessmentMap";
-export * from "./AssessmentMap";
-
 export { default as PerformanceSummary } from "./PerformanceSummary";
 export * from "./PerformanceSummary";
 
 export { default as LeaderboardRow } from "./LeaderboardRow";
 export * from "./LeaderboardRow";
 
-export { default as LeaderboardList } from "./LeaderboardList";
-export * from "./LeaderboardList";
-
 export { default as LeaderboardFilter } from "./LeaderboardFilter";
 export * from "./LeaderboardFilter";
-
-export { default as QuizLeaderboard } from "./QuizLeaderboard";
-export * from "./QuizLeaderboard";
 

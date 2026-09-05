@@ -15,6 +15,21 @@ def parse_module_start(conference_date: str | None, time_str: str | None) -> dat
         return None
 
 
+def time_to_minutes(raw: str | None) -> int | None:
+    """"10:00 AM" / "14:30" -> minutes since midnight, for ordering a session's
+    modules by their planned start time. Returns None for a missing/unparseable
+    value so callers can sort those last."""
+    if not raw:
+        return None
+    for fmt in ("%I:%M %p", "%H:%M"):
+        try:
+            parsed = datetime.strptime(raw.strip(), fmt)
+            return parsed.hour * 60 + parsed.minute
+        except ValueError:
+            continue
+    return None
+
+
 def duration(start: str | None, end: str | None) -> str | None:
     """Formats a "10:00 AM" -> "11:30 AM" pair as "1h 30m" for display."""
     if not start or not end:

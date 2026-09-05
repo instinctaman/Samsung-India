@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
+import AppText from "@/components/ui/AppText";
 import { Ionicons } from "@expo/vector-icons";
 
 import { Colors } from "@/theme/colors";
@@ -23,8 +24,8 @@ export default function TopPerformersCard({
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.titleRow}>
-          <Text style={styles.crownEmoji}>👑</Text>
-          <Text style={styles.title}>TOP PERFORMERS</Text>
+          <AppText style={styles.crownEmoji}>👑</AppText>
+          <AppText style={styles.title}>TOP PERFORMERS</AppText>
         </View>
 
         {hasStarted && hasData && (
@@ -35,9 +36,9 @@ export default function TopPerformersCard({
             accessibilityRole="button"
             accessibilityLabel={isCollapsed ? "View More" : "View Less"}
           >
-            <Text style={styles.toggleText}>
+            <AppText style={styles.toggleText}>
               {isCollapsed ? "View More" : "View Less"}
-            </Text>
+            </AppText>
             <Ionicons
               name={isCollapsed ? "chevron-down" : "chevron-forward"}
               size={13}
@@ -50,11 +51,11 @@ export default function TopPerformersCard({
       {/* Empty State */}
       {(!hasStarted || !hasData) && (
         <View style={styles.emptyState}>
-          <Text style={styles.emptyTrophy}>🏆</Text>
-          <Text style={styles.emptyTitle}>Leaderboard Empty</Text>
-          <Text style={styles.emptySubtitle}>
+          <AppText style={styles.emptyTrophy}>🏆</AppText>
+          <AppText style={styles.emptyTitle}>Leaderboard Empty</AppText>
+          <AppText style={styles.emptySubtitle}>
             Scores will appear here as participants finish quizzes
-          </Text>
+          </AppText>
         </View>
       )}
 
@@ -67,17 +68,17 @@ export default function TopPerformersCard({
                 <View style={styles.avatarCircle}>
                   <Ionicons name="person" size={13} color="#8B5CF6" />
                 </View>
-                <Text style={styles.name} numberOfLines={1}>
+                <AppText style={styles.name} numberOfLines={1}>
                   {performer.name}
-                </Text>
+                </AppText>
               </View>
 
-              <Text style={styles.scoreText}>
+              <AppText style={styles.scoreText}>
                 {performer.score}/{performer.maxScore}{" "}
-                <Text style={styles.percentageText}>
+                <AppText style={styles.percentageText}>
                   [{performer.percentage}%]
-                </Text>
-              </Text>
+                </AppText>
+              </AppText>
             </View>
           ))}
         </View>

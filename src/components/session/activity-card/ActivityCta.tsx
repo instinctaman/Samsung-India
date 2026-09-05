@@ -14,7 +14,7 @@ type ActivityCtaProps = {
 };
 
 export default function ActivityCta({ activity, isAttendance, onMarkAttendance, onEnterAction }: ActivityCtaProps) {
-  const { isCompleted, isLive, isMissed, isLocked, securityCheckInCompleted } = activity;
+  const { isCompleted, isLive, isMissed, isLocked, lockReason, securityCheckInCompleted } = activity;
 
   if (isCompleted) {
     return (
@@ -25,6 +25,12 @@ export default function ActivityCta({ activity, isAttendance, onMarkAttendance, 
         backgroundColor={Colors.recordedGreenBg}
       />
     );
+  }
+
+  // Admission gate: the trainer hasn't marked this trainee present, so the
+  // module's action (check-in / enter) is blocked even if it's LIVE.
+  if (lockReason) {
+    return <WaitingCard title="Locked" subtitle={lockReason} />;
   }
 
   if (isLive && isAttendance) {

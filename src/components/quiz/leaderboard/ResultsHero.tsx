@@ -1,6 +1,5 @@
-import { StyleSheet, View } from "react-native";
+import { Image, StyleSheet, View } from "react-native";
 
-import WinImage from "@/assets/images/svg/win.svg";
 import AppText from "@/components/ui/AppText";
 import { Colors } from "@/theme/colors";
 import { FontWeight } from "@/theme/fontWeight";
@@ -13,7 +12,11 @@ export default function ResultsHero({ screenWidth }: ResultsHeroProps) {
   return (
     <View style={styles.trophyWrapper}>
       <View style={styles.trophyBanner}>
-        <WinImage width={screenWidth} height={133} />
+        <Image
+          source={require("@/assets/images/win.webp")}
+          style={{ width: screenWidth, height: 133 }}
+          resizeMode="contain"
+        />
       </View>
       <AppText style={styles.resultsTitle} weight={FontWeight.bold}>
         Results

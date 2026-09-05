@@ -15,10 +15,10 @@ export type TraineeMetricsProps = {
 };
 
 export default function TraineeMetricsGrid({
-  totalTrainings = 32,
-  presentCount = 18,
-  absentCount = 6,
-  scheduledCount = 8,
+  totalTrainings = 0,
+  presentCount = 0,
+  absentCount = 0,
+  scheduledCount = 0,
 }: TraineeMetricsProps) {
   const cards = [
     {

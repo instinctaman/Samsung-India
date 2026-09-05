@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
+import AppText from "@/components/ui/AppText";
 import { Ionicons } from "@expo/vector-icons";
 
 import { Colors } from "@/theme/colors";
@@ -16,19 +17,19 @@ export default function LiveStudioQuestionRow({ question: q, secondsLeft, onBroa
     <View style={[styles.row, q.isActive && styles.rowActive]}>
       <View style={styles.badgesCol}>
         <View style={styles.numPill}>
-          <Text style={styles.numText}>{q.qNumber}</Text>
+          <AppText style={styles.numText}>{q.qNumber}</AppText>
         </View>
         <View style={styles.timerPill}>
           <Ionicons name="alarm-outline" size={10} color={Colors.headerBlue} />
-          <Text style={styles.timerText}>
+          <AppText style={styles.timerText}>
             {q.isActive && secondsLeft !== undefined ? `${secondsLeft}s` : `${q.timerSecs}s`}
-          </Text>
+          </AppText>
         </View>
       </View>
 
       <View style={styles.textCol}>
-        <Text style={styles.qText} numberOfLines={2}>{q.questionText}</Text>
-        <Text style={styles.metaText}>{q.points} pts · {q.responseCount} responses</Text>
+        <AppText style={styles.qText} numberOfLines={2}>{q.questionText}</AppText>
+        <AppText style={styles.metaText}>{q.points} pts · {q.responseCount} responses</AppText>
       </View>
 
       <Pressable
@@ -36,7 +37,7 @@ export default function LiveStudioQuestionRow({ question: q, secondsLeft, onBroa
         onPress={() => onBroadcast(q.id)}
       >
         <Ionicons name={q.isActive ? "radio" : "play"} size={10} color={Colors.white} />
-        <Text style={styles.broadcastBtnText}>{q.isActive ? "Live" : "Broadcast"}</Text>
+        <AppText style={styles.broadcastBtnText}>{q.isActive ? "Live" : "Broadcast"}</AppText>
       </Pressable>
     </View>
   );

@@ -96,6 +96,10 @@ class AttendanceConfig(BaseModel):
     checkInOpens: Optional[str] = None
     checkOutCloses: Optional[str] = None
     geoFencing: bool = False
+    # Metres a trainee may be from the venue and still check in. Only used when
+    # geoFencing is on and the venue has coordinates. Defaults to 100 (the
+    # `conference.geoRadius` column default) when not given.
+    geoRadius: Optional[int] = Field(default=None, ge=10, le=5000)
 
 
 class SessionFlowConfig(BaseModel):
@@ -145,6 +149,15 @@ class TrainingOut(BaseModel):
 
 class AttendanceMarkRequest(BaseModel):
     status: Literal["Present", "Absent", "Joined", "Pending"]
+    # The trainer must give a reason for a manual Present/Absent mark - it's
+    # appended (with who + when) to `attendance.remarks` as an audit trail.
+    reason: str = Field(min_length=1, max_length=500)
+
+
+class ProctoringUnlockRequest(BaseModel):
+    # The trainer must give a reason to clear a proctoring lockout - appended
+    # (with who + when) to `attendance.theftRemarks` + `remarks`.
+    reason: str = Field(min_length=1, max_length=500)
 
 
 class AttendanceListItemOut(BaseModel):
@@ -176,6 +189,11 @@ class AttendanceListItemOut(BaseModel):
     conferenceId: Optional[str] = None
     lastUpdates: Optional[str] = None
     marked: bool
+    # How many of this trainer's trainings the participant is on, across all
+    # of them - same value repeats on each of that participant's rows.
+    trainerTrainingsTotal: int = 0
+    trainerTrainingsPresent: int = 0
+    trainerTrainingsPending: int = 0
 
 
 class TrainingAgendaItem(BaseModel):
@@ -277,6 +295,13 @@ class TraineeRow(BaseModel):
     checkOutTime: Optional[str] = None
     score: Optional[str] = None
     profilePhoto: Optional[str] = None
+    # On-device proctoring lockout (post-test). `isLocked` drives the red
+    # "LOCKED" pill + the trainer's unlock control; `proctoringLogs` are the
+    # already-formatted strike/unlock lines from `attendance.theftRemarks`.
+    isLocked: bool = False
+    proctoringStrikes: int = 0
+    proctoringMaxStrikes: int = 3
+    proctoringLogs: list[str] = []
 
 
 class ExecutionFlowItem(BaseModel):
@@ -339,6 +364,10 @@ class LiveStudioOut(BaseModel):
     state: str
     activeQuestionId: Optional[int] = None
     timerEndsAt: Optional[int] = None
+    # Server clock at response time (epoch ms). The client subtracts its own
+    # Date.now() to get the clock offset, so the countdown is right even when
+    # the device clock disagrees with the server's.
+    serverNowMs: Optional[int] = None
     participants: int
     totalResponses: int
     questions: list[LiveStudioQuestionOut] = []
@@ -373,3 +402,32 @@ class SessionDashboardOut(BaseModel):
     # Only present while LIVE_QUIZ is the active module - see _live_studio in
     # services/training_service.py.
     liveStudio: Optional[LiveStudioOut] = None
+
+
+class SessionReportParticipant(BaseModel):
+    userId: str
+    name: str
+    role: str = "Participant"
+    checkIn: Optional[str] = None
+    checkOut: Optional[str] = None
+    score: Optional[str] = None
+
+
+class SessionReportSummary(BaseModel):
+    conferenceId: str
+    sessionName: str
+    date: Optional[str] = None
+    state: Optional[str] = None
+    schedule: Optional[str] = None
+    duration: Optional[str] = None
+    venueLink: Optional[str] = None
+
+
+class SessionReportOut(BaseModel):
+    """Session Report screen. `standardTest` / `liveQuiz` list only the
+    trainees who actually completed that module for this conference (a
+    Submitted assessment result for the module's suite)."""
+
+    summary: SessionReportSummary
+    standardTest: list[SessionReportParticipant] = []
+    liveQuiz: list[SessionReportParticipant] = []

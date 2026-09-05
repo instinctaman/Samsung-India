@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
+import AppText from "@/components/ui/AppText";
 
 import { Colors } from "@/theme/colors";
 import { formatMonthDay } from "../calendarUtils";
@@ -15,10 +16,10 @@ export default function RangeInfoBanner({ selectedStart, selectedEnd }: RangeInf
       <View style={styles.infoIconCircle}>
         <Ionicons name="information" size={11} color={Colors.white} />
       </View>
-      <Text style={styles.infoText}>
-        Showing data from <Text style={styles.infoHighlight}>{formatMonthDay(selectedStart)}</Text> to{" "}
-        <Text style={styles.infoHighlight}>{formatMonthDay(selectedEnd)}</Text>.
-      </Text>
+      <AppText style={styles.infoText}>
+        Showing data from <AppText style={styles.infoHighlight}>{formatMonthDay(selectedStart)}</AppText> to{" "}
+        <AppText style={styles.infoHighlight}>{formatMonthDay(selectedEnd)}</AppText>.
+      </AppText>
     </View>
   );
 }

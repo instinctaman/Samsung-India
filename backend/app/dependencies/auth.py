@@ -78,6 +78,34 @@ def get_current_admin(
     raise unauthorized
 
 
+def get_current_principal(
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+) -> str:
+    """Any decodable trainee / admin / agencyteam token - no DB lookup, no
+    role check. For endpoints (like serving an uploaded media file) that only
+    need "some logged-in user", not a specific one, mirroring the same
+    decode-only trust level `routers/ws.py` already uses for its sockets."""
+    try:
+        payload = jwt.decode(
+            credentials.credentials,
+            settings.SECRET_KEY,
+            algorithms=[settings.ALGORITHM],
+        )
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired session",
+        )
+
+    subject = payload.get("sub")
+    if not subject:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired session",
+        )
+    return subject
+
+
 def require_admin_role(admin: Admin | AgencyTeam = Depends(get_current_admin)) -> Admin:
     """Same auth as get_current_admin, but only lets role="admin" accounts
     through - for the admin-only review/assessment-builder endpoints that

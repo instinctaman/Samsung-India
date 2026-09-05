@@ -1,6 +1,8 @@
-import { useState } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { useRef, useState } from "react";
+import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
 import * as Clipboard from "expo-clipboard";
+import { File, Paths } from "expo-file-system";
+import * as Sharing from "expo-sharing";
 import { Ionicons } from "@expo/vector-icons";
 import QRCode from "react-native-qrcode-svg";
 
@@ -22,12 +24,42 @@ const joinLink = (code: string) => `samsungindia://join/${code}`;
 
 export default function SessionQRModal({ visible, onClose, conferenceUid }: SessionQRModalProps) {
   const [copied, setCopied] = useState(false);
+  const [sharing, setSharing] = useState(false);
+  // react-native-qrcode-svg exposes toDataURL() on this ref.
+  const qrRef = useRef<{ toDataURL: (cb: (base64: string) => void) => void } | null>(null);
   const link = joinLink(conferenceUid);
 
   const handleCopy = async () => {
     await Clipboard.setStringAsync(link);
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
+  };
+
+  // Renders the QR to a PNG and hands it to the OS share sheet - so the
+  // trainer can send it over WhatsApp, Telegram, email, Drive, Nearby Share,
+  // etc. The recipient scans it live or via the app's "scan from gallery".
+  const handleShare = () => {
+    if (!qrRef.current || sharing) return;
+    setSharing(true);
+    qrRef.current.toDataURL(async (base64: string) => {
+      try {
+        const file = new File(Paths.cache, `session-qr-${conferenceUid}.png`);
+        if (file.exists) file.delete();
+        file.create();
+        file.write(base64, { encoding: "base64" });
+        if (await Sharing.isAvailableAsync()) {
+          await Sharing.shareAsync(file.uri, {
+            mimeType: "image/png",
+            dialogTitle: `Session QR - ${conferenceUid}`,
+            UTI: "public.png",
+          });
+        }
+      } catch {
+        // user cancelled or sharing unavailable - nothing to do
+      } finally {
+        setSharing(false);
+      }
+    });
   };
 
   return (
@@ -41,8 +73,31 @@ export default function SessionQRModal({ visible, onClose, conferenceUid }: Sess
         </AppText>
 
         <View style={styles.qrBox}>
-          <QRCode value={link} size={190} />
+          {/* quietZone = the mandatory white border around a QR; without it
+              scanners (esp. decoding a saved image) can't lock onto it. */}
+          <QRCode
+            value={link}
+            size={230}
+            quietZone={16}
+            ecl="Q"
+            getRef={(c) => (qrRef.current = c)}
+          />
         </View>
+
+        <Pressable
+          style={[styles.shareBtn, sharing && styles.shareBtnDim]}
+          onPress={handleShare}
+          disabled={sharing}
+        >
+          {sharing ? (
+            <ActivityIndicator size="small" color={Colors.white} />
+          ) : (
+            <>
+              <Ionicons name="share-social" size={15} color={Colors.white} />
+              <AppText style={styles.shareText} weight={FontWeight.bold}>Share QR</AppText>
+            </>
+          )}
+        </Pressable>
 
         <Pressable style={styles.copyBtn} onPress={handleCopy} hitSlop={6}>
           <Ionicons
@@ -63,9 +118,10 @@ const styles = StyleSheet.create({
   content: {
     backgroundColor: Colors.white,
     borderRadius: 20,
-    padding: 24,
+    padding: 20,
     alignItems: "center",
-    width: "85%",
+    width: "90%",
+    maxWidth: 360,
     alignSelf: "center",
   },
   title: { fontSize: 16, color: "#111827", marginBottom: 4 },
@@ -77,8 +133,22 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E5E7EB",
   },
+  shareBtn: {
+    marginTop: 18,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: Colors.mainColour1,
+    borderRadius: 12,
+    paddingVertical: 11,
+    paddingHorizontal: 22,
+    minWidth: 160,
+  },
+  shareBtnDim: { opacity: 0.6 },
+  shareText: { fontSize: 13.5, color: Colors.white },
   copyBtn: {
-    marginTop: 16,
+    marginTop: 6,
     flexDirection: "row",
     alignItems: "center",
     gap: 6,

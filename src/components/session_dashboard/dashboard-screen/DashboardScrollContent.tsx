@@ -26,7 +26,8 @@ type DashboardScrollContentProps = {
   onStartModule: (moduleKey: string) => void;
   onStopActiveModule: () => void;
   onRestartModule: (moduleKey: string) => void;
-  onMarkAttendance: (traineeUid: string, status: "Present" | "Absent") => void;
+  onMarkAttendance: (traineeUid: string, status: "Present" | "Absent", reason: string) => void;
+  onUnlockExam: (traineeUid: string, reason: string) => void;
   liveQuizControls: LiveQuizControls;
 };
 
@@ -40,6 +41,7 @@ export default function DashboardScrollContent({
   onStopActiveModule,
   onRestartModule,
   onMarkAttendance,
+  onUnlockExam,
   liveQuizControls,
 }: DashboardScrollContentProps) {
   const runtimeSeconds = useLiveRuntime(data?.actualStartedAt, data?.actualEndedAt);
@@ -123,7 +125,9 @@ export default function DashboardScrollContent({
           liveStudio={data?.liveStudio ?? null}
           liveQuizControls={liveQuizControls}
           onRefresh={onRefresh}
+          canEditAttendance={data?.conferenceStatus === "Ongoing"}
           onMarkAttendance={onMarkAttendance}
+          onUnlockExam={onUnlockExam}
         />
       )}
     </ScrollView>

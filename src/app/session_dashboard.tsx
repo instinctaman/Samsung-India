@@ -4,8 +4,10 @@ import { StyleSheet } from "react-native";
 import { SessionDashboardHeader } from "@/components/session_dashboard";
 import {
   DashboardScrollContent,
+  OutsideVenueModal,
   SessionQRModal,
   TrainerCheckInModal,
+  TrainerCheckOutModal,
   useSessionDashboardScreen,
 } from "@/components/session_dashboard/dashboard-screen";
 import DashboardBottomNav from "@/components/trainer/dashboard/DashboardBottomNav";
@@ -30,7 +32,15 @@ export default function SessionDashboardScreen() {
     handleCopyLink,
     handleStartSession,
     handleConfirmStartSession,
+    outsideVenue,
+    handleUpdateVenueLocation,
+    dismissOutsideVenue,
+    showCheckOutModal,
+    setShowCheckOutModal,
+    endingSession,
+    handleConfirmEndSession,
     handleMarkAttendance,
+    handleUnlockExam,
     handleStartModule,
     handleStopActiveModule,
     handleRestartModule,
@@ -41,6 +51,8 @@ export default function SessionDashboardScreen() {
     showSessionData,
     isLive,
     isApproved,
+    notYetDue,
+    startsOnLabel,
   } = useSessionDashboardScreen();
 
   return (
@@ -51,6 +63,9 @@ export default function SessionDashboardScreen() {
         hasStarted={showSessionData}
         isLive={isLive}
         isApproved={isApproved}
+        notYetDue={notYetDue}
+        startsOnLabel={startsOnLabel}
+        reportEnabled={isSessionClosed}
         loading={loading}
         timestamp={generatedAt}
         onBack={() => router.back()}
@@ -72,6 +87,7 @@ export default function SessionDashboardScreen() {
         onStopActiveModule={handleStopActiveModule}
         onRestartModule={handleRestartModule}
         onMarkAttendance={handleMarkAttendance}
+        onUnlockExam={handleUnlockExam}
         liveQuizControls={liveQuizControls}
       />
 
@@ -85,6 +101,19 @@ export default function SessionDashboardScreen() {
         visible={showCheckInModal}
         onClose={() => setShowCheckInModal(false)}
         onConfirm={handleConfirmStartSession}
+      />
+
+      <OutsideVenueModal
+        prompt={outsideVenue}
+        onCancel={dismissOutsideVenue}
+        onSave={handleUpdateVenueLocation}
+      />
+
+      <TrainerCheckOutModal
+        visible={showCheckOutModal}
+        submitting={endingSession}
+        onClose={() => setShowCheckOutModal(false)}
+        onConfirm={handleConfirmEndSession}
       />
     </SafeAreaView>
   );

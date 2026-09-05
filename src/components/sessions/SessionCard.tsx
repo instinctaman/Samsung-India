@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
+import AppText from "@/components/ui/AppText";
 import { Ionicons } from "@expo/vector-icons";
 
 import { TrainingAgendaItem } from "@/api/training";
@@ -42,9 +43,9 @@ export default function SessionCard({
     <View style={[styles.card, { borderColor: config.borderColor }]}>
       {/* Left Date Column */}
       <View style={styles.dateColumn}>
-        <Text style={styles.dayNumber}>{day}</Text>
-        <Text style={styles.monthText}>{month}</Text>
-        <Text style={styles.timeText}>{time}</Text>
+        <AppText style={styles.dayNumber}>{day}</AppText>
+        <AppText style={styles.monthText}>{month}</AppText>
+        <AppText style={styles.timeText}>{time}</AppText>
       </View>
 
       {/* Middle Details Column */}
@@ -57,32 +58,32 @@ export default function SessionCard({
                 style={[styles.statusDot, { backgroundColor: config.dotColor }]}
               />
             )}
-            <Text
+            <AppText
               style={[
                 styles.statusBadgeText,
                 { color: config.badgeTextColor },
               ]}
             >
               {config.label}
-            </Text>
+            </AppText>
           </View>
 
-          <Text style={styles.confUidText}>
+          <AppText style={styles.confUidText}>
             {item.conferenceUid.toUpperCase()}
-          </Text>
+          </AppText>
         </View>
 
         {/* Title */}
-        <Text style={styles.title} numberOfLines={1}>
+        <AppText style={styles.title} numberOfLines={1}>
           {item.title || "Training Session"}
-        </Text>
+        </AppText>
 
         {/* Location */}
         <View style={styles.locationRow}>
           <Ionicons name="location" size={13} color="#EF4444" />
-          <Text style={styles.locationText} numberOfLines={1}>
+          <AppText style={styles.locationText} numberOfLines={1}>
             {item.trainingHub || item.state || "New Delhi"}
-          </Text>
+          </AppText>
         </View>
       </View>
 
@@ -94,12 +95,12 @@ export default function SessionCard({
           accessibilityRole="button"
           accessibilityLabel={config.buttonText}
         >
-          <Text style={styles.actionBtnText}>{config.buttonText}</Text>
+          <AppText style={styles.actionBtnText}>{config.buttonText}</AppText>
         </Pressable>
 
-        <Text style={styles.batchSizeText}>
+        <AppText style={styles.batchSizeText}>
           Batch Size : {item.batchSize || "25"}
-        </Text>
+        </AppText>
       </View>
     </View>
   );

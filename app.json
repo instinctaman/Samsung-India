@@ -23,6 +23,7 @@
       }
     },
     "android": {
+      "allowBackup": false,
       "softwareKeyboardLayoutMode": "pan",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
@@ -48,9 +49,9 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "backgroundColor": "#FFFFFF",
+          "image": "./assets/images/logo/project_logo.png",
+          "imageWidth": 240
         }
       ],
       "expo-font",
@@ -78,7 +79,11 @@
         "expo-build-properties",
         {
           "android": {
-            "usesCleartextTraffic": true
+            "usesCleartextTraffic": true,
+            "enableMinifyInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true,
+            "buildArchs": ["arm64-v8a"],
+            "extraProguardRules": "-keep class com.margelo.nitro.** { *; }\n-keep class com.mrousavy.** { *; }"
           }
         }
       ]

@@ -10,7 +10,9 @@ type LiveStudioSectionProps = {
   liveStudio: LiveStudio | null;
   liveQuizControls: LiveQuizControls;
   onRefresh: () => void;
-  onMarkAttendance: (traineeUid: string, status: "Present" | "Absent") => void;
+  canEditAttendance: boolean;
+  onMarkAttendance: (traineeUid: string, status: "Present" | "Absent", reason: string) => void;
+  onUnlockExam: (traineeUid: string, reason: string) => void;
 };
 
 export default function LiveStudioSection({
@@ -18,7 +20,9 @@ export default function LiveStudioSection({
   liveStudio,
   liveQuizControls,
   onRefresh,
+  canEditAttendance,
   onMarkAttendance,
+  onUnlockExam,
 }: LiveStudioSectionProps) {
   return (
     <Fragment>
@@ -27,8 +31,9 @@ export default function LiveStudioSection({
       <ParticipantAttendanceCard
         participants={participants}
         onRefresh={onRefresh}
-        onCheck={(id) => onMarkAttendance(id, "Present")}
-        onReject={(id) => onMarkAttendance(id, "Absent")}
+        canEdit={canEditAttendance}
+        onMark={onMarkAttendance}
+        onUnlock={onUnlockExam}
       />
     </Fragment>
   );

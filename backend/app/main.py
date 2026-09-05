@@ -1,6 +1,5 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
 from app.core.media import MEDIA_ROOT
@@ -12,6 +11,7 @@ from app.routers.admin import router as admin_router
 from app.routers.assessment import router as assessment_router
 from app.routers.attendance import router as attendance_router
 from app.routers.catalog import router as catalog_router
+from app.routers.media import router as media_router
 from app.routers.proctoring import router as proctoring_router
 from app.routers.session import router as session_router
 from app.routers.trainee import router as trainee_router
@@ -24,10 +24,12 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI(
     title="Samsung India API",
     version="1.0.0",
+    docs_url="/docs" if settings.DEBUG else None,
+    redoc_url="/redoc" if settings.DEBUG else None,
+    openapi_url="/openapi.json" if settings.DEBUG else None,
 )
 
 MEDIA_ROOT.mkdir(parents=True, exist_ok=True)
-app.mount("/media", StaticFiles(directory=MEDIA_ROOT), name="media")
 
 # Origins allowed to call this API from a browser (native app requests are
 # unaffected - see ALLOWED_ORIGINS in core/config.py). Configure via the
@@ -50,6 +52,7 @@ app.include_router(trainer_router)
 app.include_router(catalog_router)
 app.include_router(training_router)
 app.include_router(ws_router)
+app.include_router(media_router)
 
 
 @app.get("/")

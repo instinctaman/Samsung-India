@@ -1,127 +1,57 @@
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 
-import { CurrentSession, getCurrentSession } from "@/api/session";
-import { TrainingRowData } from "@/components/trainee/dashboard";
+import { CurrentSession, TraineeDashboard, getCurrentSession, getTraineeDashboard } from "@/api/session";
 import { useAuth } from "@/hooks/useAuth";
-import { getTodayFormattedDate } from "@/utils/formatDisplayDate";
 
 export function useTraineeDashboard() {
   const router = useRouter();
   const { trainee, token, logout } = useAuth();
 
   const [session, setSession] = useState<CurrentSession | null>(null);
+  const [dashboard, setDashboard] = useState<TraineeDashboard | null>(null);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
-  const loadActiveSession = useCallback(async () => {
+  const load = useCallback(async () => {
     if (!token) return;
-    setLoading(true);
-    try {
-      const data = await getCurrentSession(token);
-      setSession(data);
-    } catch {
-      // Graceful fallback if no active session
-    } finally {
-      setLoading(false);
-    }
+    // Session drives the header; dashboard drives metrics/performance/table.
+    // Either can be absent (no active session / brand-new trainee) - the
+    // screen renders zeros and an empty table in that case.
+    // Only the 5 most recent here - the full history lives on its own
+    // screen (Training Details' "View All" -> /training_history).
+    const [sessionResult, dashboardResult] = await Promise.allSettled([
+      getCurrentSession(token),
+      getTraineeDashboard(token, 5),
+    ]);
+    setSession(sessionResult.status === "fulfilled" ? sessionResult.value : null);
+    setDashboard(dashboardResult.status === "fulfilled" ? dashboardResult.value : null);
   }, [token]);
 
-  // Refetch whenever the screen regains focus, so a session that just got
-  // approved/started shows up without a manual pull-to-refresh.
   useFocusEffect(
     useCallback(() => {
-      loadActiveSession();
-    }, [loadActiveSession]),
+      setLoading(true);
+      load().finally(() => setLoading(false));
+    }, [load]),
   );
 
-  const handleRefresh = async () => {
+  const handleRefresh = useCallback(() => {
     setRefreshing(true);
-    await loadActiveSession();
-    setRefreshing(false);
-  };
-
-  const handleJoinSession = () => {
-    router.push("/session_detail");
-  };
+    load().finally(() => setRefreshing(false));
+  }, [load]);
 
   const handleLogout = () => {
     logout();
     router.replace("/");
   };
 
-  // Build training details table with active session dynamically
-  const trainings: TrainingRowData[] = [
-    {
-      id: "1",
-      status: "Present",
-      date: "21 May 2025",
-      day: "(Wed)",
-      postTestScore: "85/100",
-      postTestTrend: "up",
-      quizScore: "70/100",
-      quizTrend: "up",
-      ranking: "#120",
-      rankingScope: "Global",
-    },
-    {
-      id: "2",
-      status: "Absent",
-      date: "18 May 2025",
-      day: "(Sun)",
-      postTestScore: "60/100",
-      postTestTrend: "down",
-      quizScore: "50/100",
-      quizTrend: "down",
-      ranking: "#210",
-      rankingScope: "Global",
-    },
-    {
-      id: "3",
-      status: session?.confirmationStatus === "Confirmed" ? "Present" : "Scheduled",
-      date: session?.date || getTodayFormattedDate(),
-      day: "(Today)",
-      postTestScore: "-",
-      postTestTrend: "none",
-      quizScore: "-",
-      quizTrend: "none",
-      ranking: "-",
-      isLiveOrScheduled: true,
-    },
-    {
-      id: "4",
-      status: "Present",
-      date: "14 May 2025",
-      day: "(Wed)",
-      postTestScore: "92/100",
-      postTestTrend: "up",
-      quizScore: "88/100",
-      quizTrend: "up",
-      ranking: "#95",
-      rankingScope: "State",
-    },
-    {
-      id: "5",
-      status: "Present",
-      date: "10 May 2025",
-      day: "(Sat)",
-      postTestScore: "78/100",
-      postTestTrend: "up",
-      quizScore: "65/100",
-      quizTrend: "up",
-      ranking: "#160",
-      rankingScope: "Global",
-    },
-  ];
-
   return {
     trainee,
     session,
+    dashboard,
     loading,
     refreshing,
-    trainings,
     handleRefresh,
-    handleJoinSession,
     handleLogout,
   };
 }

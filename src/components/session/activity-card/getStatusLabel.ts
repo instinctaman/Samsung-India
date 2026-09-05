@@ -10,8 +10,7 @@ export function getStatusLabel(activity: SessionActivityData): string {
 
   if (isCompleted) {
     if (isAttendance) return "Recorded";
-    if (isQuiz) return `Score : ${activity.score ?? "9/15"}`;
-    if (isPostTest) return `Score : ${activity.score ?? "12/15"}`;
+    if ((isQuiz || isPostTest) && activity.score) return `Score : ${activity.score}`;
     return "Completed";
   }
 

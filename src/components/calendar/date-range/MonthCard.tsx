@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
+import AppText from "@/components/ui/AppText";
 
 import { Colors } from "@/theme/colors";
 import CalendarGrid from "../CalendarGrid";
@@ -34,9 +35,9 @@ export default function MonthCard({
   return (
     <View style={styles.card}>
       <View style={styles.titleRow}>
-        <Text style={styles.cardTitle}>{title}</Text>
+        <AppText style={styles.cardTitle}>{title}</AppText>
         <Pressable onPress={onClear} hitSlop={6}>
-          <Text style={styles.clearText}>Clear</Text>
+          <AppText style={styles.clearText}>Clear</AppText>
         </Pressable>
       </View>
 
@@ -59,8 +60,8 @@ export default function MonthCard({
       />
 
       <View style={styles.summaryBadge}>
-        <Text style={styles.summaryLabel}>{summaryLabel}</Text>
-        <Text style={styles.summaryValue}>{formatMonthDay(summaryDate)}</Text>
+        <AppText style={styles.summaryLabel}>{summaryLabel}</AppText>
+        <AppText style={styles.summaryValue}>{formatMonthDay(summaryDate)}</AppText>
       </View>
     </View>
   );

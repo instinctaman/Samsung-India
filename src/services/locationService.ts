@@ -115,6 +115,24 @@ export async function getCurrentCoordinates(): Promise<LocationCoordinates> {
 }
 
 /**
+ * Turns GPS coordinates into a short human-readable address (on-device
+ * geocoder, no API key) - e.g. "Baner, Pune, Maharashtra". Used to show the
+ * trainee their own live location on the Location Verified screen, rather
+ * than just repeating the venue's configured address back to them.
+ */
+export async function reverseGeocode(coords: { latitude: number; longitude: number }): Promise<string | null> {
+  try {
+    const [place] = await Location.reverseGeocodeAsync(coords);
+    if (!place) return null;
+    const parts = [place.district || place.street || place.name, place.city || place.subregion, place.region];
+    const label = parts.filter(Boolean).join(", ");
+    return label || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Opens device/app settings so user can enable permissions.
  */
 export async function openAppSettings(): Promise<void> {

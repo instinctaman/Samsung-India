@@ -12,7 +12,7 @@ export type GlobalPercentageProps = {
   percentage?: number;
   totalScore?: number;
   maxScore?: number;
-  periodGain?: number;
+  periodGain?: number | null;
   globalRank?: string;
   globalPercentile?: number;
   stateRank?: string;
@@ -20,14 +20,14 @@ export type GlobalPercentageProps = {
 };
 
 export default function Global_Percentage({
-  percentage = 90,
-  totalScore = 90,
-  maxScore = 100,
-  periodGain = 10,
-  globalRank = "# 1,245",
-  globalPercentile = 18,
-  stateRank = "# 85",
-  statePercentile = 12,
+  percentage = 0,
+  totalScore = 0,
+  maxScore = 0,
+  periodGain = null,
+  globalRank = "—",
+  globalPercentile = 0,
+  stateRank = "—",
+  statePercentile = 0,
 }: GlobalPercentageProps) {
   const size = 122;
   const strokeWidth = 13;
@@ -87,9 +87,16 @@ export default function Global_Percentage({
           <AppText variant="tiny" color="#6B7280" style={styles.footerCaption}>
             Score from all questions
           </AppText>
-          <AppText variant="tiny" color="#16A34A" weight={FontWeight.bold} style={styles.footerGain}>
-            ▲ {periodGain} points this period
-          </AppText>
+          {periodGain != null && periodGain !== 0 && (
+            <AppText
+              variant="tiny"
+              color={periodGain > 0 ? "#16A34A" : "#DC2626"}
+              weight={FontWeight.bold}
+              style={styles.footerGain}
+            >
+              {periodGain > 0 ? "▲" : "▼"} {Math.abs(periodGain)} points this period
+            </AppText>
+          )}
         </View>
       </View>
 

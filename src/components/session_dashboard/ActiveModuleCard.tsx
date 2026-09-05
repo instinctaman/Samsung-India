@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
+import AppText from "@/components/ui/AppText";
 import { Ionicons } from "@expo/vector-icons";
 
 import { useLiveRuntime } from "@/hooks/useLiveRuntime";
@@ -36,19 +37,19 @@ export default function ActiveModuleCard({
       <View style={styles.headerRow}>
         <View style={styles.liveBadge}>
           <View style={styles.liveDot} />
-          <Text style={styles.liveText}>LIVE SESSION BROADCASTING</Text>
+          <AppText style={styles.liveText}>LIVE SESSION BROADCASTING</AppText>
         </View>
         <View style={styles.timerPill}>
-          <Text style={styles.timerText}>{clock(seconds)}</Text>
+          <AppText style={styles.timerText}>{clock(seconds)}</AppText>
         </View>
       </View>
 
       <View style={styles.titleSection}>
-        <Text style={styles.activeModuleLabel}>ACTIVE MODULE</Text>
-        <Text style={styles.moduleTitle}>{moduleLabel}</Text>
+        <AppText style={styles.activeModuleLabel}>ACTIVE MODULE</AppText>
+        <AppText style={styles.moduleTitle}>{moduleLabel}</AppText>
         {questionCount != null && (
           <View style={styles.pill}>
-            <Text style={styles.pillText}>Targeted {questionCount} QPs</Text>
+            <AppText style={styles.pillText}>Targeted {questionCount} QPs</AppText>
           </View>
         )}
       </View>
@@ -60,7 +61,7 @@ export default function ActiveModuleCard({
         accessibilityLabel={buttonLabel}
       >
         <Ionicons name="power" size={16} color="#0066FF" />
-        <Text style={styles.primaryBtnText} numberOfLines={2}>{buttonLabel}</Text>
+        <AppText style={styles.primaryBtnText} numberOfLines={2}>{buttonLabel}</AppText>
       </Pressable>
     </View>
   );

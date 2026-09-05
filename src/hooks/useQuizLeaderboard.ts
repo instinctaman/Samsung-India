@@ -1,104 +1,120 @@
 /**
  * useQuizLeaderboard Hook
- * Encapsulates quiz score stats, filter controls, leaderboard user generation,
- * and navigation actions.
+ * Powers the trainee Rank page. It only ever shows real data: once a Live Quiz
+ * has been ended by the trainer it renders the true per-session ranking (score
+ * DESC, then total response time ASC). Before that it reports the live state
+ * ("in_progress" / "submitted"), and with no Live Quiz at all ("none") the
+ * screen shows an empty state - there is no sample/mock fallback.
  */
 
 import { LeaderboardFilterValues } from "@/components/quiz/LeaderboardFilter";
 import { LeaderboardUser } from "@/components/quiz/LeaderboardRow";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { useMemo, useState } from "react";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const SAMPLE_LEADERBOARD_NAMES = [
-  "Priyanshu Bora",
-  "Ankit Kumar",
-  "Anand Singh",
-  "Ameerul Haque",
-];
+import { LiveQuizResults, getCurrentSession, getLiveQuizResults } from "@/api/session";
+import { useAuth } from "@/hooks/useAuth";
+import { useLiveQuizChannel } from "@/hooks/useLiveQuizChannel";
 
-function generateLeaderboardUsers(
-  totalQuestions: number,
-  correctCount: number,
-  accuracy: number,
-  _zoneFilter?: string,
-): LeaderboardUser[] {
-  const list: LeaderboardUser[] = [
-    {
-      name: "You",
-      score: `${correctCount}/${totalQuestions}`,
-      accuracy: `${accuracy}%`,
-      isYou: true,
-    },
-  ];
-
-  for (let i = 0; i < 100; i++) {
-    const name = SAMPLE_LEADERBOARD_NAMES[i % SAMPLE_LEADERBOARD_NAMES.length];
-    const scoreVal =
-      i < 6
-        ? totalQuestions
-        : i < 14
-          ? Math.max(1, totalQuestions - 1)
-          : Math.max(1, totalQuestions - Math.floor(i / 10));
-    const pct = Math.round((scoreVal / totalQuestions) * 100);
-
-    list.push({
-      name,
-      score: `${scoreVal}/${totalQuestions}`,
-      accuracy: `${pct}%`,
-    });
-  }
-
-  return list;
+function formatMs(ms: number): string {
+  const s = Math.round(ms / 1000);
+  return s >= 60 ? `${Math.floor(s / 60)}m ${s % 60}s` : `${s}s`;
 }
+
+const pct = (n: number) => `${Number.isInteger(n) ? n : n.toFixed(1)}%`;
+
+export type RankLiveState = "none" | "in_progress" | "submitted" | "live" | "ranked";
+
+// Re-poll the board this often while the quiz is still running.
+const LIVE_POLL_MS = 5000;
 
 export function useQuizLeaderboard() {
   const insets = useSafeAreaInsets();
   const { width: screenWidth } = useWindowDimensions();
   const router = useRouter();
-  const params = useLocalSearchParams<{
-    correct?: string;
-    total?: string;
-    accuracy?: string;
-    timeTaken?: string;
-  }>();
+  const params = useLocalSearchParams<{ conferenceUid?: string }>();
+  const { token } = useAuth();
 
-  const total = Number(params.total) || 25;
-  const correct = params.correct !== undefined ? Number(params.correct) : 20;
-  const accuracy =
-    params.accuracy !== undefined
-      ? Number(params.accuracy)
-      : Math.round((correct / total) * 100);
+  const [conferenceUid, setConferenceUid] = useState<string | null>(params.conferenceUid ?? null);
+  const [results, setResults] = useState<LiveQuizResults | null>(null);
+
+  const load = useCallback(async () => {
+    if (!token) return;
+    try {
+      let uid = params.conferenceUid ?? conferenceUid;
+      if (!uid) {
+        uid = (await getCurrentSession(token)).conferenceUid;
+        setConferenceUid(uid);
+      }
+      if (uid) setResults(await getLiveQuizResults(token, uid));
+    } catch {
+      setResults(null);
+    }
+  }, [token, params.conferenceUid, conferenceUid]);
+
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [load]),
+  );
+  useLiveQuizChannel(conferenceUid, token, load);
+
+  const liveState: RankLiveState = (results?.state as RankLiveState) ?? "none";
+  // The full results view (score card + performance summary + leaderboard) is
+  // shown as soon as the trainee has submitted - "live" while the quiz runs and
+  // the board keeps re-polling, "ranked" once the trainer ends it (final).
+  const showResults = liveState === "live" || liveState === "ranked";
+  const you = results?.you ?? null;
+
+  // While the quiz is still running, refetch the board every few seconds so new
+  // submissions and re-ranks show without a manual pull. Stops once `finished`.
+  const quizFinished = results?.finished ?? false;
+  const hasResults = results != null;
+  useEffect(() => {
+    if (!conferenceUid || !hasResults || quizFinished || liveState === "none") return;
+    const id = setInterval(load, LIVE_POLL_MS);
+    return () => clearInterval(id);
+  }, [conferenceUid, hasResults, quizFinished, liveState, load]);
+
+  const total = showResults ? results!.totalQuestions : 0;
+  const correct = showResults ? results!.correctCount : 0;
   const incorrect = Math.max(0, total - correct);
-  const timeTakenFormatted = params.timeTaken || "28m 11s";
+  const accuracy = showResults ? Math.round(you?.percentage ?? 0) : 0;
+  const timeTakenFormatted = showResults
+    ? formatMs(you?.totalResponseMs ?? (results!.durationSeconds ?? 0) * 1000)
+    : "—";
 
   const [filterOpen, setFilterOpen] = useState(false);
   const [filterValues, setFilterValues] = useState<LeaderboardFilterValues>({
-    trainingType: "Classroom Training",
-    state: "Delhi",
-    district: "New Delhi",
-    zone: "South",
+    trainingType: "",
+    state: "",
+    district: "",
+    zone: "",
   });
-  const [appliedZone, setAppliedZone] = useState("");
 
-  const leaderboardUsers = useMemo(
-    () => generateLeaderboardUsers(total, correct, accuracy, appliedZone),
-    [total, correct, accuracy, appliedZone],
-  );
+  const leaderboardUsers = useMemo<LeaderboardUser[]>(() => {
+    if (!showResults || !results) return [];
+    return results.leaderboard.map((r) => ({
+      name: r.isYou ? "You" : r.name,
+      score: `${r.score}/${r.maxScore}`,
+      accuracy: pct(r.percentage),
+      isYou: r.isYou,
+    }));
+  }, [showResults, results]);
 
-  const handleApplyFilter = () => {
-    setAppliedZone(filterValues.zone);
-    setFilterOpen(false);
-  };
-
-  const handleContinue = () => {
-    router.replace("/session_detail");
-  };
+  const handleApplyFilter = () => setFilterOpen(false);
+  const handleContinue = () => router.replace("/session_detail");
 
   return {
     insets,
     screenWidth,
+    liveState,
+    showResults,
+    isLive: liveState === "live",
+    quizEnded: quizFinished,
+    yourRank: you?.rank ?? null,
     total,
     correct,
     accuracy,

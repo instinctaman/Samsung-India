@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import APIRouter, BackgroundTasks, Depends, File, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.dependencies.auth import get_current_admin, require_admin_role
@@ -15,8 +15,10 @@ from app.schemas.training import (
     AttendanceMarkRequest,
     LiveBroadcastRequest,
     PendingSessionItem,
+    ProctoringUnlockRequest,
     QuestionCreate,
     SessionDashboardOut,
+    SessionReportOut,
     TrainerAgendaResponse,
     TrainingCreate,
     TrainingOut,
@@ -133,52 +135,80 @@ def get_session_dashboard(
     return training_service.get_session_dashboard(db, admin, conference_uid)
 
 
-@router.post("/trainings/{conference_uid}/start", response_model=TrainingOut)
-async def start_training(
+@router.get("/trainings/{conference_uid}/report", response_model=SessionReportOut)
+def get_session_report(
     conference_uid: str,
-    photo: UploadFile = File(...),
     db: Session = Depends(get_db),
     admin: Admin = Depends(get_current_admin),
 ):
-    return await training_service.start_training(db, admin, conference_uid, photo)
+    return training_service.get_session_report(db, admin, conference_uid)
+
+
+@router.post("/trainings/{conference_uid}/start", response_model=TrainingOut)
+async def start_training(
+    conference_uid: str,
+    background_tasks: BackgroundTasks,
+    photo: UploadFile = File(...),
+    latitude: Optional[float] = Form(None),
+    longitude: Optional[float] = Form(None),
+    venueLatitude: Optional[float] = Form(None),
+    venueLongitude: Optional[float] = Form(None),
+    db: Session = Depends(get_db),
+    admin: Admin = Depends(get_current_admin),
+):
+    return await training_service.start_training(
+        db,
+        admin,
+        conference_uid,
+        photo,
+        background_tasks,
+        latitude=latitude,
+        longitude=longitude,
+        venue_latitude=venueLatitude,
+        venue_longitude=venueLongitude,
+    )
 
 
 @router.post("/trainings/{conference_uid}/advance-module", response_model=TrainingOut)
 def advance_module(
     conference_uid: str,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     admin: Admin = Depends(get_current_admin),
 ):
-    return training_service.advance_module(db, admin, conference_uid)
+    return training_service.advance_module(db, admin, conference_uid, background_tasks)
 
 
 @router.post("/trainings/{conference_uid}/modules/{module_key}/start", response_model=TrainingOut)
 def start_module(
     conference_uid: str,
     module_key: str,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     admin: Admin = Depends(get_current_admin),
 ):
-    return training_service.start_module(db, admin, conference_uid, module_key)
+    return training_service.start_module(db, admin, conference_uid, module_key, background_tasks)
 
 
 @router.post("/trainings/{conference_uid}/modules/{module_key}/restart", response_model=TrainingOut)
 def restart_module(
     conference_uid: str,
     module_key: str,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     admin: Admin = Depends(get_current_admin),
 ):
-    return training_service.restart_module(db, admin, conference_uid, module_key)
+    return training_service.restart_module(db, admin, conference_uid, module_key, background_tasks)
 
 
 @router.post("/trainings/{conference_uid}/modules/stop-active", response_model=TrainingOut)
 def stop_active_module(
     conference_uid: str,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     admin: Admin = Depends(get_current_admin),
 ):
-    return training_service.stop_active_module(db, admin, conference_uid)
+    return training_service.stop_active_module(db, admin, conference_uid, background_tasks)
 
 
 @router.post("/trainings/{conference_uid}/live-quiz/broadcast", response_model=SessionDashboardOut)
@@ -233,12 +263,17 @@ def live_quiz_finish(
 
 
 @router.post("/trainings/{conference_uid}/end", response_model=TrainingOut)
-def end_training(
+async def end_training(
     conference_uid: str,
+    background_tasks: BackgroundTasks,
+    photo: UploadFile = File(...),
+    attendanceSheet: UploadFile = File(...),
     db: Session = Depends(get_db),
     admin: Admin = Depends(get_current_admin),
 ):
-    return training_service.end_training(db, admin, conference_uid)
+    return await training_service.end_training(
+        db, admin, conference_uid, background_tasks, photo, attendanceSheet
+    )
 
 
 @router.post("/trainings/{conference_uid}/attendance/{trainee_uid}", response_model=SessionDashboardOut)
@@ -246,20 +281,43 @@ def mark_attendance(
     conference_uid: str,
     trainee_uid: str,
     payload: AttendanceMarkRequest,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     admin: Admin = Depends(get_current_admin),
 ):
-    return training_service.mark_attendance(db, admin, conference_uid, trainee_uid, payload)
+    return training_service.mark_attendance(
+        db, admin, conference_uid, trainee_uid, payload, background_tasks
+    )
+
+
+@router.post(
+    "/trainings/{conference_uid}/attendance/{trainee_uid}/unlock",
+    response_model=SessionDashboardOut,
+)
+def unlock_proctoring(
+    conference_uid: str,
+    trainee_uid: str,
+    payload: ProctoringUnlockRequest,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    admin: Admin = Depends(get_current_admin),
+):
+    return training_service.unlock_proctoring(
+        db, admin, conference_uid, trainee_uid, payload, background_tasks
+    )
 
 
 @router.delete("/trainings/{conference_uid}/attendance/{trainee_uid}", response_model=SessionDashboardOut)
 def reset_attendance(
     conference_uid: str,
     trainee_uid: str,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     admin: Admin = Depends(get_current_admin),
 ):
-    return training_service.reset_attendance(db, admin, conference_uid, trainee_uid)
+    return training_service.reset_attendance(
+        db, admin, conference_uid, trainee_uid, background_tasks
+    )
 
 
 @router.get("/attendance", response_model=list[AttendanceListItemOut])

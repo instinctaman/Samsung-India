@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Pressable, StyleSheet, TextInput, View } from "react-native";
+import AppText from "@/components/ui/AppText";
 import { Ionicons } from "@expo/vector-icons";
 
 import { SelectOption } from "@/components/ui/SearchableSelect";
@@ -72,8 +73,8 @@ export default function SessionsHeader({
             <Ionicons name="school" size={24} color={Colors.white} />
           </View>
           <View style={styles.titleTextContainer}>
-            <Text style={styles.title}>Sessions</Text>
-            <Text style={styles.dateRangeSubtitle}>{dateRangeText}</Text>
+            <AppText style={styles.title}>Sessions</AppText>
+            <AppText style={styles.dateRangeSubtitle}>{dateRangeText}</AppText>
           </View>
         </View>
 
@@ -113,7 +114,7 @@ export default function SessionsHeader({
       {/* Expandable Search Card */}
       {showSearchInput && (
         <View style={styles.searchCard}>
-          <Text style={styles.searchLabel}>Search Sessions</Text>
+          <AppText style={styles.searchLabel}>Search Sessions</AppText>
           <View style={styles.searchInputRow}>
             <Ionicons name="search" size={16} color="#9CA3AF" />
             <TextInput
@@ -162,14 +163,14 @@ export default function SessionsHeader({
           accessibilityRole="tab"
           accessibilityState={{ selected: activeTab === "all" }}
         >
-          <Text
+          <AppText
             style={[
               styles.tabText,
               activeTab === "all" && styles.tabTextActive,
             ]}
           >
             All Sessions
-          </Text>
+          </AppText>
         </Pressable>
 
         <Pressable
@@ -181,14 +182,14 @@ export default function SessionsHeader({
           accessibilityRole="tab"
           accessibilityState={{ selected: activeTab === "today" }}
         >
-          <Text
+          <AppText
             style={[
               styles.tabText,
               activeTab === "today" && styles.tabTextActive,
             ]}
           >
             Today
-          </Text>
+          </AppText>
         </Pressable>
 
         <Pressable
@@ -200,14 +201,14 @@ export default function SessionsHeader({
           accessibilityRole="tab"
           accessibilityState={{ selected: activeTab === "completed" }}
         >
-          <Text
+          <AppText
             style={[
               styles.tabText,
               activeTab === "completed" && styles.tabTextActive,
             ]}
           >
             Completed
-          </Text>
+          </AppText>
         </Pressable>
       </View>
     </View>

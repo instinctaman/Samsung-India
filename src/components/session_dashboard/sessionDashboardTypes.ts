@@ -24,17 +24,12 @@ export type LiveQuizControls = {
   onFinish: () => void;
 };
 
-export type ProctoringLog = {
-  timestamp: string;
-  strikeNumber: number;
-  reason: string;
-  attemptsLeft: number;
-};
-
 export type ProctoringStatus = {
   flags: number;
   maxFlags: number;
-  logs: ProctoringLog[];
+  // Already-formatted strike / unlock lines from the backend
+  // (`attendance.theftRemarks`), newest first.
+  logs: string[];
 };
 
 export type ParticipantStatus = "PRESENT" | "ABSENT" | "PENDING";

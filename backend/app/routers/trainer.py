@@ -14,10 +14,11 @@ router = APIRouter(prefix="/admin", tags=["trainer"])
 
 @router.get("/trainers", response_model=list[SelectOptionOut])
 def list_trainers(
+    company: str | None = None,
     db: Session = Depends(get_db),
     _admin: Admin = Depends(get_current_admin),
 ):
-    return trainer_service.list_trainers(db)
+    return trainer_service.list_trainers(db, company)
 
 
 @router.get("/trainers/{username}")

@@ -9,19 +9,11 @@ import {
 
 import CalendarIcon from "@/assets/images/svg/calender2.svg";
 import AppText from "@/components/ui/AppText";
+import { useAuth } from "@/hooks/useAuth";
 import { Colors } from "@/theme/colors";
 import { Radius } from "@/theme/radius";
 import { FontWeight } from "@/theme/typography";
-import { resolveMediaUrl } from "@/utils";
-
-// Same gender-avatar mapping as the trainee's Join Session screen
-// (components/session/join/useSessionScreen) - male / female icon by
-// `trainee.gender`, neutral face icon when it's unknown.
-const AVATAR_BY_GENDER: Record<string, ImageSourcePropType> = {
-  male: require("@/assets/images/user_img/default_male.png"),
-  female: require("@/assets/images/user_img/default_female.png"),
-};
-const DEFAULT_AVATAR: ImageSourcePropType = require("@/assets/images/Icons/face_icon.png");
+import { traineeAvatar } from "@/utils";
 
 export type TrainingSessionHeaderProps = {
   onBack?: () => void;
@@ -50,10 +42,8 @@ export default function TrainingSessionHeader({
   date = "--",
   location = "--",
 }: TrainingSessionHeaderProps) {
-  const photoUrl = resolveMediaUrl(profilePhoto);
-  const avatar: ImageSourcePropType = photoUrl
-    ? { uri: photoUrl }
-    : (AVATAR_BY_GENDER[gender?.toLowerCase() ?? ""] ?? DEFAULT_AVATAR);
+  const { token } = useAuth();
+  const avatar: ImageSourcePropType = traineeAvatar({ gender, profilePhoto }, token);
 
   const isConfirmed =
     confirmationStatus.toLowerCase().includes("confirmed") &&

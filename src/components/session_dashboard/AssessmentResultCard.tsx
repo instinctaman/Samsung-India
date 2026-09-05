@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
+import AppText from "@/components/ui/AppText";
 import { Ionicons } from "@expo/vector-icons";
 import Svg, { Circle } from "react-native-svg";
 
@@ -39,7 +40,7 @@ export default function AssessmentResultCard({
       {/* Header */}
       <View style={styles.header}>
         <Ionicons name="time-outline" size={16} color={Colors.mainColour1} />
-        <Text style={styles.title}>ASSESSMENT RESULT</Text>
+        <AppText style={styles.title}>ASSESSMENT RESULT</AppText>
       </View>
 
       {/* Content */}
@@ -73,9 +74,9 @@ export default function AssessmentResultCard({
           </Svg>
 
           <View style={styles.chartCenter}>
-            <Text style={styles.chartCenterText}>
+            <AppText style={styles.chartCenterText}>
               {hasAttempts ? `${passRate}% PASS` : "No attempts"}
-            </Text>
+            </AppText>
           </View>
         </View>
 
@@ -84,21 +85,21 @@ export default function AssessmentResultCard({
           <View style={styles.topBoxesRow}>
             {/* PASS Box */}
             <View style={styles.passBox}>
-              <Text style={styles.passLabel}>PASS</Text>
-              <Text style={styles.passValue}>{passCount}</Text>
+              <AppText style={styles.passLabel}>PASS</AppText>
+              <AppText style={styles.passValue}>{passCount}</AppText>
             </View>
 
             {/* FAIL Box */}
             <View style={styles.failBox}>
-              <Text style={styles.failLabel}>FAIL</Text>
-              <Text style={styles.failValue}>{failCount}</Text>
+              <AppText style={styles.failLabel}>FAIL</AppText>
+              <AppText style={styles.failValue}>{failCount}</AppText>
             </View>
           </View>
 
           {/* Pass Rate Badge */}
           <View style={styles.passRateBadge}>
             <Ionicons name="trending-up" size={13} color="#10B981" />
-            <Text style={styles.passRateText}>Pass Rate : {passRate}%</Text>
+            <AppText style={styles.passRateText}>Pass Rate : {passRate}%</AppText>
           </View>
         </View>
       </View>

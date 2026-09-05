@@ -27,6 +27,7 @@ export default function SecureCheckInScreen() {
     error,
     locationResult,
     verifiedAt,
+    liveLocationLabel,
     permissionState,
     locationLoading,
     locationError,
@@ -60,6 +61,7 @@ export default function SecureCheckInScreen() {
         params={params}
         locationResult={locationResult}
         verifiedAt={verifiedAt}
+        liveLocationLabel={liveLocationLabel}
         onContinue={() => setStep("security-checkin")}
       />
     );

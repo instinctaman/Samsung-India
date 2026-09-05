@@ -10,7 +10,7 @@ import {
 
 import AppText from "@/components/ui/AppText";
 import AppInput from "@/components/ui/AppInput";
-import AppSelect from "@/components/ui/AppSelect";
+import InlineSelect from "@/components/ui/InlineSelect";
 import { STATES } from "@/data/states";
 
 import { Colors } from "@/theme/colors";
@@ -22,13 +22,18 @@ type ProfessionalDetailsProps = {
     control: Control<RegisterFormValues>;
     setValue: UseFormSetValue<RegisterFormValues>;
     errors: FieldErrors<RegisterFormValues>;
+    // Field names that already have a saved value and must stay read-only
+    // (Edit Profile lets the trainee fill blanks, not rewrite existing data).
+    lockedFields?: Set<keyof RegisterFormValues>;
 };
 
 export default function ProfessionalDetails({
     control,
     setValue,
     errors,
+    lockedFields,
 }: ProfessionalDetailsProps) {
+    const locked = (name: keyof RegisterFormValues) => lockedFields?.has(name) ?? false;
     const state = useWatch({ control, name: "state" });
     const selectedState = useMemo(
         () => STATES.find((item) => item.value === state),
@@ -51,6 +56,7 @@ export default function ProfessionalDetails({
                             <AppInput
                                 placeholder="Designation*"
                                 autoCapitalize="words"
+                                editable={!locked("designation")}
                                 value={value}
                                 onChangeText={onChange}
                             />
@@ -67,6 +73,7 @@ export default function ProfessionalDetails({
                                 placeholder="Employee ID"
                                 autoCapitalize="characters"
                                 autoCorrect={false}
+                                editable={!locked("employee_id")}
                                 value={value}
                                 onChangeText={onChange}
                             />
@@ -85,6 +92,7 @@ export default function ProfessionalDetails({
                     <AppInput
                         placeholder="Supervisor Name"
                         autoCapitalize="words"
+                        editable={!locked("supervisorName")}
                         value={value}
                         onChangeText={onChange}
                     />
@@ -97,22 +105,18 @@ export default function ProfessionalDetails({
                         control={control}
                         name="state"
                         render={({ field: { value, onChange } }) => (
-                            <AppSelect
-                                selectedValue={value}
-                                onValueChange={(newValue) => {
+                            <InlineSelect
+                                placeholder="Select State"
+                                value={value}
+                                disabled={locked("state")}
+                                onSelect={(newValue) => {
                                     onChange(newValue);
                                     setValue("district", "");
                                 }}
-                                items={[
-                                    {
-                                        label: "Select State",
-                                        value: "",
-                                    },
-                                    ...STATES.map((item) => ({
-                                        label: item.label,
-                                        value: item.value,
-                                    })),
-                                ]}
+                                options={STATES.map((item) => ({
+                                    label: item.label,
+                                    value: item.value,
+                                }))}
                             />
                         )}
                     />
@@ -123,16 +127,12 @@ export default function ProfessionalDetails({
                         control={control}
                         name="district"
                         render={({ field: { value, onChange } }) => (
-                            <AppSelect
-                                selectedValue={value}
-                                onValueChange={onChange}
-                                items={[
-                                    {
-                                        label: "Select City",
-                                        value: "",
-                                    },
-                                    ...(selectedState?.cities || []),
-                                ]}
+                            <InlineSelect
+                                placeholder="Select City"
+                                value={value}
+                                disabled={locked("district")}
+                                onSelect={onChange}
+                                options={selectedState?.cities || []}
                             />
                         )}
                     />
@@ -153,6 +153,7 @@ const styles = StyleSheet.create({
 
     row: {
         flexDirection: "row",
+        alignItems: "flex-start",
         gap: 12,
     },
 

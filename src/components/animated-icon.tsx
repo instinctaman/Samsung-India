@@ -7,6 +7,9 @@ import { scheduleOnRN } from 'react-native-worklets';
 
 const INITIAL_SCALE_FACTOR = Dimensions.get('screen').height / 90;
 const DURATION = 600;
+// How long the TOPS branding is held, static, before it fades to the app.
+const BRAND_HOLD_MS = 800;
+const SCREEN_W = Dimensions.get('window').width;
 
 export function AnimatedSplashOverlay() {
   const [animate, setAnimate] = useState(false);
@@ -33,7 +36,13 @@ export function AnimatedSplashOverlay() {
     },
   });
 
-  const image = <Image style={styles.image} source={require('@/assets/images/expo-logo.png')} />;
+  const image = (
+    <Image
+      style={styles.brandLogo}
+      contentFit="contain"
+      source={require('@/assets/images/logo/project_logo.png')}
+    />
+  );
 
   return animate ? (
     <Animated.View
@@ -49,8 +58,10 @@ export function AnimatedSplashOverlay() {
   ) : (
     <View
       onLayout={() => {
+        // Hide the OS splash, then hold the TOPS branding a beat before the
+        // fade-out so it actually registers instead of flashing past.
         SplashScreen.hideAsync().finally(() => {
-          setAnimate(true);
+          setTimeout(() => setAnimate(true), BRAND_HOLD_MS);
         });
       }}
       style={styles.splashOverlay}>
@@ -140,9 +151,13 @@ const styles = StyleSheet.create({
   },
   splashOverlay: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: '#208AEF',
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 1000,
+  },
+  brandLogo: {
+    width: SCREEN_W * 0.66,
+    height: SCREEN_W * 0.66 * (872 / 1600),
   },
 });

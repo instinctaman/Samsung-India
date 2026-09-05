@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Pressable, StyleSheet, TextInput, View } from "react-native";
+import AppText from "@/components/ui/AppText";
 import { Ionicons } from "@expo/vector-icons";
 
 import AppModal from "@/components/ui/AppModal";
@@ -35,10 +36,10 @@ export default function UnlockExamModal({ participant, onCancel, onConfirm }: Un
     >
       <View style={styles.header}>
         <Ionicons name="warning" size={16} color="#F59E0B" />
-        <Text style={styles.title}>UNLOCK EXAM FOR : {participant?.name}</Text>
+        <AppText style={styles.title}>UNLOCK EXAM FOR : {participant?.name}</AppText>
       </View>
 
-      <Text style={styles.label}>Please enter reason:</Text>
+      <AppText style={styles.label}>Please enter reason:</AppText>
       <TextInput
         style={styles.input}
         value={reason}
@@ -50,10 +51,10 @@ export default function UnlockExamModal({ participant, onCancel, onConfirm }: Un
 
       <View style={styles.actionsRow}>
         <Pressable onPress={handleCancel} hitSlop={8}>
-          <Text style={styles.cancelText}>Cancel</Text>
+          <AppText style={styles.cancelText}>Cancel</AppText>
         </Pressable>
         <Pressable onPress={handleConfirm} disabled={!reason.trim()} hitSlop={8}>
-          <Text style={[styles.okText, !reason.trim() && styles.okTextDisabled]}>OK</Text>
+          <AppText style={[styles.okText, !reason.trim() && styles.okTextDisabled]}>OK</AppText>
         </Pressable>
       </View>
     </AppModal>

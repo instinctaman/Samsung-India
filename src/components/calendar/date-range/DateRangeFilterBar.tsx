@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
+import AppText from "@/components/ui/AppText";
 
 import CalenderIcon from "@/assets/images/svg/calender.svg";
 import { Colors } from "@/theme/colors";
@@ -17,19 +18,19 @@ export default function DateRangeFilterBar({ selectedStart, selectedEnd, onToggl
     <View style={styles.topFilterBar}>
       <Pressable style={styles.dateBox} onPress={onToggleExpand} accessibilityRole="button" accessibilityLabel="Select Start Date">
         <CalenderIcon width={13} height={13} color={Colors.mainColour1} stroke={Colors.mainColour1} />
-        <Text style={styles.dateBoxText}>{formatDisplayDate(selectedStart)}</Text>
+        <AppText style={styles.dateBoxText}>{formatDisplayDate(selectedStart)}</AppText>
       </Pressable>
 
       <Ionicons name="arrow-forward" size={13} color="#9CA3AF" />
 
       <Pressable style={styles.dateBox} onPress={onToggleExpand} accessibilityRole="button" accessibilityLabel="Select End Date">
         <CalenderIcon width={13} height={13} color={Colors.mainColour1} stroke={Colors.mainColour1} />
-        <Text style={styles.dateBoxText}>{formatDisplayDate(selectedEnd)}</Text>
+        <AppText style={styles.dateBoxText}>{formatDisplayDate(selectedEnd)}</AppText>
       </Pressable>
 
       <Pressable style={styles.filterButton} onPress={onFilterPress} accessibilityRole="button" accessibilityLabel="Filter">
         <CalenderIcon width={13} height={13} color={Colors.white} stroke={Colors.white} />
-        <Text style={styles.filterButtonText}>Filter</Text>
+        <AppText style={styles.filterButtonText}>Filter</AppText>
       </Pressable>
     </View>
   );

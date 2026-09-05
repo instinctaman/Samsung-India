@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
+import AppText from "@/components/ui/AppText";
 import { Ionicons } from "@expo/vector-icons";
 
 import PersonCheckIcon from "@/assets/images/svg/session/person_check.svg";
@@ -47,13 +48,13 @@ export default function AudienceBreakdownCard({
         <View style={styles.headerIconBox}>
           <Ionicons name="people" size={18} color="#0066FF" />
         </View>
-        <Text style={styles.title}>AUDIENCE BREAKDOWN</Text>
+        <AppText style={styles.title}>AUDIENCE BREAKDOWN</AppText>
       </View>
 
       {/* Total Audience Box */}
       <View style={styles.totalBox}>
-        <Text style={styles.totalLabel}>TOTAL AUDIENCE</Text>
-        <Text style={styles.totalValue}>{totalAudience}</Text>
+        <AppText style={styles.totalLabel}>TOTAL AUDIENCE</AppText>
+        <AppText style={styles.totalValue}>{totalAudience}</AppText>
       </View>
 
       {/* 2x3 Metric Cards Grid */}
@@ -64,10 +65,10 @@ export default function AudienceBreakdownCard({
             <PersonCheckIcon width={18} height={14} />
           </View>
           <View style={styles.metricTextCol}>
-            <Text style={[styles.metricLabel, { color: "#10B981" }]}>
+            <AppText style={[styles.metricLabel, { color: "#10B981" }]}>
               PRESENT
-            </Text>
-            <Text style={styles.metricValue}>{present}</Text>
+            </AppText>
+            <AppText style={styles.metricValue}>{present}</AppText>
           </View>
         </View>
 
@@ -77,13 +78,13 @@ export default function AudienceBreakdownCard({
             <PersonAddDisabledIcon width={18} height={18} />
           </View>
           <View style={styles.metricTextCol}>
-            <Text
+            <AppText
               style={[styles.metricLabel, { color: "#EAB308" }]}
               numberOfLines={1}
             >
               NOT MARKED
-            </Text>
-            <Text style={styles.metricValue}>{notMarked}</Text>
+            </AppText>
+            <AppText style={styles.metricValue}>{notMarked}</AppText>
           </View>
         </View>
 
@@ -93,10 +94,10 @@ export default function AudienceBreakdownCard({
             <PersonCancelIcon width={18} height={14} />
           </View>
           <View style={styles.metricTextCol}>
-            <Text style={[styles.metricLabel, { color: "#EF4444" }]}>
+            <AppText style={[styles.metricLabel, { color: "#EF4444" }]}>
               ABSENT
-            </Text>
-            <Text style={styles.metricValue}>{absent}</Text>
+            </AppText>
+            <AppText style={styles.metricValue}>{absent}</AppText>
           </View>
         </View>
 
@@ -106,10 +107,10 @@ export default function AudienceBreakdownCard({
             <AssignmentIcon width={16} height={18} />
           </View>
           <View style={styles.metricTextCol}>
-            <Text style={[styles.metricLabel, { color: "#6B7280" }]}>
+            <AppText style={[styles.metricLabel, { color: "#6B7280" }]}>
               ASSIGNED
-            </Text>
-            <Text style={styles.metricValue}>{assigned}</Text>
+            </AppText>
+            <AppText style={styles.metricValue}>{assigned}</AppText>
           </View>
         </View>
 
@@ -119,13 +120,13 @@ export default function AudienceBreakdownCard({
             <PersonRemoveIcon width={18} height={14} />
           </View>
           <View style={styles.metricTextCol}>
-            <Text
+            <AppText
               style={[styles.metricLabel, { color: "#6B7280" }]}
               numberOfLines={1}
             >
               UNASSIGNED
-            </Text>
-            <Text style={styles.metricValue}>{unassigned}</Text>
+            </AppText>
+            <AppText style={styles.metricValue}>{unassigned}</AppText>
           </View>
         </View>
 
@@ -135,10 +136,10 @@ export default function AudienceBreakdownCard({
             <AddNotesIcon width={16} height={16} />
           </View>
           <View style={styles.metricTextCol}>
-            <Text style={[styles.metricLabel, { color: "#6B7280" }]}>
+            <AppText style={[styles.metricLabel, { color: "#6B7280" }]}>
               FRESH
-            </Text>
-            <Text style={styles.metricValue}>{fresh}</Text>
+            </AppText>
+            <AppText style={styles.metricValue}>{fresh}</AppText>
           </View>
         </View>
       </View>
